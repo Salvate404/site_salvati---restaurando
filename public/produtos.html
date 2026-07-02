@@ -330,6 +330,91 @@
         .actions-menu .delete-action { color: #dc3545;
         }
 
+        .image-link-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .image-link-menu {
+            display: none;
+            position: absolute;
+            left: 0;
+            top: calc(100% + 4px);
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 2100;
+            min-width: 180px;
+            padding: 5px 0;
+        }
+
+        .image-link-menu button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 10px 14px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95em;
+        }
+
+        .image-link-menu button:hover:not(:disabled) {
+            background-color: #f0f0f0;
+        }
+
+        .image-link-menu button:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .image-link-menu .remove-link-btn {
+            color: #dc3545;
+            border-top: 1px solid #eee;
+            margin-top: 4px;
+        }
+
+        .section-editor-block {
+            margin-bottom: 16px;
+        }
+        .section-editor-block > label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 6px;
+        }
+        .section-editor-adder {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .section-editor-adder input {
+            flex-grow: 1;
+        }
+        .section-options-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .section-option-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background-color: #e9ecef;
+            border-radius: 14px;
+            padding: 4px 10px;
+            font-size: 0.9em;
+        }
+        .section-option-tag button {
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+            font-size: 1.1em;
+            line-height: 1;
+            padding: 0;
+        }
+
         /* --- ESTILOS DOS MODAIS --- */
         #add-product-modal,
         #password-modal {
@@ -1208,6 +1293,24 @@
                     </div>
                 </div>
 
+                <div id="image-link-section" style="display: none; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+                    <h4 style="margin: 0 0 8px 0;">Link com Detalhes do Orçamento</h4>
+                    <p style="font-size: 0.9em; color: #666; margin: 0 0 12px 0;">Vincule este produto a uma imagem de detalhes (Cortina ou Capota). Cada imagem aceita apenas um produto.</p>
+                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                        <span id="image-link-status" style="font-weight: bold;">Nenhuma imagem linkada</span>
+                        <div class="image-link-container">
+                            <button type="button" id="open-image-link-btn" class="button select-product-button" style="padding: 8px 14px;">Linkar imagem</button>
+                            <div id="image-link-menu" class="image-link-menu"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="product-sections-section" style="display: none; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+                    <h4 style="margin: 0 0 8px 0;">Seções da Descrição (Orçamento)</h4>
+                    <p style="font-size: 0.9em; color: #666; margin: 0 0 12px 0;">Cadastre as opções de cada seção. No orçamento, o vendedor escolhe 1 opção por seção (várias em Observações) e o texto é montado na imagem do produto.</p>
+                    <div id="sections-editor"></div>
+                </div>
+
                 <div id="product-composition-container" style="display: none;">
                     <h4>Composição do Kit-Item (para Estoque)</h4>
                     <div class="kit-item-adder">
@@ -1279,6 +1382,20 @@
         let lastSearchTerm = '';
         let fiscalDataSources = {}; // Para armazenar listas fiscais
         let currentVariantBranchId = null; // Para gerenciar o estoque de variantes no modal
+        let currentLinkedImageType = null;
+
+        const IMAGE_LINK_TYPES = [
+            { id: 'cortina', label: 'Cortina' },
+            { id: 'capota', label: 'Capota' }
+        ];
+
+        const PRODUCT_SECTIONS = [
+            { id: 'marcaLona', label: 'Marca da lona', multi: false },
+            { id: 'corLona', label: 'Cor da lona', multi: false },
+            { id: 'fundoLona', label: 'Fundo da lona', multi: false },
+            { id: 'corVies', label: 'Cor do viés', multi: false },
+            { id: 'observacoes', label: 'Observações possíveis', multi: true }
+        ];
         
         const itemsPerPage = 30;
         let currentPage = 1;
@@ -1508,6 +1625,8 @@
                         agrupamento: data.agrupamento || null,
                         precosPorLona: data.precosPorLona || [],
                         mainPriceFormula: data.mainPriceFormula || null,
+                        linkedImageType: data.linkedImageType || null,
+                        descriptionSections: data.descriptionSections || {},
                     };
                 });
 
@@ -1535,6 +1654,150 @@
             }
         }
 
+        function getImageLinkLabel(imageType) {
+            const found = IMAGE_LINK_TYPES.find(t => t.id === imageType);
+            return found ? found.label : imageType;
+        }
+
+        function findProductLinkedToImage(imageType, excludeProductId = null) {
+            return catalogoProdutos.find(p =>
+                p.linkedImageType === imageType && p.id !== excludeProductId
+            );
+        }
+
+        function updateImageLinkDisplay() {
+            const section = document.getElementById('image-link-section');
+            const statusEl = document.getElementById('image-link-status');
+            if (!section || !statusEl) return;
+
+            if (currentLinkedImageType) {
+                statusEl.textContent = `Linkado a: ${getImageLinkLabel(currentLinkedImageType)}`;
+                statusEl.style.color = '#28a745';
+            } else {
+                statusEl.textContent = 'Nenhuma imagem linkada';
+                statusEl.style.color = '#666';
+            }
+        }
+
+        function buildImageLinkMenu() {
+            const menu = document.getElementById('image-link-menu');
+            menu.innerHTML = '';
+
+            IMAGE_LINK_TYPES.forEach(type => {
+                const occupiedBy = findProductLinkedToImage(type.id, currentEditingProductId);
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.dataset.imageType = type.id;
+
+                if (occupiedBy) {
+                    btn.textContent = `${type.label} (ocupada)`;
+                    btn.title = `Já linkada ao produto: ${occupiedBy.nome}`;
+                    btn.disabled = true;
+                } else {
+                    btn.textContent = type.label;
+                    if (currentLinkedImageType === type.id) {
+                        btn.textContent += ' ✓';
+                    }
+                }
+                menu.appendChild(btn);
+            });
+
+            if (currentLinkedImageType) {
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'remove-link-btn';
+                removeBtn.dataset.action = 'remove-link';
+                removeBtn.textContent = 'Remover link';
+                menu.appendChild(removeBtn);
+            }
+        }
+
+        function closeImageLinkMenu() {
+            const menu = document.getElementById('image-link-menu');
+            if (menu) menu.style.display = 'none';
+        }
+
+        function toggleImageLinkMenu(event) {
+            event.stopPropagation();
+            const menu = document.getElementById('image-link-menu');
+            const isOpen = menu.style.display === 'block';
+            if (isOpen) {
+                closeImageLinkMenu();
+                return;
+            }
+            buildImageLinkMenu();
+            menu.style.display = 'block';
+        }
+
+        function setLinkedImageType(imageType) {
+            const occupiedBy = findProductLinkedToImage(imageType, currentEditingProductId);
+            if (occupiedBy) {
+                showToast(`A imagem "${getImageLinkLabel(imageType)}" já está linkada ao produto "${occupiedBy.nome}".`, 'error');
+                return;
+            }
+            currentLinkedImageType = imageType;
+            updateImageLinkDisplay();
+            closeImageLinkMenu();
+            showToast(`Produto linkado à imagem ${getImageLinkLabel(imageType)}.`, 'success');
+        }
+
+        function addSectionOptionTag(listEl, value) {
+            const trimmed = (value || '').trim();
+            if (!trimmed) return false;
+            const exists = Array.from(listEl.querySelectorAll('.section-option-tag')).some(
+                tag => tag.dataset.value.toLowerCase() === trimmed.toLowerCase()
+            );
+            if (exists) {
+                showToast(`"${trimmed}" já foi adicionado nesta seção.`, 'error');
+                return false;
+            }
+            const tag = document.createElement('span');
+            tag.className = 'section-option-tag';
+            tag.dataset.value = trimmed;
+            tag.innerHTML = `<span></span><button type="button" title="Remover">&times;</button>`;
+            tag.querySelector('span').textContent = trimmed;
+            listEl.appendChild(tag);
+            return true;
+        }
+
+        function renderSectionsEditor(existing = {}) {
+            const editor = document.getElementById('sections-editor');
+            if (!editor) return;
+            editor.innerHTML = '';
+
+            PRODUCT_SECTIONS.forEach(section => {
+                const block = document.createElement('div');
+                block.className = 'section-editor-block';
+                block.dataset.sectionId = section.id;
+
+                const hint = section.multi ? ' (o vendedor pode escolher várias)' : ' (o vendedor escolhe uma)';
+                block.innerHTML = `
+                    <label>${section.label}${hint}</label>
+                    <div class="section-editor-adder">
+                        <input type="text" class="section-option-input" placeholder="Nova opção...">
+                        <button type="button" class="button section-add-option-btn">+ Adicionar</button>
+                    </div>
+                    <div class="section-options-list"></div>
+                `;
+                editor.appendChild(block);
+
+                const listEl = block.querySelector('.section-options-list');
+                (existing[section.id] || []).forEach(opt => addSectionOptionTag(listEl, opt));
+            });
+        }
+
+        function collectSectionsFromEditor() {
+            const editor = document.getElementById('sections-editor');
+            const result = {};
+            if (!editor) return result;
+            PRODUCT_SECTIONS.forEach(section => {
+                const block = editor.querySelector(`.section-editor-block[data-section-id="${section.id}"]`);
+                if (!block) { result[section.id] = []; return; }
+                result[section.id] = Array.from(block.querySelectorAll('.section-option-tag')).map(tag => tag.dataset.value);
+            });
+            return result;
+        }
+
         function openProductModal(productId = null) {
             const modal = document.getElementById('add-product-modal');
             const form = document.getElementById('add-product-form');
@@ -1558,6 +1821,7 @@
             document.getElementById('product-composition-container').style.display = 'none';
             document.getElementById('sob-medida-variables-section').style.display = 'none';
             currentEditingProductId = productId;
+            currentLinkedImageType = null;
             productTypeDisplay.style.display = 'none'; // Oculta por padrão
 
             let productType = 'simples'; // Padrão para novo produto
@@ -1650,6 +1914,8 @@
                         product.precosPorLona.forEach(lonaConfig => addLonaProductRow(lonaConfig));
                     }
                 }
+
+                currentLinkedImageType = product.linkedImageType || null;
                 // Se for do tipo "personalizado", mostra as seções que contêm dados
                 if (product.type === 'personalizado') {
                     if (product.variants && product.variants.length > 0) {
@@ -1739,8 +2005,12 @@
             const agrupamentoContainer = document.getElementById('agrupamento-container');
             const personalizadoOptionsSection = document.getElementById('personalizado-options-section');
             const stockManagementSection = document.getElementById('stock-management-section');
+            const imageLinkSection = document.getElementById('image-link-section');
+            const sectionsSection = document.getElementById('product-sections-section');
 
             document.getElementById('toldo-completo-pricing-section').style.display = 'none';
+            if (imageLinkSection) imageLinkSection.style.display = 'none';
+            if (sectionsSection) sectionsSection.style.display = 'none';
             stockField.innerHTML = ''; // Limpa o container de estoque sempre
             // Oculta todas as seções opcionais
             unitField.style.display = 'none';
@@ -1844,6 +2114,16 @@
                 compositionContainer.style.display = 'block';
                 compositionContainer.style.marginTop = '0';
                 sobMedidaVariablesSection.style.display = 'block';
+                if (imageLinkSection) imageLinkSection.style.display = 'block';
+                updateImageLinkDisplay();
+                if (sectionsSection) {
+                    sectionsSection.style.display = 'block';
+                    const sectionsEditor = document.getElementById('sections-editor');
+                    if (!sectionsEditor.querySelector('.section-editor-block')) {
+                        const editingProduct = currentEditingProductId ? catalogoProdutos.find(p => p.id === currentEditingProductId) : null;
+                        renderSectionsEditor(editingProduct?.descriptionSections || {});
+                    }
+                }
                 // Define campos obrigatórios para 'sob-medida'
                 document.getElementById('productDescInput').required = true;
             } else if (type === 'toldo-completo') {
@@ -1853,6 +2133,16 @@
                 compositionContainer.style.display = 'block'; // Para definir o kit padrão
                 document.getElementById('toldo-completo-pricing-section').style.display = 'block';
                 sobMedidaVariablesSection.style.display = 'block'; // Para adicionar variáveis
+                if (imageLinkSection) imageLinkSection.style.display = 'block';
+                updateImageLinkDisplay();
+                if (sectionsSection) {
+                    sectionsSection.style.display = 'block';
+                    const sectionsEditor = document.getElementById('sections-editor');
+                    if (!sectionsEditor.querySelector('.section-editor-block')) {
+                        const editingProduct = currentEditingProductId ? catalogoProdutos.find(p => p.id === currentEditingProductId) : null;
+                        renderSectionsEditor(editingProduct?.descriptionSections || {});
+                    }
+                }
 
                 // Define campos obrigatórios
                 document.getElementById('productDescInput').required = true;
@@ -1897,6 +2187,7 @@
 
         function closeProductModal() {
             addProductModal.style.display = 'none';
+            closeImageLinkMenu();
             // Garante que o formulário principal esteja visível e o construtor oculto na próxima vez que o modal for aberto
             document.getElementById('add-product-form').style.display = 'block';
             document.getElementById('formula-builder-wrapper').style.display = 'none';
@@ -1905,6 +2196,9 @@
             document.getElementById('variants-list').innerHTML = '';
             document.getElementById('lona-prices-list').innerHTML = '';
             document.getElementById('lona-prices-list').innerHTML = '';
+            const sectionsEditor = document.getElementById('sections-editor');
+            if (sectionsEditor) sectionsEditor.innerHTML = '';
+            currentLinkedImageType = null;
         }
 
         function addLonaProductRow(lonaConfig = { productId: null, preco: 0 }) {
@@ -2289,8 +2583,43 @@
             updateMoveButtons(listElement);
         }
 
+        function clearRequiredFromHiddenFields(form) {
+            form.querySelectorAll('[required]').forEach(el => {
+                let node = el;
+                while (node && node !== document.body) {
+                    const style = window.getComputedStyle(node);
+                    if (style.display === 'none' || style.visibility === 'hidden') {
+                        el.required = false;
+                        break;
+                    }
+                    node = node.parentElement;
+                }
+            });
+        }
+
+        function sanitizeFirestorePayload(payload) {
+            const cleaned = {};
+            Object.entries(payload).forEach(([key, value]) => {
+                if (value !== undefined) cleaned[key] = value;
+            });
+            return cleaned;
+        }
+
         async function handleSaveProduct(event) {
             event.preventDefault();
+            clearRequiredFromHiddenFields(addProductForm);
+            if (!addProductForm.checkValidity()) {
+                const invalidField = addProductForm.querySelector(':invalid');
+                const label = invalidField?.labels?.[0]?.textContent?.trim()
+                    || invalidField?.placeholder
+                    || invalidField?.title
+                    || 'Campo obrigatório';
+                showToast(`Preencha corretamente: ${label}`, 'error');
+                invalidField?.focus();
+                return;
+            }
+
+            try {
             // --- Lógica de Estoque ---
             let originalProduct = currentEditingProductId ? catalogoProdutos.find(p => p.id === currentEditingProductId) : null;
 
@@ -2513,19 +2842,38 @@
                 }
             }
 
-            try {
-                if (currentEditingProductId) {
-                    await db.collection('produtos').doc(currentEditingProductId).update(newProduct);
-                    showToast('Produto atualizado com sucesso!', 'success');
-                } else {
-                    await db.collection('produtos').add(newProduct);
-                    showToast('Produto cadastrado com sucesso!', 'success');
+            if (productType === 'sob-medida' || productType === 'toldo-completo') {
+                if (currentLinkedImageType) {
+                    const occupiedBy = findProductLinkedToImage(currentLinkedImageType, currentEditingProductId);
+                    if (occupiedBy) {
+                        showToast(`A imagem "${getImageLinkLabel(currentLinkedImageType)}" já está linkada ao produto "${occupiedBy.nome}".`, 'error');
+                        return;
+                    }
+                    newProduct.linkedImageType = currentLinkedImageType;
+                } else if (currentEditingProductId) {
+                    newProduct.linkedImageType = firebase.firestore.FieldValue.delete();
                 }
-                closeProductModal();
-                await fetchProductsFromFirestore(); // Recarrega a lista
+                newProduct.descriptionSections = collectSectionsFromEditor();
+            }
+
+            const payload = sanitizeFirestorePayload(newProduct);
+
+            if (currentEditingProductId) {
+                await db.collection('produtos').doc(currentEditingProductId).update(payload);
+                showToast('Produto atualizado com sucesso!', 'success');
+            } else {
+                if (payload.linkedImageType && payload.linkedImageType._methodName === 'delete') {
+                    delete payload.linkedImageType;
+                }
+                await db.collection('produtos').add(payload);
+                showToast('Produto cadastrado com sucesso!', 'success');
+            }
+            closeProductModal();
+            await fetchProductsFromFirestore(); // Recarrega a lista
             } catch (error) {
                 console.error("Erro ao salvar produto:", error);
-                showToast('Erro ao salvar o produto.', 'error');
+                const detail = error?.code ? `${error.code}: ${error.message}` : (error?.message || 'Erro desconhecido');
+                showToast(`Erro ao salvar o produto. ${detail}`, 'error');
             }
         }
 
@@ -3287,6 +3635,56 @@
         closeAddProductModalBtn.addEventListener('click', closeProductModal);
         cancelAddProductBtn.addEventListener('click', closeProductModal);
         addProductForm.addEventListener('submit', handleSaveProduct);
+
+        document.getElementById('open-image-link-btn').addEventListener('click', toggleImageLinkMenu);
+        document.getElementById('image-link-menu').addEventListener('click', (e) => {
+            const removeBtn = e.target.closest('button[data-action="remove-link"]');
+            if (removeBtn) {
+                currentLinkedImageType = null;
+                updateImageLinkDisplay();
+                closeImageLinkMenu();
+                showToast('Link de imagem removido.', 'success');
+                return;
+            }
+
+            const btn = e.target.closest('button[data-image-type]');
+            if (!btn || btn.disabled) return;
+            setLinkedImageType(btn.dataset.imageType);
+        });
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.image-link-container')) {
+                closeImageLinkMenu();
+            }
+        });
+
+        // Listeners do editor de seções (adicionar/remover opções)
+        document.getElementById('sections-editor').addEventListener('click', (e) => {
+            const addBtn = e.target.closest('.section-add-option-btn');
+            if (addBtn) {
+                const block = addBtn.closest('.section-editor-block');
+                const input = block.querySelector('.section-option-input');
+                const listEl = block.querySelector('.section-options-list');
+                if (addSectionOptionTag(listEl, input.value)) {
+                    input.value = '';
+                    input.focus();
+                }
+                return;
+            }
+            const removeBtn = e.target.closest('.section-option-tag button');
+            if (removeBtn) {
+                removeBtn.closest('.section-option-tag').remove();
+            }
+        });
+        document.getElementById('sections-editor').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.target.classList.contains('section-option-input')) {
+                e.preventDefault();
+                const block = e.target.closest('.section-editor-block');
+                const listEl = block.querySelector('.section-options-list');
+                if (addSectionOptionTag(listEl, e.target.value)) {
+                    e.target.value = '';
+                }
+            }
+        });
 
         // Listener delegado para os controles de itens de kit/composição
             stockModeToggleBtn.addEventListener('click', () => {

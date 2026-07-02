@@ -1987,7 +1987,10 @@
     </div>
 
     <div class="fixed-buttons">
-        <button type="button" class="button" id="saveButton">Salvar</button>
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-start;">
+            <button type="button" class="button" id="clearLinksButton" style="background-color: #fd7e14; color: white;">Limpar Links</button>
+            <button type="button" class="button" id="saveButton">Salvar</button>
+        </div>
         <button type="button" class="button" id="backToMenuButton">Menu</button>
     </div>
 
@@ -2200,6 +2203,7 @@
             <div id="mtm-variables-container">
                 <!-- Input fields for variables will be generated here -->
             </div>
+            <div id="mtm-sections-container" class="product-sections-selectors" style="display: none;"></div>
             <div class="modal-buttons">
                 <button type="button" class="button select-product-button" id="add-mtm-item-to-order-btn">Calcular e Adicionar</button>
                 <button type="button" class="button seller-button" data-modal-id="made-to-measure-modal">Cancelar</button>
@@ -2296,6 +2300,25 @@
             text-align: center;
         }
         #toldo-completo-calculated-price { font-size: 1.4em; font-weight: bold; color: #004085; margin: 0; }
+
+        .product-sections-selectors { margin-top: 15px; }
+        .section-select-group { margin-bottom: 12px; }
+        .section-select-group > label { font-weight: bold; display: block; margin-bottom: 6px; }
+        .section-select-options { display: flex; flex-wrap: wrap; gap: 6px; }
+        .section-select-btn {
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            border-radius: 16px;
+            background-color: #fff;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .section-select-btn.active {
+            background-color: #28a745;
+            color: #fff;
+            border-color: #218838;
+            font-weight: bold;
+        }
         .components-checkbox-list { max-height: 250px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 5px; }
         .opcional-item {
             display: flex;
@@ -2315,7 +2338,7 @@
     <div id="toldo-completo-config-modal" class="modal">
         <div class="modal-content" style="max-width: 700px;">
             <button type="button" class="close-button" data-modal-id="toldo-completo-config-modal">&times;</button>
-            <h2 id="toldo-completo-product-name">Configurar Toldo Completo</h2><div class="toldo-config-grid"><div class="toldo-config-column"><h4>Variáveis e Lona</h4><div id="toldo-completo-variables-container"></div><div class="form-group"><label for="toldo-completo-lona-select">Marca da Lona</label><select id="toldo-completo-lona-select" class="mtm-variant-select"></select></div></div><div class="toldo-config-column"><h4>Componentes Opcionais</h4><p class="column-subtitle">Selecione os itens para baixa de estoque.</p><div id="toldo-completo-opcionais-list" class="components-checkbox-list"></div></div></div><div class="calculated-price-box"><p id="toldo-completo-calculated-price">Preço: R$ 0,00</p></div><button type="button" class="button select-product-button" id="add-toldo-completo-to-order-btn" style="margin-top: 20px; width: 100%;">Adicionar ao Orçamento</button>
+            <h2 id="toldo-completo-product-name">Configurar Toldo Completo</h2><div class="toldo-config-grid"><div class="toldo-config-column"><h4>Variáveis e Lona</h4><div id="toldo-completo-variables-container"></div><div class="form-group"><label for="toldo-completo-lona-select">Marca da Lona</label><select id="toldo-completo-lona-select" class="mtm-variant-select"></select></div></div><div class="toldo-config-column"><h4>Componentes Opcionais</h4><p class="column-subtitle">Selecione os itens para baixa de estoque.</p><div id="toldo-completo-opcionais-list" class="components-checkbox-list"></div></div></div><div id="toldo-completo-sections-container" class="product-sections-selectors" style="display: none;"></div><div class="calculated-price-box"><p id="toldo-completo-calculated-price">Preço: R$ 0,00</p></div><button type="button" class="button select-product-button" id="add-toldo-completo-to-order-btn" style="margin-top: 20px; width: 100%;">Adicionar ao Orçamento</button>
         </div>
     </div>
 
@@ -3301,6 +3324,280 @@
         }
         const LOAD_ITEMS_PER_PAGE = 5;
 
+        const IMAGE_LINK_TYPES = [
+            { id: 'cortina', label: 'Cortina' },
+            { id: 'capota', label: 'Capota' }
+        ];
+
+        const PRODUCT_SECTIONS = [
+            { id: 'marcaLona', label: 'Marca da lona', multi: false },
+            { id: 'corLona', label: 'Cor da lona', multi: false },
+            { id: 'fundoLona', label: 'Fundo da lona', multi: false },
+            { id: 'corVies', label: 'Cor do viés', multi: false },
+            { id: 'observacoes', label: 'Observações', multi: true }
+        ];
+        let activeLinkedImageWrapper = null;
+
+        function generatePairId() {
+            return (typeof crypto !== 'undefined' && crypto.randomUUID)
+                ? crypto.randomUUID()
+                : `pair-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+        }
+
+        function getProductByLinkedImageType(imageType) {
+            return catalogoProdutos.find(p => p.linkedImageType === imageType) || null;
+        }
+
+        function findPairedImage(pairId) {
+            if (!pairId) return null;
+            return document.querySelector(`#image-preview-container .image-with-desc[data-pair-id="${pairId}"]`);
+        }
+
+        function findPairedOrderRow(pairId) {
+            if (!pairId) return null;
+            return document.querySelector(`#order-items-body .order-item[data-pair-id="${pairId}"]`);
+        }
+
+        function normalizeTextKey(value) {
+            return (value || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        }
+
+        function getScopeDisplayValue(scope, keys) {
+            if (!scope) return null;
+            for (const [key, val] of Object.entries(scope)) {
+                const normalizedKey = normalizeTextKey(key);
+                if (keys.some(k => normalizedKey.includes(k)) && val !== '' && val != null) {
+                    return typeof val === 'number' ? formatNumberToCurrencyString(val) : val;
+                }
+            }
+            return null;
+        }
+
+        function getActiveMtmComponents() {
+            const components = [];
+            document.querySelectorAll('#made-to-measure-modal .mtm-component-btn.active').forEach(button => {
+                const componentId = button.dataset.componentId;
+                const componentProduct = catalogoProdutos.find(p => p.id === componentId);
+                if (!componentProduct) return;
+                const variantSpan = button.querySelector('.selected-variant-text');
+                const variantIndex = variantSpan && variantSpan.dataset.variantIndex !== '' ? parseInt(variantSpan.dataset.variantIndex, 10) : null;
+                const variantName = (variantIndex != null && componentProduct.variants && componentProduct.variants[variantIndex])
+                    ? componentProduct.variants[variantIndex].name
+                    : (variantSpan ? variantSpan.textContent.trim() : '');
+                components.push({ product: componentProduct, variantName });
+            });
+            return components;
+        }
+
+        function buildLinkedImageDescription(config) {
+            const { product, scope = {}, sections = {} } = config;
+            const lines = [];
+
+            if (product?.nome) lines.push(product.nome);
+
+            const largura = getScopeDisplayValue(scope, ['largura', 'larg', 'profundidade', 'comprimento']);
+            const caida = getScopeDisplayValue(scope, ['caida', 'queda', 'avanco', 'altura']);
+            if (largura || caida) {
+                lines.push(`${largura || '?'} x ${caida || '?'}`);
+            }
+
+            // Linha da lona: marca + cor + fundo (omite os ausentes)
+            const lonaParts = [sections.marcaLona, sections.corLona, sections.fundoLona].filter(Boolean);
+            if (lonaParts.length > 0) lines.push(lonaParts.join(' '));
+
+            // Linha do viés
+            if (sections.corVies) lines.push(`Viés ${sections.corVies}`);
+
+            // Observações (várias)
+            const obs = Array.isArray(sections.observacoes)
+                ? sections.observacoes
+                : (sections.observacoes ? [sections.observacoes] : []);
+            obs.forEach(o => { if (o) lines.push(o); });
+
+            return lines.join('\n');
+        }
+
+        function renderSectionSelectors(container, product, existing = {}) {
+            if (!container) return false;
+            container.innerHTML = '';
+            const sections = (product && product.descriptionSections) || {};
+            let hasAny = false;
+
+            PRODUCT_SECTIONS.forEach(section => {
+                const options = sections[section.id] || [];
+                if (options.length === 0) return;
+                hasAny = true;
+
+                const group = document.createElement('div');
+                group.className = 'section-select-group';
+                group.dataset.sectionId = section.id;
+                group.dataset.multi = section.multi ? '1' : '0';
+
+                const label = document.createElement('label');
+                label.textContent = section.multi ? `${section.label} (pode escolher várias)` : section.label;
+                group.appendChild(label);
+
+                const optsWrap = document.createElement('div');
+                optsWrap.className = 'section-select-options';
+
+                const existingVal = existing[section.id];
+                const existingArr = section.multi
+                    ? (Array.isArray(existingVal) ? existingVal : (existingVal ? [existingVal] : []))
+                    : (existingVal ? [existingVal] : []);
+
+                options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'section-select-btn';
+                    btn.dataset.value = opt;
+                    btn.textContent = opt;
+                    if (existingArr.includes(opt)) btn.classList.add('active');
+                    btn.addEventListener('click', () => {
+                        if (section.multi) {
+                            btn.classList.toggle('active');
+                        } else {
+                            const wasActive = btn.classList.contains('active');
+                            optsWrap.querySelectorAll('.section-select-btn').forEach(b => b.classList.remove('active'));
+                            if (!wasActive) btn.classList.add('active'); // clicar de novo desmarca
+                        }
+                    });
+                    optsWrap.appendChild(btn);
+                });
+
+                group.appendChild(optsWrap);
+                container.appendChild(group);
+            });
+
+            container.style.display = hasAny ? 'block' : 'none';
+            return hasAny;
+        }
+
+        function readSectionSelections(container) {
+            const result = {};
+            if (!container) return result;
+            container.querySelectorAll('.section-select-group').forEach(group => {
+                const sectionId = group.dataset.sectionId;
+                const multi = group.dataset.multi === '1';
+                const activeBtns = Array.from(group.querySelectorAll('.section-select-btn.active'));
+                result[sectionId] = multi
+                    ? activeBtns.map(b => b.dataset.value)
+                    : (activeBtns.length > 0 ? activeBtns[0].dataset.value : '');
+            });
+            return result;
+        }
+
+        function createImageWrapper(imageType, pairId = null) {
+            const previewContainer = document.getElementById('image-preview-container');
+            const wrapper = document.createElement('div');
+            wrapper.className = 'image-with-desc';
+            if (pairId) wrapper.dataset.pairId = pairId;
+            if (imageType) wrapper.dataset.imageType = imageType;
+
+            const imageCanvasWrapper = document.createElement('div');
+            imageCanvasWrapper.className = 'image-canvas-wrapper';
+
+            const img = document.createElement('img');
+            img.src = `IMG/${imageType}.png`;
+            img.alt = `Imagem de ${imageType}`;
+            img.draggable = true;
+
+            const canvas = document.createElement('canvas');
+            canvas.className = 'drawing-canvas';
+            canvas.width = 150;
+            canvas.height = 120;
+
+            const descDiv = document.createElement('div');
+            descDiv.className = 'image-description';
+            descDiv.contentEditable = true;
+            descDiv.setAttribute('data-placeholder', 'Descrição da imagem...');
+
+            imageCanvasWrapper.appendChild(img);
+            imageCanvasWrapper.appendChild(canvas);
+            wrapper.appendChild(imageCanvasWrapper);
+            wrapper.appendChild(descDiv);
+            previewContainer.appendChild(wrapper);
+            return wrapper;
+        }
+
+        function syncLinkedImageDescription(pairId, description, linkedProductId) {
+            const imageWrapper = findPairedImage(pairId);
+            if (!imageWrapper) return;
+            const descDiv = imageWrapper.querySelector('.image-description');
+            if (descDiv) descDiv.innerText = description;
+            if (linkedProductId) imageWrapper.dataset.linkedProductId = linkedProductId;
+        }
+
+        function finalizeLinkedProductPair(orderRow, descriptionConfig) {
+            if (!orderRow) return;
+            const pairId = orderRow.dataset.pairId;
+            if (!pairId) return;
+
+            const description = buildLinkedImageDescription(descriptionConfig);
+            syncLinkedImageDescription(pairId, description, descriptionConfig.product?.id);
+
+            const imageWrapper = findPairedImage(pairId);
+            if (imageWrapper && !imageWrapper.dataset.pairId) {
+                imageWrapper.dataset.pairId = pairId;
+            }
+            activeLinkedImageWrapper = null;
+        }
+
+        function removePairedOrderRow(pairId) {
+            const row = findPairedOrderRow(pairId);
+            if (row) row.remove();
+            reindexOrderItems();
+            updateTotals();
+        }
+
+        async function clearAllImageLinks() {
+            const confirmed = window.confirm('Isso vai remover o link de imagem de TODOS os produtos cadastrados. Deseja continuar?');
+            if (!confirmed) return;
+
+            const clearBtn = document.getElementById('clearLinksButton');
+            const originalText = clearBtn.innerText;
+            clearBtn.disabled = true;
+            clearBtn.innerText = 'Limpando...';
+
+            try {
+                const snapshot = await db.collection('produtos').where('linkedImageType', '!=', null).get();
+                if (snapshot.empty) {
+                    showNotification('Nenhum produto com link para limpar.', 'success');
+                    return;
+                }
+
+                const batch = db.batch();
+                snapshot.docs.forEach(docSnap => {
+                    batch.update(docSnap.ref, { linkedImageType: firebase.firestore.FieldValue.delete() });
+                });
+                await batch.commit();
+
+                showNotification(`Links removidos de ${snapshot.size} produto(s).`, 'success');
+                await loadProductsFromFirebase(); // Atualiza o catálogo local
+            } catch (error) {
+                console.error('Erro ao limpar os links de imagem:', error);
+                const detail = error?.code ? `${error.code}: ${error.message}` : (error?.message || 'Erro desconhecido');
+                showNotification(`Falha ao limpar os links. ${detail}`, 'error');
+            } finally {
+                clearBtn.disabled = false;
+                clearBtn.innerText = originalText;
+            }
+        }
+
+        function startLinkedProductFlow(imageType) {
+            const linkedProduct = getProductByLinkedImageType(imageType);
+            if (!linkedProduct) return false;
+
+            const pairId = generatePairId();
+            const wrapper = createImageWrapper(imageType, pairId);
+            activeLinkedImageWrapper = wrapper;
+            wrapper.dataset.linkedProductId = linkedProduct.id;
+
+            selectedRowToEdit = null;
+            currentEditingProduct = null;
+            openQuantityModal(linkedProduct.id);
+            return true;
+        }
+
         async function loadProductsFromFirebase() {
             try {
                 const snapshot = await db.collection('produtos').get();
@@ -3517,32 +3814,16 @@
             return num.toFixed(2).replace('.', ',');
         }
 
-        async function getProducts() {
-            // 1. Se já estiver em memória, retorna imediatamente.
-            if (catalogoProdutos.length > 0) {
+        async function getProducts(forceRefresh = false) {
+            if (!forceRefresh && catalogoProdutos.length > 0) {
                 return;
             }
-
-            // 2. Tenta carregar do localStorage.
-            const cachedCatalog = localStorage.getItem('productCatalog');
-            if (cachedCatalog) {
-                try {
-                    catalogoProdutos = JSON.parse(cachedCatalog);
-                    console.log('Catálogo de produtos carregado do cache local.');
-                    return;
-                } catch (e) {
-                    console.error("Erro ao carregar catálogo do cache. Buscando do Firebase.", e);
-                    localStorage.removeItem('productCatalog'); // Limpa cache corrompido
-                }
-            }
-
-            // 3. Se não encontrou em memória ou no cache, busca do Firebase.
             await loadProductsFromFirebase();
         }
 
         async function openProductSelection() {
-            // Garante que os produtos estejam carregados antes de abrir o modal.
-            await getProducts();
+            // Sempre busca a versão mais recente do catálogo ao abrir o modal.
+            await getProducts(true);
 
             document.body.classList.add('modal-open');
             renderProductModalList([], 1, true); // Renderiza a lista vazia com a mensagem inicial
@@ -3556,6 +3837,14 @@
             if (modal) modal.style.display = 'none';
             if (modalId === 'product-modal') {
                 document.getElementById('product-search-input').value = '';
+            }
+            if (modalId === 'made-to-measure-modal' || modalId === 'toldo-completo-config-modal') {
+                // Se a imagem linkada foi criada mas o usuário cancelou (não finalizou o par),
+                // remove a imagem órfã. Ao finalizar com sucesso, activeLinkedImageWrapper já é null.
+                if (activeLinkedImageWrapper) {
+                    activeLinkedImageWrapper.remove();
+                }
+                activeLinkedImageWrapper = null;
             }
         }
 
@@ -3637,6 +3926,15 @@
             // Reseta a variante selecionada ao iniciar um novo fluxo
             selectedVariant = null;
 
+            // Se o produto é linkado a uma imagem e o fluxo NÃO veio de uma imagem já criada
+            // (ex.: selecionado direto em "Selecionar Produto") e não é edição, gera a imagem pareada.
+            if (selectedProduct.linkedImageType && !activeLinkedImageWrapper && !selectedRowToEdit) {
+                const pairId = generatePairId();
+                const wrapper = createImageWrapper(selectedProduct.linkedImageType, pairId);
+                wrapper.dataset.linkedProductId = selectedProduct.id;
+                activeLinkedImageWrapper = wrapper;
+            }
+
             // 1. Verifica se é "Sob Medida" - tem seu próprio modal complexo
             if (selectedProduct.type === 'sob-medida') {
                 openMadeToMeasureModal(selectedProduct);
@@ -3712,7 +4010,8 @@
             quantityInput.focus();
         }
 
-        function openMadeToMeasureModal(product, existingScope = null, existingVariants = null, existingComponents = null) {
+        function openMadeToMeasureModal(product, existingScope = null, existingVariants = null, existingComponents = null, existingSections = null) {
+            selectedProduct = product; // Garante que o produto atual esteja setado (inclusive na edição)
             document.getElementById('mtm-product-name').textContent = product.nome;
             
             // Aumenta a largura do modal para acomodar o novo layout
@@ -3833,6 +4132,8 @@
                 variablesContainer.innerHTML = '<p>Este produto não tem variáveis de cálculo ou opções configuráveis.</p>';
             }
 
+            renderSectionSelectors(document.getElementById('mtm-sections-container'), product, existingSections || {});
+
             document.getElementById('made-to-measure-modal').style.display = 'flex';
             document.body.classList.add('modal-open');
         }
@@ -3897,6 +4198,8 @@
 
             // Limpa os campos de medida e preço
             document.getElementById('toldo-completo-calculated-price').textContent = 'Preço: R$ 0,00';
+
+            renderSectionSelectors(document.getElementById('toldo-completo-sections-container'), product, existingConfig.sections || {});
 
             calculateToldoCompletoPrice(product); // Calcula o preço inicial com os valores carregados
             modal.style.display = 'flex';
@@ -4007,12 +4310,26 @@
             newRow.dataset.quantidade = 1; // Toldo completo é sempre 1 unidade
             newRow.dataset.preco = totalPrice; // O preço calculado é o preço final do item
 
+            const selectedSections = readSectionSelections(document.getElementById('toldo-completo-sections-container'));
+
             // Armazena a configuração completa para salvar e dar baixa no estoque depois
             newRow.dataset.scope = JSON.stringify(scope);
             newRow.dataset.lonaId = lonaId;
             newRow.dataset.selectedComponents = JSON.stringify(selectedComponentIds);
+            newRow.dataset.sections = JSON.stringify(selectedSections);
 
             const obsText = Object.entries(scope).filter(([key]) => key !== 'preco_lona').map(([key, val]) => `${key}: ${val}`).join('; ') + `. Lona: ${lonaProductName}.`;
+
+            const linkedDescriptionConfig = {
+                product,
+                scope,
+                sections: selectedSections
+            };
+
+            if (!newRow.dataset.pairId) {
+                const pairId = activeLinkedImageWrapper?.dataset.pairId || '';
+                if (pairId) newRow.dataset.pairId = pairId;
+            }
 
             newRow.innerHTML = `
                 <td></td>
@@ -4031,8 +4348,11 @@
                 orderBody.appendChild(newRow);
             }
 
+            finalizeLinkedProductPair(newRow, linkedDescriptionConfig);
+
             closeModal('toldo-completo-config-modal');
             closeModal('product-modal');
+            activeLinkedImageWrapper = null;
             reindexOrderItems();
             updateTotals();
         }
@@ -4455,11 +4775,15 @@
                 const desc = container.querySelector('.image-description');
                 const canvas = container.querySelector('.drawing-canvas');
                 if (img && desc && canvas) {
-                    orderData.images.push({ 
+                    const imageEntry = { 
                         src: img.getAttribute('src'), 
                         description: desc.innerHTML,
                         drawing: canvas.toDataURL() // Salva o desenho do canvas
-                    });
+                    };
+                    if (container.dataset.pairId) imageEntry.pairId = container.dataset.pairId;
+                    if (container.dataset.imageType) imageEntry.imageType = container.dataset.imageType;
+                    if (container.dataset.linkedProductId) imageEntry.linkedProductId = container.dataset.linkedProductId;
+                    orderData.images.push(imageEntry);
                 }
             });
 
@@ -4505,6 +4829,12 @@
                 }
                 if (row.dataset.selectedComponents) {
                     itemData.selectedComponents = JSON.parse(row.dataset.selectedComponents);
+                }
+                if (row.dataset.pairId) {
+                    itemData.pairId = row.dataset.pairId;
+                }
+                if (row.dataset.sections) {
+                    itemData.sections = JSON.parse(row.dataset.sections);
                 }
                 orderData.items.push(itemData);
             });
@@ -4809,6 +5139,9 @@
                 data.images.forEach(imageData => {
                     const wrapper = document.createElement('div'); 
                     wrapper.className = 'image-with-desc';
+                    if (imageData.pairId) wrapper.dataset.pairId = imageData.pairId;
+                    if (imageData.imageType) wrapper.dataset.imageType = imageData.imageType;
+                    if (imageData.linkedProductId) wrapper.dataset.linkedProductId = imageData.linkedProductId;
 
                 const imageCanvasWrapper = document.createElement('div');
                 imageCanvasWrapper.className = 'image-canvas-wrapper';
@@ -4878,6 +5211,12 @@
                     }
                     if (item.selectedComponents) {
                         newRow.dataset.selectedComponents = JSON.stringify(item.selectedComponents);
+                    }
+                    if (item.pairId) {
+                        newRow.dataset.pairId = item.pairId;
+                    }
+                    if (item.sections) {
+                        newRow.dataset.sections = JSON.stringify(item.sections);
                     }
 
                     newRow.innerHTML = `
@@ -5868,6 +6207,7 @@
             }
 
             await fetchFiliais();
+            await loadProductsFromFirebase();
             generateSaleNumberAndDate();
             loadSellers();
             loadBranchInfo();
@@ -5964,6 +6304,7 @@
                 }
             });
 
+            document.getElementById('clearLinksButton').addEventListener('click', clearAllImageLinks);
             document.getElementById('open-product-modal-btn').addEventListener('click', openProductSelection);
             document.getElementById('add-item-to-order-btn').addEventListener('click', addSelectedItemToOrder);
             document.getElementById('add-mtm-item-to-order-btn').addEventListener('click', () => {
@@ -5989,7 +6330,12 @@
                     } else {
                         input.style.borderColor = '#ccc';
                         scope[varName] = value;
-                        obsText.push(`${varName.charAt(0).toUpperCase() + varName.slice(1)}: ${formatNumberToCurrencyString(value)}`); // Mantém a lógica de criação
+                        let displayName = varName.charAt(0).toUpperCase() + varName.slice(1);
+                        if (selectedProduct.customVariables) {
+                            const customVar = selectedProduct.customVariables.find(v => v.value === varName);
+                            if (customVar?.name) displayName = customVar.name;
+                        }
+                        obsText.push(`${displayName}: ${formatNumberToCurrencyString(value)}`);
                     }
                 });
 
@@ -6014,15 +6360,24 @@
             const totalPrice = calculateMtmPrice(selectedProduct, scope, selectedComponentIds);
             if (totalPrice === null) return;
 
+            const selectedSections = readSectionSelections(document.getElementById('mtm-sections-container'));
+            const linkedDescriptionConfig = {
+                product: selectedProduct,
+                scope,
+                sections: selectedSections
+            };
+
                 if (selectedRowToEdit) {
                     // Atualiza a linha existente
                     selectedRowToEdit.dataset.scope = JSON.stringify(scope);
                     selectedRowToEdit.dataset.preco = totalPrice;
                     selectedRowToEdit.dataset.variants = JSON.stringify(finalSelectedVariants); // CORREÇÃO: Salva as variantes coletadas
                     selectedRowToEdit.dataset.selectedComponents = JSON.stringify(Array.from(selectedComponentIds)); // CORREÇÃO: Salva os componentes atualizados
+                    selectedRowToEdit.dataset.sections = JSON.stringify(selectedSections);
                     selectedRowToEdit.querySelector('.obs-input-div').innerHTML = obsText.join('<br>');
                     selectedRowToEdit.querySelector('td:nth-child(5)').innerText = formatarValorMonetario(totalPrice); // Atualiza o preço unitário
                     selectedRowToEdit.querySelector('.total-cell').innerText = formatarValorMonetario(totalPrice);
+                    finalizeLinkedProductPair(selectedRowToEdit, linkedDescriptionConfig);
                     selectedRowToEdit = null;
                 } else {
                     // Adiciona uma nova linha
@@ -6039,6 +6394,10 @@
                 newRow.dataset.scope = JSON.stringify(scope); // Salva as variáveis de cálculo na linha
                 newRow.dataset.variants = JSON.stringify(finalSelectedVariants); // CORREÇÃO: Salva as variantes coletadas
                 newRow.dataset.selectedComponents = JSON.stringify(Array.from(selectedComponentIds)); // Salva os componentes selecionados
+
+                const pairId = activeLinkedImageWrapper?.dataset.pairId || '';
+                if (pairId) newRow.dataset.pairId = pairId;
+                newRow.dataset.sections = JSON.stringify(selectedSections);
 
                 // CORREÇÃO: Salva a composição completa do produto na linha do pedido.
                 // Isso garante que, ao editar, o sistema saiba quais componentes e suas variantes
@@ -6060,10 +6419,12 @@
                 `;
                 orderBody.appendChild(newRow);
                     reindexOrderItems();
+                    finalizeLinkedProductPair(newRow, linkedDescriptionConfig);
                 }
 
                 closeModal('made-to-measure-modal');
                 closeModal('product-modal');
+                activeLinkedImageWrapper = null;
                 updateTotals();
             });
 
@@ -6314,42 +6675,18 @@
                 menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
             });
 
-            document.getElementById('image-options-menu').addEventListener('click', (e) => {
+            document.getElementById('image-options-menu').addEventListener('click', async (e) => {
                 if (e.target.tagName === 'BUTTON') {
                     const imageType = e.target.dataset.imageType;
-                    const previewContainer = document.getElementById('image-preview-container');
-
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'image-with-desc';
-                    // wrapper.draggable = true; // Movido para a imagem
-    
-                    // NOVO: Adiciona um wrapper para a imagem e o canvas
-                    const imageCanvasWrapper = document.createElement('div');
-                    imageCanvasWrapper.className = 'image-canvas-wrapper';
-    
-                    const img = document.createElement('img');
-                    img.src = `IMG/${imageType}.png`;
-                    img.alt = `Imagem de ${imageType}`;
-    
-                    // NOVO: Cria o canvas para desenho
-                    const canvas = document.createElement('canvas');
-                    canvas.className = 'drawing-canvas';
-                    canvas.width = 150; // Mesma largura da imagem
-                    canvas.height = 120; // Mesma altura da imagem
-    
-                    img.draggable = true; // Apenas a imagem é arrastável
-                    const descDiv = document.createElement('div');
-                    descDiv.className = 'image-description';
-                    descDiv.contentEditable = true;
-                    descDiv.setAttribute('data-placeholder', 'Descrição da imagem...');
-    
-                    imageCanvasWrapper.appendChild(img);
-                    imageCanvasWrapper.appendChild(canvas); // Adiciona o canvas sobre a imagem
-                    wrapper.appendChild(imageCanvasWrapper);
-                    wrapper.appendChild(descDiv);
-                    previewContainer.appendChild(wrapper);
-
                     document.getElementById('image-options-menu').style.display = 'none';
+
+                    await getProducts(true);
+
+                    if (startLinkedProductFlow(imageType)) {
+                        return;
+                    }
+
+                    createImageWrapper(imageType);
                 }
             });
 
@@ -6506,6 +6843,9 @@
                         break;
 
                     case 'delete-image':
+                        if (currentImageWrapper.dataset.pairId) {
+                            removePairedOrderRow(currentImageWrapper.dataset.pairId);
+                        }
                         currentImageWrapper.remove();
                         break;
                 }
@@ -6914,14 +7254,15 @@
 
             if (product.type === 'sob-medida' || product.type === 'toldo-completo') {
                 const scope = JSON.parse(row.dataset.scope || '{}');
+                const sections = JSON.parse(row.dataset.sections || '{}');
                 if (product.type === 'toldo-completo') {
                     const lonaId = row.dataset.lonaId;
                     const components = new Set(JSON.parse(row.dataset.selectedComponents || '[]'));
-                    openToldoCompletoConfigurator(product, { scope, lonaId, components });
+                    openToldoCompletoConfigurator(product, { scope, lonaId, components, sections });
                 } else {
                     const variants = JSON.parse(row.dataset.variants || '{}');
                     const components = new Set(JSON.parse(row.dataset.selectedComponents || '[]'));
-                    openMadeToMeasureModal(product, scope, variants, components);
+                    openMadeToMeasureModal(product, scope, variants, components, sections);
                 }
             } else {
                 const currentQuantity = parseFloat(row.dataset.quantidade);
