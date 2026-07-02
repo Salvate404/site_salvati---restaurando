@@ -909,13 +909,13 @@
             flex-shrink: 0;
         }
 
-        .load-list-item .download-button {
-            background-color: #6c757d;
+        .load-list-item .fiscal-load-button {
+            background-color: #17a2b8;
             color: white;
         }
         
-        .load-list-item .download-button:hover {
-            background-color: #5a6268;
+        .load-list-item .fiscal-load-button:hover {
+            background-color: #138496;
         }
 
         .load-item-date {
@@ -2085,6 +2085,7 @@
                     <div id="image-options-menu" class="options-menu" style="display: none;">
                         <button data-image-type="cortina">Cortina</button>
                         <button data-image-type="capota">Capota</button>
+                        <button data-image-type="bando">Bando</button>
                     </div>
                 </div>
             </div>
@@ -2753,7 +2754,7 @@
             </div>
 
             <div class="modal-buttons" style="margin-top: 20px; justify-content: flex-end;">
-                <button type="button" class="button select-product-button" id="generate-fiscal-doc-btn">Gerar Documento Fiscal</button>
+                <button type="button" class="button select-product-button" id="generate-fiscal-doc-btn" disabled title="Função temporariamente desativada">Gerar Documento Fiscal</button>
             </div>
         </div>
     </div>
@@ -2998,6 +2999,48 @@
             });
 
             return data;
+        }
+
+        async function openFiscalModalForCurrentOrder() {
+            if (!currentLoadedOrderId) {
+                showNotification("Você precisa carregar ou salvar o pedido antes de ver o lançamento fiscal.", "error");
+                return;
+            }
+
+            const fiscalModal = document.getElementById('fiscal-config-modal');
+            const infoDisplay = document.getElementById('fiscal-info-display');
+            const fieldsContainer = document.getElementById('fiscal-fields-container');
+
+            infoDisplay.innerHTML = 'Carregando configuração fiscal...';
+            fieldsContainer.innerHTML = `<div class="fiscal-placeholder"><i class="fas fa-spinner fa-spin"></i><p>Carregando...</p></div>`;
+            fiscalModal.style.display = 'flex';
+            document.body.classList.add('modal-open');
+
+            try {
+                await loadFiscalDataSources();
+
+                const doc = await db.collection('fiscal').doc('configuracao_global').get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    fiscalConfig.regime = data.regime;
+                    fiscalConfig.tipo = data.tipo;
+
+                    const regimeText = data.regime ? data.regime.charAt(0).toUpperCase() + data.regime.slice(1) : 'Não definido';
+                    const tipoText = data.tipo ? data.tipo.toUpperCase() : 'Não definido';
+                    infoDisplay.innerHTML = `Configuração Atual: <strong>${regimeText.replace('Presumido', 'L. Presumido').replace('Real', 'L. Real')}</strong> / <strong>${tipoText}</strong>`;
+
+                    renderFiscalView();
+                } else {
+                    infoDisplay.innerHTML = 'Configuração fiscal não encontrada.';
+                    fieldsContainer.innerHTML = `<div class="fiscal-placeholder"><i class="fas fa-exclamation-triangle"></i><p>Por favor, configure os dados fiscais no painel de Administração.</p></div>`;
+                    showNotification("Configuração fiscal não encontrada.", "error");
+                }
+            } catch (error) {
+                console.error("Erro ao carregar configuração fiscal:", error);
+                infoDisplay.innerHTML = 'Erro ao carregar configuração fiscal.';
+                fieldsContainer.innerHTML = `<div class="fiscal-placeholder"><i class="fas fa-exclamation-triangle"></i><p>Ocorreu um erro ao buscar os dados fiscais.</p></div>`;
+                showNotification("Erro ao carregar configuração fiscal.", "error");
+            }
         }
 
         function setupRowCalculations(row) {
@@ -3625,7 +3668,8 @@
 
         const IMAGE_LINK_TYPES = [
             { id: 'cortina', label: 'Cortina' },
-            { id: 'capota', label: 'Capota' }
+            { id: 'capota', label: 'Capota' },
+            { id: 'bando', label: 'Bando' }
         ];
 
         const PRODUCT_SECTIONS = [
@@ -5398,7 +5442,7 @@
                     <span class="load-item-date">${dataCurta}</span>
                     <div class="item-buttons" data-order-id="${orcamento.id}">
                         <button class="button select-product-button" data-action="load">Carregar</button>
-                        <button class="button download-button" data-action="download">Baixar PDF</button>
+                        <button class="button fiscal-load-button" data-action="fiscal">Fiscal</button>
                         <button class="button" data-action="delete" style="background-color: #dc3545;">Apagar</button>
                     </div>
                 `;
@@ -5494,7 +5538,7 @@
                         <span class="load-item-date">${dataCurta}</span>
                     <div class="item-buttons" data-order-id="${orcamento.id}">
                             <button class="button select-product-button" data-action="load">Carregar</button>
-                            <button class="button download-button" data-action="download">Baixar PDF</button>
+                            <button class="button fiscal-load-button" data-action="fiscal">Fiscal</button>
                             <button class="button" data-action="delete" style="background-color: #dc3545;">Apagar</button>
                         </div>
                     `;
@@ -6687,54 +6731,13 @@
             });
 
             // --- Listener para o modal Fiscal ---
-            document.getElementById('open-fiscal-modal-btn').addEventListener('click', async () => {
-                if (!currentLoadedOrderId) {
-                    showNotification("Você precisa salvar o pedido antes de fazer o lançamento fiscal.", "error");
-                    return;
-                }
+            document.getElementById('open-fiscal-modal-btn').addEventListener('click', openFiscalModalForCurrentOrder);
 
-                const fiscalModal = document.getElementById('fiscal-config-modal');
-                const infoDisplay = document.getElementById('fiscal-info-display');
-                const fieldsContainer = document.getElementById('fiscal-fields-container');
-
-                // Show loading state
-                infoDisplay.innerHTML = 'Carregando configuração fiscal...';
-                fieldsContainer.innerHTML = `<div class="fiscal-placeholder"><i class="fas fa-spinner fa-spin"></i><p>Carregando...</p></div>`;
-                fiscalModal.style.display = 'flex';
-                document.body.classList.add('modal-open');
-
-                try {
-                    // Garante que as listas de autocomplete (CFOP, etc) estejam carregadas
-                    await loadFiscalDataSources();
-
-                    const doc = await db.collection('fiscal').doc('configuracao_global').get();
-                    if (doc.exists) {
-                        const data = doc.data();
-                        fiscalConfig.regime = data.regime;
-                        fiscalConfig.tipo = data.tipo;
-
-                        // Display the fetched config
-                        const regimeText = data.regime ? data.regime.charAt(0).toUpperCase() + data.regime.slice(1) : 'Não definido';
-                        const tipoText = data.tipo ? data.tipo.toUpperCase() : 'Não definido';
-                        infoDisplay.innerHTML = `Configuração Atual: <strong>${regimeText.replace('Presumido', 'L. Presumido').replace('Real', 'L. Real')}</strong> / <strong>${tipoText}</strong>`;
-
-                        // Renderiza a nova visão fiscal com a tabela de itens
-                        renderFiscalView();
-                    } else {
-                        infoDisplay.innerHTML = 'Configuração fiscal não encontrada.';
-                        fieldsContainer.innerHTML = `<div class="fiscal-placeholder"><i class="fas fa-exclamation-triangle"></i><p>Por favor, configure os dados fiscais no painel de Administração.</p></div>`;
-                        showNotification("Configuração fiscal não encontrada.", "error");
-                    }
-                } catch (error) {
-                    console.error("Erro ao carregar configuração fiscal:", error);
-                    infoDisplay.innerHTML = 'Erro ao carregar configuração fiscal.';
-                    fieldsContainer.innerHTML = `<div class="fiscal-placeholder"><i class="fas fa-exclamation-triangle"></i><p>Ocorreu um erro ao buscar os dados fiscais.</p></div>`;
-                    showNotification("Erro ao carregar configuração fiscal.", "error");
-                }
-            });
-
-            // Listener para o botão de salvar do modal fiscal
+            // Listener para o botão de salvar do modal fiscal (desativado por enquanto via disabled no HTML)
             document.getElementById('generate-fiscal-doc-btn').addEventListener('click', async () => {
+                const fiscalDocBtn = document.getElementById('generate-fiscal-doc-btn');
+                if (fiscalDocBtn.disabled) return;
+
                 if (!currentLoadedOrderId) {
                     showNotification("Nenhum pedido carregado para salvar os dados fiscais.", "error");
                     return;
@@ -7516,7 +7519,7 @@
             });
             document.getElementById('load-list').addEventListener('click', async (e) => {
                 const button = e.target;
-                const action = button.dataset.action; // load, download, ou delete
+                const action = button.dataset.action; // load, fiscal, ou delete
                 if (!action) return;
 
                 const orderId = button.closest('.item-buttons').dataset.orderId;
@@ -7526,13 +7529,12 @@
                     orderIdToDelete = orderId; // Armazena o ID do orçamento a ser apagado
                     document.getElementById('delete-single-password-modal').style.display = 'flex';
                     document.getElementById('delete-single-password-input').focus();
-                } else if (action === 'load' || action === 'download') {
+                } else if (action === 'load' || action === 'fiscal') {
                     try {
                         await loadSelectedOrder(orderId);
-                        // Apenas fecha o modal e gera o PDF em caso de sucesso
                         closeModal('load-modal');
-                        if (action === 'download') {
-                            generatePDF();
+                        if (action === 'fiscal') {
+                            await openFiscalModalForCurrentOrder();
                         }
                     } catch (error) {
                         // O erro já é tratado dentro de loadSelectedOrder, que mostra a notificação e reseta o form.
