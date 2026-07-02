@@ -383,6 +383,22 @@
             display: block;
             margin-bottom: 6px;
         }
+        .section-required-row {
+            margin-bottom: 10px;
+        }
+        .section-required-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            color: #555;
+            cursor: pointer;
+            user-select: none;
+        }
+        .section-required-toggle input {
+            width: auto;
+            cursor: pointer;
+        }
         .section-editor-adder {
             display: flex;
             gap: 8px;
@@ -1438,6 +1454,7 @@
             { id: 'corLona', label: 'Cor da lona', multi: false },
             { id: 'fundoLona', label: 'Fundo da lona', multi: false },
             { id: 'corVies', label: 'Cor do viés', multi: false },
+            { id: 'costura', label: 'Costura', multi: false },
             { id: 'observacoes', label: 'Observações possíveis', multi: true }
         ];
         
@@ -1785,6 +1802,13 @@
             showToast(`Produto linkado à imagem ${getImageLinkLabel(imageType)}.`, 'success');
         }
 
+        function normalizeSectionData(data) {
+            if (!data) return { required: false, options: [] };
+            if (Array.isArray(data)) return { required: false, options: data };
+            if (Array.isArray(data.options)) return { required: !!data.required, options: data.options };
+            return { required: false, options: [] };
+        }
+
         function normalizeSectionOption(opt) {
             if (typeof opt === 'string') return { type: 'text', label: opt };
             return {
@@ -1815,7 +1839,7 @@
                 const product = catalogoProdutos.find(p => p.id === normalized.productId);
                 if (!product) return false;
                 const tag = document.createElement('div');
-                tag.className = 'section-option-tag section-option-product component-item';
+                tag.className = 'section-option-tag section-option-product';
                 tag.dataset.type = 'product';
                 tag.dataset.productId = normalized.productId;
                 tag.dataset.formula = normalized.formula || '1';
@@ -1889,9 +1913,16 @@
                 block.className = 'section-editor-block';
                 block.dataset.sectionId = section.id;
 
+                const sectionData = normalizeSectionData(existing[section.id]);
                 const hint = section.multi ? ' (o vendedor pode escolher várias)' : ' (o vendedor escolhe uma)';
                 block.innerHTML = `
                     <label>${section.label}${hint}</label>
+                    <div class="section-required-row">
+                        <label class="section-required-toggle">
+                            <input type="checkbox" class="section-required-checkbox"${sectionData.required ? ' checked' : ''}>
+                            <span>Obrigatório selecionar nesta seção</span>
+                        </label>
+                    </div>
                     <div class="section-editor-adder">
                         <input type="text" class="section-option-input" placeholder="Opção em texto...">
                         <button type="button" class="button section-add-text-btn">+ Texto</button>
@@ -1905,7 +1936,7 @@
                 editor.appendChild(block);
 
                 const listEl = block.querySelector('.section-options-list');
-                (existing[section.id] || []).forEach(opt => addSectionOptionToList(listEl, opt));
+                sectionData.options.forEach(opt => addSectionOptionToList(listEl, opt));
                 setupSectionProductSearch(block.querySelector('.section-product-search'), listEl);
             });
         }
@@ -1916,8 +1947,11 @@
             if (!editor) return result;
             PRODUCT_SECTIONS.forEach(section => {
                 const block = editor.querySelector(`.section-editor-block[data-section-id="${section.id}"]`);
-                if (!block) { result[section.id] = []; return; }
-                result[section.id] = Array.from(block.querySelectorAll('.section-option-tag')).map(tag => {
+                if (!block) {
+                    result[section.id] = { required: false, options: [] };
+                    return;
+                }
+                const options = Array.from(block.querySelectorAll('.section-option-tag')).map(tag => {
                     if (tag.dataset.type === 'product') {
                         return {
                             type: 'product',
@@ -1928,6 +1962,10 @@
                     }
                     return { type: 'text', label: tag.dataset.label || tag.querySelector('span')?.textContent.trim() };
                 });
+                result[section.id] = {
+                    required: block.querySelector('.section-required-checkbox')?.checked || false,
+                    options
+                };
             });
             return result;
         }
@@ -3807,10 +3845,14 @@
             const removeBtn = e.target.closest('.section-remove-btn');
             if (removeBtn) {
                 removeBtn.closest('.section-option-tag').remove();
+                return;
             }
             const editFormulaBtn = e.target.closest('.section-edit-formula-btn');
             if (editFormulaBtn) {
+                e.preventDefault();
+                e.stopPropagation();
                 openFormulaBuilder(editFormulaBtn.closest('.section-option-product'));
+                return;
             }
         });
         document.getElementById('sections-editor').addEventListener('keydown', (e) => {
@@ -3835,7 +3877,8 @@
             const editBtn = e.target.closest('.edit-quantity-btn');
             if (editBtn) {
                 const controls = editBtn.closest('.item-controls');
-                const componentItem = controls.closest('.component-item, .bundle-item');
+                const componentItem = controls?.closest('.component-item, .bundle-item');
+                if (!componentItem || componentItem.classList.contains('section-option-product')) return;
 
                 const productType = getCurrentModalProductType();
                 const isFormulaBasedItem = (productType === 'sob-medida' || productType === 'toldo-completo') && componentItem.parentElement.id === 'composition-list';

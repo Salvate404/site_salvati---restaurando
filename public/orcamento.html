@@ -1149,9 +1149,9 @@
             text-align: left;
         }
         #mtm-variables-container .mtm-measures-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px 15px;
         }
         #mtm-sections-container {
             margin-top: 20px;
@@ -2283,11 +2283,11 @@
             border-top: none;
         }
 
-        /* Container de variáveis — coluna única */
+        /* Container de variáveis — 2 colunas */
         #toldo-completo-variables-container {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px 15px;
             margin-bottom: 0;
         }
         #toldo-completo-sections-container {
@@ -3400,6 +3400,7 @@
             { id: 'corLona', label: 'Cor da lona', multi: false },
             { id: 'fundoLona', label: 'Fundo da lona', multi: false },
             { id: 'corVies', label: 'Cor do viés', multi: false },
+            { id: 'costura', label: 'Costura', multi: false },
             { id: 'observacoes', label: 'Observações', multi: true }
         ];
         let activeLinkedImageWrapper = null;
@@ -3455,6 +3456,13 @@
             return components;
         }
 
+        function normalizeSectionData(data) {
+            if (!data) return { required: false, options: [] };
+            if (Array.isArray(data)) return { required: false, options: data };
+            if (Array.isArray(data.options)) return { required: !!data.required, options: data.options };
+            return { required: false, options: [] };
+        }
+
         function normalizeSectionOption(opt) {
             if (typeof opt === 'string') return { type: 'text', label: opt };
             return {
@@ -3476,7 +3484,8 @@
             const ids = new Set();
             const sections = product?.descriptionSections || {};
             PRODUCT_SECTIONS.forEach(section => {
-                (sections[section.id] || []).forEach(opt => {
+                const sectionData = normalizeSectionData(sections[section.id]);
+                sectionData.options.forEach(opt => {
                     const normalized = normalizeSectionOption(opt);
                     if (normalized.type === 'product' && normalized.productId) {
                         ids.add(normalized.productId);
@@ -3484,6 +3493,26 @@
                 });
             });
             return ids;
+        }
+
+        function validateRequiredSections(product, sectionSelections) {
+            const descSections = product?.descriptionSections || {};
+            for (const section of PRODUCT_SECTIONS) {
+                const sectionData = normalizeSectionData(descSections[section.id]);
+                if (!sectionData.required || sectionData.options.length === 0) continue;
+
+                const sel = sectionSelections[section.id];
+                if (section.multi) {
+                    if (!Array.isArray(sel) || sel.length === 0) {
+                        showNotification(`Selecione ao menos uma opção em "${section.label}".`, 'error');
+                        return false;
+                    }
+                } else if (!sel || sel === '') {
+                    showNotification(`Selecione uma opção em "${section.label}".`, 'error');
+                    return false;
+                }
+            }
+            return true;
         }
 
         function getMatchingExistingSelection(existingVal, normalizedOpt) {
@@ -3525,6 +3554,9 @@
             const viesLabel = getSectionDisplayLabel(sections.corVies);
             if (viesLabel) lines.push(`Viés ${viesLabel}`);
 
+            const costuraLabel = getSectionDisplayLabel(sections.costura);
+            if (costuraLabel) lines.push(`Costura ${costuraLabel}`);
+
             const obsRaw = sections.observacoes;
             const obs = Array.isArray(obsRaw)
                 ? obsRaw.map(getSectionDisplayLabel).filter(Boolean)
@@ -3541,7 +3573,8 @@
             let hasAny = false;
 
             PRODUCT_SECTIONS.forEach(section => {
-                const options = sections[section.id] || [];
+                const sectionData = normalizeSectionData(sections[section.id]);
+                const options = sectionData.options;
                 if (options.length === 0) return;
                 hasAny = true;
 
@@ -3549,9 +3582,13 @@
                 group.className = 'section-select-group';
                 group.dataset.sectionId = section.id;
                 group.dataset.multi = section.multi ? '1' : '0';
+                group.dataset.required = sectionData.required ? '1' : '0';
 
                 const label = document.createElement('label');
-                label.textContent = section.multi ? `${section.label} (pode escolher várias)` : section.label;
+                const requiredMark = sectionData.required ? ' *' : '';
+                label.textContent = section.multi
+                    ? `${section.label}${requiredMark} (pode escolher várias)`
+                    : `${section.label}${requiredMark}`;
                 group.appendChild(label);
 
                 const optsWrap = document.createElement('div');
@@ -4225,13 +4262,15 @@
                 components.forEach(c => (c.formula || '').match(/[a-zA-Z_][a-zA-Z0-9_]*/g)?.forEach(v => {
                     if (isNaN(v) && !knownFunctions.includes(v.toUpperCase())) variablesFromFormula.add(v);
                 }));
-                (product.descriptionSections ? Object.values(product.descriptionSections).flat() : []).forEach(opt => {
-                    const normalized = normalizeSectionOption(opt);
-                    if (normalized.formula) {
-                        normalized.formula.match(/[a-zA-Z_][a-zA-Z0-9_]*/g)?.forEach(v => {
-                            if (isNaN(v) && !knownFunctions.includes(v.toUpperCase())) variablesFromFormula.add(v);
-                        });
-                    }
+                PRODUCT_SECTIONS.forEach(section => {
+                    normalizeSectionData(product.descriptionSections?.[section.id]).options.forEach(opt => {
+                        const normalized = normalizeSectionOption(opt);
+                        if (normalized.formula) {
+                            normalized.formula.match(/[a-zA-Z_][a-zA-Z0-9_]*/g)?.forEach(v => {
+                                if (isNaN(v) && !knownFunctions.includes(v.toUpperCase())) variablesFromFormula.add(v);
+                            });
+                        }
+                    });
                 });
             }
             const variables = product.customVariables ? new Set(product.customVariables.map(v => v.value)) : variablesFromFormula;
@@ -4466,6 +4505,9 @@
             // CORREÇÃO: Usa o produto que está sendo editado (currentEditingProduct) se estiver em modo de edição,
             // ou o produto recém-selecionado (selectedProduct) se for um item novo.
             const productToCalculate = currentEditingProduct || selectedProduct;
+            const selectedSections = readSectionSelections(document.getElementById('toldo-completo-sections-container'));
+            if (!validateRequiredSections(productToCalculate, selectedSections)) return;
+
             const { totalPrice, scope, componentsForStock } = calculateToldoCompletoPrice(productToCalculate);
 
             if (totalPrice <= 0) {
@@ -4496,8 +4538,6 @@
             newRow.dataset.productId = product.id;
             newRow.dataset.quantidade = 1; // Toldo completo é sempre 1 unidade
             newRow.dataset.preco = totalPrice; // O preço calculado é o preço final do item
-
-            const selectedSections = readSectionSelections(document.getElementById('toldo-completo-sections-container'));
 
             // Armazena a configuração completa para salvar e dar baixa no estoque depois
             newRow.dataset.scope = JSON.stringify(scope);
@@ -6546,6 +6586,8 @@
             });
 
             const selectedSections = readSectionSelections(document.getElementById('mtm-sections-container'));
+            if (!validateRequiredSections(selectedProduct, selectedSections)) return;
+
             const totalPrice = calculateMtmPrice(selectedProduct, scope, selectedComponentIds, selectedSections);
             if (totalPrice === null) return;
 
