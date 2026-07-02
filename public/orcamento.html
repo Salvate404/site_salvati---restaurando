@@ -1129,15 +1129,34 @@
         }
         
         /* --- Estilos para o Modal Sob Medida --- */
+        #made-to-measure-modal .modal-content.mtm-config-modal {
+            max-width: 560px;
+            text-align: left;
+        }
+        .mtm-modal-scroll-body {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            margin: 10px 0 15px;
+            padding-right: 4px;
+        }
         #mtm-variables-container {
             display: flex;
             flex-direction: column;
             gap: 15px;
-            margin: 20px 0;
-            max-height: 50vh;
-            overflow-y: auto;
-            padding: 5px;
+            margin: 0;
+            padding: 0;
             text-align: left;
+        }
+        #mtm-variables-container .mtm-measures-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        #mtm-sections-container {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
         }
         #mtm-variables-container .form-group {
             display: flex;
@@ -1153,6 +1172,10 @@
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 1em;
+        }
+        .mtm-config-modal .modal-buttons {
+            flex-shrink: 0;
+            margin-top: 0;
         }
 
         /* --- Estilo do Modal de Senha --- */
@@ -2196,14 +2219,16 @@
     </div>
 
     <div id="made-to-measure-modal" class="modal">
-        <div class="modal-content quantity"> <!-- Reusing 'quantity' class for similar sizing -->
+        <div class="modal-content quantity mtm-config-modal">
             <button type="button" class="close-button" data-modal-id="made-to-measure-modal">&times;</button>
             <h2 id="mtm-product-name"></h2>
             <p>Preencha as medidas para calcular o preço.</p>
-            <div id="mtm-variables-container">
-                <!-- Input fields for variables will be generated here -->
+            <div class="mtm-modal-scroll-body">
+                <div id="mtm-variables-container">
+                    <!-- Medidas, componentes e seções gerados aqui -->
+                </div>
+                <div id="mtm-sections-container" class="product-sections-selectors" style="display: none;"></div>
             </div>
-            <div id="mtm-sections-container" class="product-sections-selectors" style="display: none;"></div>
             <div class="modal-buttons">
                 <button type="button" class="button select-product-button" id="add-mtm-item-to-order-btn">Calcular e Adicionar</button>
                 <button type="button" class="button seller-button" data-modal-id="made-to-measure-modal">Cancelar</button>
@@ -2238,24 +2263,37 @@
         }
 
         #toldo-completo-config-modal .modal-content {
-            max-width: 800px; /* Aumenta a largura para melhor acomodação */
+            max-width: 560px;
+        }
+
+        .toldo-modal-scroll-body {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            margin: 10px 0 15px;
+            padding-right: 4px;
         }
 
         .toldo-config-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 25px;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 10px;
+            padding-top: 0;
+            border-top: none;
         }
 
-        /* Novo: Estilo para o container de variáveis */
+        /* Container de variáveis — coluna única */
         #toldo-completo-variables-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px 15px;
-            margin-bottom: 15px; /* Espaço antes do seletor de lona */
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 0;
+        }
+        #toldo-completo-sections-container {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
         }
         .toldo-config-column h4 {
             margin-top: 0;
@@ -2319,6 +2357,12 @@
             border-color: #218838;
             font-weight: bold;
         }
+        .section-select-btn .selected-variant-text {
+            display: block;
+            font-size: 0.85em;
+            font-weight: normal;
+            margin-top: 2px;
+        }
         .components-checkbox-list { max-height: 250px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 5px; }
         .opcional-item {
             display: flex;
@@ -2336,9 +2380,31 @@
 
     <!-- NOVO MODAL: CONFIGURADOR DE TOLDO COMPLETO -->
     <div id="toldo-completo-config-modal" class="modal">
-        <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-content">
             <button type="button" class="close-button" data-modal-id="toldo-completo-config-modal">&times;</button>
-            <h2 id="toldo-completo-product-name">Configurar Toldo Completo</h2><div class="toldo-config-grid"><div class="toldo-config-column"><h4>Variáveis e Lona</h4><div id="toldo-completo-variables-container"></div><div class="form-group"><label for="toldo-completo-lona-select">Marca da Lona</label><select id="toldo-completo-lona-select" class="mtm-variant-select"></select></div></div><div class="toldo-config-column"><h4>Componentes Opcionais</h4><p class="column-subtitle">Selecione os itens para baixa de estoque.</p><div id="toldo-completo-opcionais-list" class="components-checkbox-list"></div></div></div><div id="toldo-completo-sections-container" class="product-sections-selectors" style="display: none;"></div><div class="calculated-price-box"><p id="toldo-completo-calculated-price">Preço: R$ 0,00</p></div><button type="button" class="button select-product-button" id="add-toldo-completo-to-order-btn" style="margin-top: 20px; width: 100%;">Adicionar ao Orçamento</button>
+            <h2 id="toldo-completo-product-name">Configurar Toldo Completo</h2>
+            <div class="toldo-modal-scroll-body">
+                <div class="toldo-config-grid">
+                    <div class="toldo-config-column">
+                        <h4>Medidas</h4>
+                        <div id="toldo-completo-variables-container"></div>
+                    </div>
+                    <div class="toldo-config-column">
+                        <h4>Marca da Lona</h4>
+                        <div class="form-group">
+                            <select id="toldo-completo-lona-select" class="mtm-variant-select"></select>
+                        </div>
+                    </div>
+                    <div class="toldo-config-column">
+                        <h4>Componentes Opcionais</h4>
+                        <p class="column-subtitle">Selecione os itens para baixa de estoque.</p>
+                        <div id="toldo-completo-opcionais-list" class="components-checkbox-list"></div>
+                    </div>
+                </div>
+                <div id="toldo-completo-sections-container" class="product-sections-selectors" style="display: none;"></div>
+            </div>
+            <div class="calculated-price-box"><p id="toldo-completo-calculated-price">Preço: R$ 0,00</p></div>
+            <button type="button" class="button select-product-button" id="add-toldo-completo-to-order-btn" style="margin-top: 12px; width: 100%;">Adicionar ao Orçamento</button>
         </div>
     </div>
 
@@ -3389,6 +3455,54 @@
             return components;
         }
 
+        function normalizeSectionOption(opt) {
+            if (typeof opt === 'string') return { type: 'text', label: opt };
+            return {
+                type: opt.type || 'text',
+                label: opt.label || '',
+                productId: opt.productId || null,
+                formula: opt.formula || '1'
+            };
+        }
+
+        function getSectionDisplayLabel(val) {
+            if (!val) return '';
+            if (typeof val === 'string') return val;
+            if (val.variantName) return val.variantName;
+            return val.label || '';
+        }
+
+        function getProductIdsInDescriptionSections(product) {
+            const ids = new Set();
+            const sections = product?.descriptionSections || {};
+            PRODUCT_SECTIONS.forEach(section => {
+                (sections[section.id] || []).forEach(opt => {
+                    const normalized = normalizeSectionOption(opt);
+                    if (normalized.type === 'product' && normalized.productId) {
+                        ids.add(normalized.productId);
+                    }
+                });
+            });
+            return ids;
+        }
+
+        function getMatchingExistingSelection(existingVal, normalizedOpt) {
+            if (Array.isArray(existingVal)) {
+                return existingVal.find(ex => {
+                    if (typeof ex === 'string') return ex === normalizedOpt.label;
+                    if (ex.productId && normalizedOpt.productId) return ex.productId === normalizedOpt.productId;
+                    return ex.label === normalizedOpt.label;
+                });
+            }
+            if (!existingVal) return null;
+            if (typeof existingVal === 'string' && existingVal === normalizedOpt.label) return existingVal;
+            if (typeof existingVal === 'object') {
+                if (existingVal.productId && normalizedOpt.productId && existingVal.productId === normalizedOpt.productId) return existingVal;
+                if (existingVal.label === normalizedOpt.label) return existingVal;
+            }
+            return null;
+        }
+
         function buildLinkedImageDescription(config) {
             const { product, scope = {}, sections = {} } = config;
             const lines = [];
@@ -3401,18 +3515,21 @@
                 lines.push(`${largura || '?'} x ${caida || '?'}`);
             }
 
-            // Linha da lona: marca + cor + fundo (omite os ausentes)
-            const lonaParts = [sections.marcaLona, sections.corLona, sections.fundoLona].filter(Boolean);
+            const lonaParts = [
+                getSectionDisplayLabel(sections.marcaLona),
+                getSectionDisplayLabel(sections.corLona),
+                getSectionDisplayLabel(sections.fundoLona)
+            ].filter(Boolean);
             if (lonaParts.length > 0) lines.push(lonaParts.join(' '));
 
-            // Linha do viés
-            if (sections.corVies) lines.push(`Viés ${sections.corVies}`);
+            const viesLabel = getSectionDisplayLabel(sections.corVies);
+            if (viesLabel) lines.push(`Viés ${viesLabel}`);
 
-            // Observações (várias)
-            const obs = Array.isArray(sections.observacoes)
-                ? sections.observacoes
-                : (sections.observacoes ? [sections.observacoes] : []);
-            obs.forEach(o => { if (o) lines.push(o); });
+            const obsRaw = sections.observacoes;
+            const obs = Array.isArray(obsRaw)
+                ? obsRaw.map(getSectionDisplayLabel).filter(Boolean)
+                : (obsRaw ? [getSectionDisplayLabel(obsRaw)].filter(Boolean) : []);
+            obs.forEach(o => lines.push(o));
 
             return lines.join('\n');
         }
@@ -3441,26 +3558,74 @@
                 optsWrap.className = 'section-select-options';
 
                 const existingVal = existing[section.id];
-                const existingArr = section.multi
-                    ? (Array.isArray(existingVal) ? existingVal : (existingVal ? [existingVal] : []))
-                    : (existingVal ? [existingVal] : []);
 
                 options.forEach(opt => {
+                    const normalized = normalizeSectionOption(opt);
                     const btn = document.createElement('button');
                     btn.type = 'button';
                     btn.className = 'section-select-btn';
-                    btn.dataset.value = opt;
-                    btn.textContent = opt;
-                    if (existingArr.includes(opt)) btn.classList.add('active');
+                    btn.dataset.value = normalized.label;
+                    btn.dataset.optionType = normalized.type;
+                    if (normalized.productId) {
+                        btn.dataset.productId = normalized.productId;
+                        btn.dataset.componentId = normalized.productId;
+                        btn.dataset.formula = normalized.formula || '1';
+                    }
+
+                    const linkedProduct = normalized.productId
+                        ? catalogoProdutos.find(p => p.id === normalized.productId)
+                        : null;
+                    const hasVariants = linkedProduct?.variants?.length > 0;
+
+                    btn.innerHTML = hasVariants
+                        ? `${normalized.label}<span class="selected-variant-text" data-variant-index=""></span>`
+                        : normalized.label;
+
+                    if (getMatchingExistingSelection(existingVal, normalized)) {
+                        btn.classList.add('active');
+                        const matched = getMatchingExistingSelection(existingVal, normalized);
+                        if (hasVariants && matched && typeof matched === 'object') {
+                            const variantSpan = btn.querySelector('.selected-variant-text');
+                            if (variantSpan && matched.variantIndex !== undefined) {
+                                const variant = linkedProduct.variants[matched.variantIndex];
+                                if (variant) {
+                                    variantSpan.textContent = variant.name;
+                                    variantSpan.dataset.variantIndex = matched.variantIndex;
+                                }
+                            }
+                        }
+                    }
+
                     btn.addEventListener('click', () => {
                         if (section.multi) {
+                            if (hasVariants && !btn.classList.contains('active')) {
+                                openMtmVariantSelector(btn);
+                                return;
+                            }
                             btn.classList.toggle('active');
+                            if (!btn.classList.contains('active')) {
+                                const variantSpan = btn.querySelector('.selected-variant-text');
+                                if (variantSpan) {
+                                    variantSpan.textContent = '';
+                                    variantSpan.dataset.variantIndex = '';
+                                }
+                            }
                         } else {
                             const wasActive = btn.classList.contains('active');
-                            optsWrap.querySelectorAll('.section-select-btn').forEach(b => b.classList.remove('active'));
-                            if (!wasActive) btn.classList.add('active'); // clicar de novo desmarca
+                            optsWrap.querySelectorAll('.section-select-btn').forEach(b => {
+                                b.classList.remove('active');
+                                const vs = b.querySelector('.selected-variant-text');
+                                if (vs) { vs.textContent = ''; vs.dataset.variantIndex = ''; }
+                            });
+                            if (wasActive) return;
+                            if (hasVariants) {
+                                openMtmVariantSelector(btn);
+                            } else {
+                                btn.classList.add('active');
+                            }
                         }
                     });
+
                     optsWrap.appendChild(btn);
                 });
 
@@ -3475,15 +3640,47 @@
         function readSectionSelections(container) {
             const result = {};
             if (!container) return result;
+
             container.querySelectorAll('.section-select-group').forEach(group => {
                 const sectionId = group.dataset.sectionId;
                 const multi = group.dataset.multi === '1';
                 const activeBtns = Array.from(group.querySelectorAll('.section-select-btn.active'));
+
+                const parseBtn = (btn) => {
+                    if (btn.dataset.optionType === 'product' && btn.dataset.productId) {
+                        const variantSpan = btn.querySelector('.selected-variant-text');
+                        const selection = {
+                            type: 'product',
+                            label: btn.dataset.value,
+                            productId: btn.dataset.productId,
+                            formula: btn.dataset.formula || '1'
+                        };
+                        if (variantSpan?.dataset.variantIndex !== undefined && variantSpan.dataset.variantIndex !== '') {
+                            selection.variantIndex = parseInt(variantSpan.dataset.variantIndex, 10);
+                            if (variantSpan.textContent) selection.variantName = variantSpan.textContent.trim();
+                        }
+                        return selection;
+                    }
+                    return btn.dataset.value || btn.textContent.trim();
+                };
+
                 result[sectionId] = multi
-                    ? activeBtns.map(b => b.dataset.value)
-                    : (activeBtns.length > 0 ? activeBtns[0].dataset.value : '');
+                    ? activeBtns.map(parseBtn)
+                    : (activeBtns.length > 0 ? parseBtn(activeBtns[0]) : '');
             });
             return result;
+        }
+
+        function calcComponentPrice(productId, formula, scope) {
+            const componentProduct = catalogoProdutos.find(p => p.id === productId);
+            if (!componentProduct) return 0;
+            const quantity = evaluateFormula(formula || '1', scope);
+            if (isNaN(quantity) || quantity <= 0) return 0;
+            const price = priceMode === 'atacado' ? componentProduct.precoAtacado : componentProduct.precoVarejo;
+            const minPrice = componentProduct.precoMinimo || 0;
+            let componentValue = quantity * price;
+            if (minPrice > 0 && componentValue < minPrice) componentValue = minPrice;
+            return componentValue;
         }
 
         function createImageWrapper(imageType, pairId = null) {
@@ -4011,22 +4208,16 @@
         }
 
         function openMadeToMeasureModal(product, existingScope = null, existingVariants = null, existingComponents = null, existingSections = null) {
-            selectedProduct = product; // Garante que o produto atual esteja setado (inclusive na edição)
+            selectedProduct = product;
             document.getElementById('mtm-product-name').textContent = product.nome;
-            
-            // Aumenta a largura do modal para acomodar o novo layout
-            const modalContent = document.querySelector('#made-to-measure-modal .modal-content');
-            modalContent.style.maxWidth = '600px';
 
             const variablesContainer = document.getElementById('mtm-variables-container');
-            variablesContainer.innerHTML = ''; // Clear previous inputs
-            variablesContainer.style.display = 'grid';
-            variablesContainer.style.gridTemplateColumns = '1fr 1fr';
-            variablesContainer.style.gap = '15px 20px';
-            
+            variablesContainer.innerHTML = '';
+
             const components = product.composition || [];
-            
-            // Extrai as variáveis únicas das fórmulas
+            const idsInSections = getProductIdsInDescriptionSections(product);
+            const componentsToShow = components.filter(c => !idsInSections.has(c.productId));
+
             const knownFunctions = ['ROUNDUP', 'ROUNDDOWN', 'ROUND'];
             const variablesFromFormula = new Set();
             (product.customVariables || []).forEach(v => variablesFromFormula.add(v.value));
@@ -4034,85 +4225,79 @@
                 components.forEach(c => (c.formula || '').match(/[a-zA-Z_][a-zA-Z0-9_]*/g)?.forEach(v => {
                     if (isNaN(v) && !knownFunctions.includes(v.toUpperCase())) variablesFromFormula.add(v);
                 }));
+                (product.descriptionSections ? Object.values(product.descriptionSections).flat() : []).forEach(opt => {
+                    const normalized = normalizeSectionOption(opt);
+                    if (normalized.formula) {
+                        normalized.formula.match(/[a-zA-Z_][a-zA-Z0-9_]*/g)?.forEach(v => {
+                            if (isNaN(v) && !knownFunctions.includes(v.toUpperCase())) variablesFromFormula.add(v);
+                        });
+                    }
+                });
             }
             const variables = product.customVariables ? new Set(product.customVariables.map(v => v.value)) : variablesFromFormula;
 
-            // Adiciona os inputs de variáveis ao grid
-            variables.forEach(variable => {
-                const inputGroup = document.createElement('div');
-                inputGroup.className = 'form-group';
-                // Encontra o nome de exibição da variável
-                let variableDisplayName = variable;
-                if (product.customVariables && product.customVariables.length > 0) {
-                    const customVar = product.customVariables.find(v => v.value === variable);
-                    if (customVar) {
-                        variableDisplayName = customVar.name;
+            if (variables.size > 0) {
+                const measuresBlock = document.createElement('div');
+                measuresBlock.className = 'mtm-measures-block';
+                measuresBlock.innerHTML = `<label style="font-weight: bold; display: block; margin-bottom: 8px;">Medidas</label>`;
+                const measuresGrid = document.createElement('div');
+                measuresGrid.className = 'mtm-measures-grid';
+
+                variables.forEach(variable => {
+                    const inputGroup = document.createElement('div');
+                    inputGroup.className = 'form-group';
+                    let variableDisplayName = variable;
+                    if (product.customVariables?.length) {
+                        const customVar = product.customVariables.find(v => v.value === variable);
+                        if (customVar) variableDisplayName = customVar.name;
                     }
-                }
+                    inputGroup.innerHTML = `
+                        <label for="mtm-var-${variable}">${variableDisplayName}</label>
+                        <input type="text" id="mtm-var-${variable}" data-variable-name="${variable}" class="mtm-variable-input" inputmode="decimal" required>
+                    `;
+                    measuresGrid.appendChild(inputGroup);
+                    const mtmInput = inputGroup.querySelector('input');
+                    mtmInput.value = formatNumberToCurrencyString(existingScope ? existingScope[variable] || '' : '');
+                    mtmInput.addEventListener('input', liveFormatCurrency);
+                    mtmInput.addEventListener('blur', liveFormatCurrency);
+                });
+                measuresBlock.appendChild(measuresGrid);
+                variablesContainer.appendChild(measuresBlock);
+            }
 
-                inputGroup.innerHTML = `
-                    <label for="mtm-var-${variable}">${variableDisplayName}</label>
-                    <input type="text" id="mtm-var-${variable}" data-variable-name="${variable}" class="mtm-variable-input" inputmode="decimal" required>
-                `;
-                variablesContainer.appendChild(inputGroup);
-                const mtmInput = inputGroup.querySelector('input');
-                const value = existingScope ? existingScope[variable] || '' : '';
-                mtmInput.value = formatNumberToCurrencyString(value);
-                mtmInput.addEventListener('input', liveFormatCurrency);
-                mtmInput.addEventListener('blur', liveFormatCurrency);
-            });
-
-            // NOVO: Adiciona a grade de botões de componentes
-            if (components.length > 0) {
+            if (componentsToShow.length > 0) {
                 const componentsSection = document.createElement('div');
                 componentsSection.className = 'form-group';
-                componentsSection.style.gridColumn = '1 / -1';
-                componentsSection.innerHTML = `<label style="font-weight: bold; margin-top: 15px; margin-bottom: 10px; display: block;">Componentes Inclusos</label>`;
+                componentsSection.innerHTML = `<label style="font-weight: bold; margin-top: 5px; margin-bottom: 10px; display: block;">Componentes Inclusos</label>`;
                 const componentGrid = document.createElement('div');
                 componentGrid.className = 'mtm-components-grid';
 
-                components.forEach(component => {
-                    const componentProduct = catalogoProdutos.find(p => p.id === component.productId); // Renomeado para evitar conflito de escopo
+                componentsToShow.forEach(component => {
+                    const componentProduct = catalogoProdutos.find(p => p.id === component.productId);
                     if (componentProduct) {
                         const button = document.createElement('button');
                         button.type = 'button';
                         button.className = 'mtm-component-btn';
                         button.dataset.componentId = component.productId;
-
-                        // NOVO: Adiciona o nome e um span para a variante
                         button.innerHTML = `
                             ${componentProduct.nome}
                             <span class="selected-variant-text" data-variant-index=""></span>
                         `;
-
                         if (existingComponents && existingComponents.has(component.productId)) {
                             button.classList.add('active');
                         }
-
-                        // NOVO: Lógica de clique aprimorada
                         button.addEventListener('click', () => {
-                            // Se o botão já está ativo, desativa e limpa a variante
                             if (button.classList.contains('active')) {
                                 button.classList.remove('active');
                                 const variantSpan = button.querySelector('.selected-variant-text');
-                                if (variantSpan) {
-                                    variantSpan.textContent = '';
-                                    variantSpan.dataset.variantIndex = '';
-                                }
-                            }
-                            // Se não está ativo e tem variantes, abre o modal
-                            else if (componentProduct.variants && componentProduct.variants.length > 0) {
+                                if (variantSpan) { variantSpan.textContent = ''; variantSpan.dataset.variantIndex = ''; }
+                            } else if (componentProduct.variants?.length > 0) {
                                 openMtmVariantSelector(button);
-                            }
-                            // Se não está ativo e não tem variantes, apenas ativa
-                            else {
+                            } else {
                                 button.classList.toggle('active');
                             }
                         });
-
                         componentGrid.appendChild(button);
-
-                        // NOVO: Se estiver editando, preenche a variante já selecionada
                         if (existingVariants && existingVariants[component.productId] !== undefined) {
                             const variantIndex = existingVariants[component.productId];
                             const variant = componentProduct.variants[variantIndex];
@@ -4128,7 +4313,7 @@
                 variablesContainer.appendChild(componentsSection);
             }
 
-            if (variablesContainer.childElementCount === 0) {
+            if (variablesContainer.childElementCount === 0 && !product.descriptionSections) {
                 variablesContainer.innerHTML = '<p>Este produto não tem variáveis de cálculo ou opções configuráveis.</p>';
             }
 
@@ -4181,7 +4366,9 @@
             // Limpa e popula a lista de itens opcionais (que antes eram a composição principal)
             const opcionaisList = document.getElementById('toldo-completo-opcionais-list');
             opcionaisList.innerHTML = '';
+            const idsInSections = getProductIdsInDescriptionSections(product);
             (product.composition || []).forEach(component => {
+                if (idsInSections.has(component.productId)) return;
                 const componentProduct = catalogoProdutos.find(p => p.id === component.productId);
                 if (componentProduct) {
                     const itemDiv = document.createElement('div');
@@ -4482,35 +4669,37 @@
             document.getElementById('saveButton').disabled = !canSaveOrder();
         }
 
-        function calculateMtmPrice(product, scope, selectedComponentIds) {
-            if (!product || !product.composition) {
-                showNotification("Produto ou sua composição não encontrados.", "error");
+        function calculateMtmPrice(product, scope, selectedComponentIds, sectionSelections = null) {
+            if (!product) {
+                showNotification("Produto não encontrado.", "error");
                 return null;
             }
 
+            const idsInSections = getProductIdsInDescriptionSections(product);
             let totalPrice = 0;
+
             try {
-                product.composition.forEach(component => {
-                    // Apenas calcula o preço se o componente foi selecionado no checkbox
+                (product.composition || []).forEach(component => {
+                    if (idsInSections.has(component.productId)) return;
                     if (selectedComponentIds.has(component.productId)) {
-                        const componentProduct = catalogoProdutos.find(p => p.id === component.productId);
-                        if (!componentProduct) return;
-
-                        const quantity = evaluateFormula(component.formula || '1', scope);
-                        if (isNaN(quantity) || quantity <= 0) return;
-
-                        const price = priceMode === 'atacado' ? componentProduct.precoAtacado : componentProduct.precoVarejo;
-                        const minPrice = componentProduct.precoMinimo || 0;
-
-                        let componentValue = quantity * price;
-
-                        // Se o valor calculado for menor que o preço mínimo (e o mínimo for maior que zero), usa o preço mínimo.
-                        if (minPrice > 0 && componentValue < minPrice) {
-                            componentValue = minPrice;
-                        }
-                        totalPrice += componentValue;
+                        totalPrice += calcComponentPrice(component.productId, component.formula, scope);
                     }
                 });
+
+                if (sectionSelections && product.descriptionSections) {
+                    PRODUCT_SECTIONS.forEach(section => {
+                        const sel = sectionSelections[section.id];
+                        const selections = section.multi
+                            ? (Array.isArray(sel) ? sel : [])
+                            : (sel ? [sel] : []);
+                        selections.forEach(item => {
+                            if (item && typeof item === 'object' && item.type === 'product' && item.productId) {
+                                totalPrice += calcComponentPrice(item.productId, item.formula || '1', scope);
+                            }
+                        });
+                    });
+                }
+
                 return totalPrice;
             } catch (error) {
                 showNotification(error.message, "error");
@@ -4538,7 +4727,8 @@
                     if (scopeString && componentsString) { // Verifica se os dados existem
                         const scope = JSON.parse(scopeString);
                         const selectedComponentIds = new Set(JSON.parse(componentsString));
-                        preco = calculateMtmPrice(product, scope, selectedComponentIds); // A função agora estará definida
+                        const sectionSelections = row.dataset.sections ? JSON.parse(row.dataset.sections) : null;
+                        preco = calculateMtmPrice(product, scope, selectedComponentIds, sectionSelections);
                     } else {
                         preco = 0; // Não há dados para recalcular
                     }
@@ -6059,7 +6249,7 @@
          * @param {HTMLElement} targetButton - O botão que foi clicado, contendo o ID do produto.
          */
         function openMtmVariantSelector(targetButton) {
-            const componentId = targetButton.dataset.componentId;
+            const componentId = targetButton.dataset.componentId || targetButton.dataset.productId;
             const componentProduct = catalogoProdutos.find(p => p.id === componentId);
 
             if (!componentProduct || !componentProduct.variants || componentProduct.variants.length === 0) {
@@ -6135,7 +6325,7 @@
                 return;
             }
 
-            const componentId = targetButton.dataset.componentId;
+            const componentId = targetButton.dataset.componentId || targetButton.dataset.productId;
             const componentProduct = catalogoProdutos.find(p => p.id === componentId);
             const variantIndex = parseInt(selectedOption.dataset.variantIndex, 10);
             const selectedVariant = componentProduct.variants[variantIndex];
@@ -6346,21 +6536,19 @@
 
             // CORREÇÃO: Coleta as variantes selecionadas a partir dos botões de componente no modal
             const finalSelectedVariants = {};
-            document.querySelectorAll('#made-to-measure-modal .mtm-component-btn.active').forEach(button => {
-                const componentId = button.dataset.componentId;
+            document.querySelectorAll('#made-to-measure-modal .mtm-component-btn.active, #mtm-sections-container .section-select-btn.active[data-product-id]').forEach(button => {
+                const componentId = button.dataset.componentId || button.dataset.productId;
                 const variantSpan = button.querySelector('.selected-variant-text');
                 const variantIndexStr = variantSpan ? variantSpan.dataset.variantIndex : null;
-
                 if (variantIndexStr && variantIndexStr !== '') {
-                    const variantIndex = parseInt(variantIndexStr, 10);
-                    finalSelectedVariants[componentId] = variantIndex;
+                    finalSelectedVariants[componentId] = parseInt(variantIndexStr, 10);
                 }
             });
 
-            const totalPrice = calculateMtmPrice(selectedProduct, scope, selectedComponentIds);
+            const selectedSections = readSectionSelections(document.getElementById('mtm-sections-container'));
+            const totalPrice = calculateMtmPrice(selectedProduct, scope, selectedComponentIds, selectedSections);
             if (totalPrice === null) return;
 
-            const selectedSections = readSectionSelections(document.getElementById('mtm-sections-container'));
             const linkedDescriptionConfig = {
                 product: selectedProduct,
                 scope,

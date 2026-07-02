@@ -405,6 +405,50 @@
             padding: 4px 10px;
             font-size: 0.9em;
         }
+        .section-option-tag.section-option-product {
+            display: flex;
+            width: 100%;
+            border-radius: 8px;
+            padding: 8px 10px;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+        }
+        .section-option-product .item-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .section-option-product .item-quantity-display {
+            font-size: 0.85em;
+            color: #666;
+        }
+        .section-editor-product-row {
+            position: relative;
+            margin-bottom: 8px;
+        }
+        .section-product-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 20;
+            display: none;
+        }
+        .section-product-suggestions div {
+            padding: 8px 10px;
+            cursor: pointer;
+        }
+        .section-product-suggestions div:hover {
+            background: #f0f0f0;
+        }
         .section-option-tag button {
             background: none;
             border: none;
@@ -1307,7 +1351,7 @@
 
                 <div id="product-sections-section" style="display: none; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
                     <h4 style="margin: 0 0 8px 0;">Seções da Descrição (Orçamento)</h4>
-                    <p style="font-size: 0.9em; color: #666; margin: 0 0 12px 0;">Cadastre as opções de cada seção. No orçamento, o vendedor escolhe 1 opção por seção (várias em Observações) e o texto é montado na imagem do produto.</p>
+                    <p style="font-size: 0.9em; color: #666; margin: 0 0 12px 0;">Cadastre opções em texto ou vincule um produto cadastrado com fórmula de cálculo (igual à composição). Produtos nas seções não precisam repetir na composição.</p>
                     <div id="sections-editor"></div>
                 </div>
 
@@ -1741,23 +1785,98 @@
             showToast(`Produto linkado à imagem ${getImageLinkLabel(imageType)}.`, 'success');
         }
 
-        function addSectionOptionTag(listEl, value) {
-            const trimmed = (value || '').trim();
-            if (!trimmed) return false;
-            const exists = Array.from(listEl.querySelectorAll('.section-option-tag')).some(
-                tag => tag.dataset.value.toLowerCase() === trimmed.toLowerCase()
-            );
-            if (exists) {
-                showToast(`"${trimmed}" já foi adicionado nesta seção.`, 'error');
+        function normalizeSectionOption(opt) {
+            if (typeof opt === 'string') return { type: 'text', label: opt };
+            return {
+                type: opt.type || 'text',
+                label: opt.label || '',
+                productId: opt.productId || null,
+                formula: opt.formula || '1'
+            };
+        }
+
+        function addSectionOptionToList(listEl, option) {
+            const normalized = normalizeSectionOption(option);
+            const label = normalized.label.trim();
+            if (!label) return false;
+
+            const isDuplicate = Array.from(listEl.querySelectorAll('.section-option-tag')).some(tag => {
+                if (normalized.type === 'product' && tag.dataset.type === 'product') {
+                    return tag.dataset.productId === normalized.productId;
+                }
+                return tag.dataset.label?.toLowerCase() === label.toLowerCase();
+            });
+            if (isDuplicate) {
+                showToast(`"${label}" já foi adicionado nesta seção.`, 'error');
                 return false;
             }
+
+            if (normalized.type === 'product' && normalized.productId) {
+                const product = catalogoProdutos.find(p => p.id === normalized.productId);
+                if (!product) return false;
+                const tag = document.createElement('div');
+                tag.className = 'section-option-tag section-option-product component-item';
+                tag.dataset.type = 'product';
+                tag.dataset.productId = normalized.productId;
+                tag.dataset.formula = normalized.formula || '1';
+                tag.dataset.label = label;
+                tag.innerHTML = `
+                    <span class="item-name">${product.nome}</span>
+                    <div class="item-controls">
+                        <span class="item-quantity-display">Fórmula: ${normalized.formula || '1'}</span>
+                        <button type="button" class="edit-quantity-btn section-edit-formula-btn" title="Editar fórmula"><i class="fas fa-pencil-alt"></i></button>
+                        <button type="button" class="section-remove-btn" title="Remover">&times;</button>
+                    </div>`;
+                listEl.appendChild(tag);
+                return true;
+            }
+
             const tag = document.createElement('span');
             tag.className = 'section-option-tag';
-            tag.dataset.value = trimmed;
-            tag.innerHTML = `<span></span><button type="button" title="Remover">&times;</button>`;
-            tag.querySelector('span').textContent = trimmed;
+            tag.dataset.type = 'text';
+            tag.dataset.label = label;
+            tag.innerHTML = `<span></span><button type="button" class="section-remove-btn" title="Remover">&times;</button>`;
+            tag.querySelector('span').textContent = label;
             listEl.appendChild(tag);
             return true;
+        }
+
+        function setupSectionProductSearch(inputEl, listEl) {
+            const row = inputEl.closest('.section-editor-product-row');
+            const suggestions = row.querySelector('.section-product-suggestions');
+
+            inputEl.addEventListener('input', () => {
+                const term = inputEl.value.toLowerCase().trim();
+                suggestions.innerHTML = '';
+                suggestions.style.display = 'none';
+                if (term.length < 1) return;
+
+                const matches = catalogoProdutos.filter(p =>
+                    p.nome && p.nome.toLowerCase().includes(term)
+                ).slice(0, 8);
+
+                matches.forEach(product => {
+                    const div = document.createElement('div');
+                    div.textContent = product.nome;
+                    div.addEventListener('click', () => {
+                        if (addSectionOptionToList(listEl, {
+                            type: 'product',
+                            label: product.nome,
+                            productId: product.id,
+                            formula: '1'
+                        })) {
+                            inputEl.value = '';
+                            suggestions.style.display = 'none';
+                        }
+                    });
+                    suggestions.appendChild(div);
+                });
+                if (matches.length > 0) suggestions.style.display = 'block';
+            });
+
+            inputEl.addEventListener('blur', () => {
+                setTimeout(() => { suggestions.style.display = 'none'; }, 200);
+            });
         }
 
         function renderSectionsEditor(existing = {}) {
@@ -1774,15 +1893,20 @@
                 block.innerHTML = `
                     <label>${section.label}${hint}</label>
                     <div class="section-editor-adder">
-                        <input type="text" class="section-option-input" placeholder="Nova opção...">
-                        <button type="button" class="button section-add-option-btn">+ Adicionar</button>
+                        <input type="text" class="section-option-input" placeholder="Opção em texto...">
+                        <button type="button" class="button section-add-text-btn">+ Texto</button>
+                    </div>
+                    <div class="section-editor-product-row">
+                        <input type="text" class="section-product-search" placeholder="Buscar produto cadastrado...">
+                        <div class="section-product-suggestions"></div>
                     </div>
                     <div class="section-options-list"></div>
                 `;
                 editor.appendChild(block);
 
                 const listEl = block.querySelector('.section-options-list');
-                (existing[section.id] || []).forEach(opt => addSectionOptionTag(listEl, opt));
+                (existing[section.id] || []).forEach(opt => addSectionOptionToList(listEl, opt));
+                setupSectionProductSearch(block.querySelector('.section-product-search'), listEl);
             });
         }
 
@@ -1793,7 +1917,17 @@
             PRODUCT_SECTIONS.forEach(section => {
                 const block = editor.querySelector(`.section-editor-block[data-section-id="${section.id}"]`);
                 if (!block) { result[section.id] = []; return; }
-                result[section.id] = Array.from(block.querySelectorAll('.section-option-tag')).map(tag => tag.dataset.value);
+                result[section.id] = Array.from(block.querySelectorAll('.section-option-tag')).map(tag => {
+                    if (tag.dataset.type === 'product') {
+                        return {
+                            type: 'product',
+                            label: tag.dataset.label || tag.querySelector('.item-name')?.textContent.trim(),
+                            productId: tag.dataset.productId,
+                            formula: tag.dataset.formula || '1'
+                        };
+                    }
+                    return { type: 'text', label: tag.dataset.label || tag.querySelector('span')?.textContent.trim() };
+                });
             });
             return result;
         }
@@ -3659,20 +3793,24 @@
 
         // Listeners do editor de seções (adicionar/remover opções)
         document.getElementById('sections-editor').addEventListener('click', (e) => {
-            const addBtn = e.target.closest('.section-add-option-btn');
-            if (addBtn) {
-                const block = addBtn.closest('.section-editor-block');
+            const addTextBtn = e.target.closest('.section-add-text-btn');
+            if (addTextBtn) {
+                const block = addTextBtn.closest('.section-editor-block');
                 const input = block.querySelector('.section-option-input');
                 const listEl = block.querySelector('.section-options-list');
-                if (addSectionOptionTag(listEl, input.value)) {
+                if (addSectionOptionToList(listEl, { type: 'text', label: input.value })) {
                     input.value = '';
                     input.focus();
                 }
                 return;
             }
-            const removeBtn = e.target.closest('.section-option-tag button');
+            const removeBtn = e.target.closest('.section-remove-btn');
             if (removeBtn) {
                 removeBtn.closest('.section-option-tag').remove();
+            }
+            const editFormulaBtn = e.target.closest('.section-edit-formula-btn');
+            if (editFormulaBtn) {
+                openFormulaBuilder(editFormulaBtn.closest('.section-option-product'));
             }
         });
         document.getElementById('sections-editor').addEventListener('keydown', (e) => {
@@ -3680,7 +3818,7 @@
                 e.preventDefault();
                 const block = e.target.closest('.section-editor-block');
                 const listEl = block.querySelector('.section-options-list');
-                if (addSectionOptionTag(listEl, e.target.value)) {
+                if (addSectionOptionToList(listEl, { type: 'text', label: e.target.value })) {
                     e.target.value = '';
                 }
             }
