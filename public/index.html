@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="icon" type="image/png" href="IMG/imgfavicon.png">
+    
+    <style>
+        /* --- ESTILOS CSS EMBUTIDOS (Copiados do seu site principal) --- */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: #000000;
+
+            /* --- IMAGEM DE FUNDO DA TELA --- */
+            background-image: url(IMG/imgsalvati.png);
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+
+            /* --- REMOVER ROLAGEM VERTICAL --- */
+            overflow: hidden;
+
+            /* --- ANIMAÇÃO DE ENTRADA (AO CARREGAR A PÁGINA) --- */
+            /* Removido o transform: scale(5.00) que causava um zoom inicial muito grande */
+            opacity: 0;
+            transform: scale(1.05); /* Começa ligeiramente ampliado */
+            animation: fadeZoomIn 1.0s ease-out forwards; /* Duração 1s para entrada */
+        }
+
+        @keyframes fadeZoomIn {
+            from { opacity: 0; transform: scale(1.05); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* --- ANIMAÇÃO DE SAÍDA (QUANDO CLICAR NO BOTÃO PARA SAIR) --- */
+        body.fade-zoom-out {
+            /* A animação fadeZoomOut será acionada quando a classe for adicionada */
+            animation: fadeZoomOut 0.55s ease-in forwards; /* Duração 0.55s para saída, combine com JS setTimeout */
+        }
+
+        @keyframes fadeZoomOut {
+            /* Para uma saída, a opacidade deve ir de 1 para 0 e o zoom de 1 para um valor menor */
+            from { opacity: 1; transform: scale(1); } 
+            to { opacity: 0; transform: scale(0.95); } /* Diminui ligeiramente ao sumir */
+        }
+        
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+
+        h1 {
+            color: #000000;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        input[type="password"],
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            box-sizing: border-box;
+            /* Garante fundo branco para legibilidade sobre a imagem de fundo */
+            background-color: #fff;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* --- ESTILOS DO SPINNER DE CARREGAMENTO NO BOTÃO --- */
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        button.loading {
+            position: relative;
+            color: transparent; /* Esconde o texto "Entrar" */
+            cursor: wait;
+        }
+
+        button.loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 24px;  /* Tamanho do spinner */
+            height: 24px; /* Tamanho do spinner */
+            margin-top: -12px;  /* Metade da altura para centralizar */
+            margin-left: -12px; /* Metade da largura para centralizar */
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        #mensagemErro {
+            color: #dc3545;
+            margin-top: 15px;
+            font-weight: bold;
+            display: none;
+        }
+
+        /* --- ESTILOS PARA O NOVO MODAL DE "ESQUECI MINHA SENHA" --- */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 20px 30px 30px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+            text-align: left;
+        }
+
+        .modal-content h2 { text-align: center; margin-top: 0; margin-bottom: 15px; color: #333; }
+        .modal-content p { font-size: 0.95em; color: #666; margin-bottom: 20px; text-align: center; }
+        .close-btn { color: #aaa; position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close-btn:hover { color: black; }
+
+        #forgot-password-message {
+            text-align: center;
+            font-weight: bold;
+            min-height: 1.2em; /* Garante espaço para a mensagem não empurrar o layout */
+        }
+
+        /* NOVO: Estilo para o input do modal, igual ao principal */
+        .modal-content .input-group input[type="email"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            box-sizing: border-box;
+            background-color: #fff;
+        }
+
+        #forgot-password-link.disabled {
+            color: #6c757d;
+            pointer-events: none;
+        }
+        
+        .header-title-wrapper img {
+            max-height: 100px;
+            width: auto;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-title-wrapper">
+            <img src="IMG/imglogo.png" alt="Logo da Empresa"> 
+        </div>
+        <h1>Somente pessoas cadastradas</h1>
+        <h2 style="margin-bottom: 20px;">a Salvati agradece</h2>
+        <form id="loginForm">
+            <div class="input-group">
+                <label for="emailApelido">Email ou Apelido:</label>
+                <input type="text" id="emailApelido" placeholder="Digite seu apelido" required>
+            </div>
+            <div class="input-group">
+                <label for="senha">Senha:</label>
+                <input type="password" id="senha" placeholder="Digite sua senha" required>
+            </div>
+            <div style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: -10px; margin-bottom: 20px;">
+                <span id="forgot-password-timer" style="font-size: 0.9em; color: #6c757d; display: none;"></span>
+                <a href="#" id="forgot-password-link" style="font-size: 0.9em; color: #007bff; text-decoration: none;">Esqueci minha senha</a>
+            </div>
+
+            <button type="submit">Entrar</button>
+            <p id="mensagemErro"></p>
+        </form>
+    </div>
+
+    <!-- NOVO: Modal para "Esqueci minha senha" -->
+    <div id="forgot-password-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" data-modal="forgot-password-modal">&times;</span>
+            <h2>Redefinir Senha</h2>
+            <p>Insira seu e-mail de cadastro. Enviaremos um link para você criar uma nova senha.</p>
+            <form id="forgot-password-form">
+                <div class="input-group">
+                    <label for="forgot-email-input">E-mail:</label>
+                    <input type="email" id="forgot-email-input" placeholder="seu.email@exemplo.com" required>
+                </div>
+                <button type="submit">Enviar Link de Redefinição</button>
+                <p id="forgot-password-message"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Carrega os SDKs do Firebase a partir da CDN.
+         Isso é necessário para rodar o projeto em um servidor local comum (ex: Live Server do VS Code)
+         que não reconhece as URLs reservadas do Firebase Hosting ('/__/firebase/...'). -->
+    <script src="firebase-config.js"></script> <!-- Carrega a configuração do Firebase de um arquivo externo -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Inicializa o Firebase
+        // A variável 'firebaseConfig' agora vem do arquivo 'firebase-config.js'
+        firebase.initializeApp(firebaseConfig);
+
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Função para adicionar a classe de animação de saída e redirecionar
+        function addExitAnimationAndRedirect(urlDestino) {
+            document.body.classList.add('fade-zoom-out'); // Adiciona a classe de SAÍDA
+            // Espera a animação terminar antes de redirecionar
+            setTimeout(() => {
+                window.location.href = urlDestino;
+            }, 500); // Duração do setTimeout DEVE ser igual ou maior que a duração da animação CSS
+        }
+
+        const loginForm = document.getElementById('loginForm');
+        const emailApelidoInput = document.getElementById('emailApelido');
+        const senhaInput = document.getElementById('senha');
+        const mensagemErro = document.getElementById('mensagemErro');
+        const forgotPasswordLink = document.getElementById('forgot-password-link');
+        const submitButton = loginForm.querySelector('button[type="submit"]');
+
+        loginForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            mensagemErro.style.display = 'none'; // Esconde erros anteriores
+
+            // Desabilita o botão e mostra feedback visual
+            submitButton.classList.add('loading');
+            submitButton.disabled = true;
+
+            const loginInput = emailApelidoInput.value.trim().toLowerCase();
+            const senhaDigitada = senhaInput.value;
+
+            if (!loginInput || !senhaDigitada) {
+                mensagemErro.textContent = "Por favor, preencha todos os campos.";
+                mensagemErro.style.display = 'block';
+                // Reabilita o botão em caso de erro
+                submitButton.classList.remove('loading');
+                submitButton.disabled = false;
+                return;
+            }
+
+            let emailParaLogin = loginInput;
+
+            // Se o usuário digitou um apelido (sem '@'), buscamos o email correspondente
+            if (!loginInput.includes('@')) {
+                try {
+                    const querySnapshot = await db.collection('funcionarios').where('apelido', '==', loginInput).limit(1).get();
+                    if (querySnapshot.empty) {
+                        mensagemErro.textContent = "Apelido não encontrado.";
+                        mensagemErro.style.display = 'block';
+                        // Reabilita o botão em caso de erro
+                        submitButton.classList.remove('loading');
+                        submitButton.disabled = false;
+                        return;
+                    }
+                    const funcionarioDoc = querySnapshot.docs[0].data();
+                    emailParaLogin = funcionarioDoc.email;
+                } catch (error) {
+                    console.error("Erro ao buscar apelido:", error);
+                    mensagemErro.textContent = "Ocorreu um erro ao verificar o apelido.";
+                    mensagemErro.style.display = 'block';
+                    // Reabilita o botão em caso de erro
+                    submitButton.classList.remove('loading');
+                    submitButton.disabled = false;
+                    return;
+                }
+            }
+
+            // Tentativa de login com o email (seja o digitado ou o encontrado pelo apelido)
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(emailParaLogin, senhaDigitada);
+                const user = userCredential.user;
+
+                // Busca os dados do funcionário no Firestore para salvar cargo e filial
+                const userDoc = await db.collection('funcionarios').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    localStorage.setItem('tipoUsuario', userData.cargo || 'vendedor');
+                    localStorage.setItem('userBranch', userData.filial); // Salva a filial
+                    localStorage.setItem('userName', userData.nome); // Salva o nome do usuário
+                } else {
+                    // Se o usuário está autenticado mas não tem registro no Firestore, é um erro grave.
+                    console.error("Dados do funcionário não encontrados no Firestore para o UID:", user.uid);
+                    mensagemErro.textContent = "Erro crítico: Dados do funcionário não encontrados. Contate o administrador.";
+                    mensagemErro.style.display = 'block';
+                    auth.signOut(); // Desloga o usuário para segurança
+                    submitButton.classList.remove('loading');
+                    submitButton.disabled = false;
+                    return;
+                }
+
+                addExitAnimationAndRedirect('menu.html');
+
+            } catch (error) {
+                console.error("Erro de login:", error.code);
+                mensagemErro.textContent = "Apelido/Email ou senha incorretos.";
+                mensagemErro.style.display = 'block';
+                senhaInput.value = '';
+                // Reabilita o botão em caso de erro
+                submitButton.classList.remove('loading');
+                submitButton.disabled = false;
+            }
+        });
+
+        // NOVO: Funções para controlar o cronômetro de redefinição de senha
+        let countdownInterval;
+        function startForgotPasswordCooldown(initialSeconds = 60) {
+            const link = document.getElementById('forgot-password-link');
+            const timerSpan = document.getElementById('forgot-password-timer');
+            let seconds = initialSeconds;
+
+            link.classList.add('disabled');
+            timerSpan.style.display = 'inline';
+
+            // Salva o momento em que o cooldown deve terminar
+            if (initialSeconds === 60) {
+                localStorage.setItem('forgotPasswordCooldownEnd', Date.now() + 60000);
+            }
+
+            const updateTimer = () => {
+                timerSpan.textContent = `Aguarde (${seconds}s)`;
+                seconds--;
+
+                if (seconds < 0) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                    timerSpan.style.display = 'none';
+                    link.classList.remove('disabled');
+                    localStorage.removeItem('forgotPasswordCooldownEnd');
+                }
+            };
+            updateTimer(); // Executa imediatamente
+            countdownInterval = setInterval(updateTimer, 1000);
+        }
+
+        // NOVO: Listener para o formulário de redefinição de senha
+        // NOVO: Listener para o link "Esqueci minha senha"
+        forgotPasswordLink.addEventListener('click', async (event) => {
+            event.preventDefault();
+            document.getElementById('forgot-password-modal').style.display = 'flex';
+            document.getElementById('forgot-email-input').focus();
+        });
+
+        document.getElementById('forgot-password-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const emailInput = document.getElementById('forgot-email-input');
+            const emailParaReset = emailInput.value.trim();
+            const messageEl = document.getElementById('forgot-password-message');
+            const forgotSubmitBtn = e.target.querySelector('button[type="submit"]');
+
+            messageEl.textContent = '';
+            messageEl.style.color = '';
+
+            if (!emailParaReset) {
+                messageEl.textContent = 'Por favor, insira um e-mail.';
+                messageEl.style.color = '#dc3545';
+                return;
+            }
+
+            forgotSubmitBtn.classList.add('loading');
+            forgotSubmitBtn.disabled = true;
+
+            try {
+                await auth.sendPasswordResetEmail(emailParaReset);
+                messageEl.textContent = 'Link enviado! Verifique sua caixa de entrada e spam.';
+                messageEl.style.color = '#28a745';
+                emailInput.disabled = true; // Desabilita o input após o sucesso
+                forgotSubmitBtn.style.display = 'none'; // Esconde o botão
+
+                // Inicia o cronômetro e fecha o modal após um delay
+                startForgotPasswordCooldown();
+                setTimeout(() => {
+                    closeModal('forgot-password-modal');
+                }, 2000); // Fecha após 2 segundos
+
+            } catch (error) {
+                console.error("Erro ao enviar e-mail de redefinição:", error);
+                // Mostra uma mensagem genérica para não revelar se um e-mail existe ou não no sistema
+                messageEl.textContent = 'Se o e-mail estiver cadastrado, um link será enviado.';
+                messageEl.style.color = '#dc3545'; // Mostra erro para feedback do usuário
+            } finally {
+                forgotSubmitBtn.classList.remove('loading');
+                forgotSubmitBtn.disabled = false;
+            }
+        });
+
+        // NOVO: Listeners para fechar o modal
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.style.display = 'none';
+                // Reseta o formulário do modal ao fechar
+                const form = modal.querySelector('form');
+                if (form) {
+                    form.reset();
+                    form.querySelector('button[type="submit"]').style.display = 'block';
+                    form.querySelector('input').disabled = false;
+                    const messageEl = form.querySelector('p[id$="-message"]');
+                    if (messageEl) messageEl.textContent = '';
+                }
+            }
+        }
+
+        document.querySelectorAll('.close-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                closeModal(btn.dataset.modal);
+            });
+        });
+
+        // NOVO: Verifica se há um cooldown ativo ao carregar a página
+        window.addEventListener('load', () => {
+            const cooldownEnd = localStorage.getItem('forgotPasswordCooldownEnd');
+            if (cooldownEnd) {
+                const remainingTime = cooldownEnd - Date.now();
+                if (remainingTime > 0) {
+                    const remainingSeconds = Math.ceil(remainingTime / 1000);
+                    // Inicia o cronômetro com o tempo restante
+                    startForgotPasswordCooldown(remainingSeconds);
+                } else {
+                    localStorage.removeItem('forgotPasswordCooldownEnd');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

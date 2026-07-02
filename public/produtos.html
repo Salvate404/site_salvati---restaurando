@@ -1,0 +1,3526 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Produtos</title>
+    <link rel="icon" type="image/png" href="IMG/imgfavicon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: #333;
+            background-image: url(IMG/imgsalvati.png);
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            overflow: hidden;
+            position: relative;
+            opacity: 0;
+            transform: scale(1.05);
+            animation: fadeZoomIn 1.0s ease-out forwards;
+        }
+
+        @keyframes fadeZoomIn {
+            from { opacity: 0; transform: scale(1.05); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        body.fade-zoom-out {
+            animation: fadeZoomOut 0.5s ease-in forwards;
+        }
+
+        @keyframes fadeZoomOut {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0.95); }
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+
+        .header-title-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+            gap: 10px;
+            padding-top: 30px;
+        }
+
+        .header-title-wrapper img {
+            max-height: 100px;
+            width: auto;
+            margin-bottom: 10px;
+        }
+
+        .header-title-wrapper h1 {
+            color: #000000;
+            font-size: 1.8em;
+            margin: 0;
+            padding: 0;
+            line-height: 1.2;
+            display: block;
+        }
+
+        #backToMenuButton {
+            position: fixed; /* 'fixed' para manter no lugar mesmo com scroll */
+            bottom: 20px;
+            right: 20px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        #backToMenuButton:hover { background-color: #c82333; }
+
+        /* --- ESTILOS DO CATÁLOGO --- */        
+        .search-container {
+            flex: 1;
+            position: relative;
+        }
+
+        .search-container input {
+            width: 100%;
+            padding: 10px 40px 10px 15px;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-container input:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        .search-container .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #aaa;
+            pointer-events: none;
+        }
+
+        .branch-selector-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .branch-selector-btn {
+            background-color: #6c757d;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            min-width: 160px;
+            text-align: left;
+            position: relative;
+            padding-right: 30px;
+        }
+        .branch-selector-btn::after {
+            content: '\f078'; /* Font Awesome caret-down */
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .branch-selector-dropdown {
+            display: none;
+            position: absolute;
+            background-color: white;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 100;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .branch-selector-dropdown a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            font-size: 0.9em;
+        }
+
+        .branch-selector-dropdown a:hover {background-color: #f0f0f0;}
+
+        .branch-selector-dropdown.show {
+            display: block;
+        }
+
+        .search-and-buy-mode {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            font-size: 0.9em;
+        }
+        
+        th {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        @keyframes row-fade-out {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0.95); }
+        }
+
+        @keyframes row-fade-in {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        tr.fade-out-individual {
+            animation: row-fade-out 0.2s ease-out forwards;
+        }
+        tr.fade-in-individual {
+            opacity: 0;
+            animation: row-fade-in 0.3s ease-in forwards;
+        }
+
+        th:nth-child(1) {
+            border-top-left-radius: 10px;
+            border-bottom-left-radius: 10px;
+        }
+
+        #addProductBtn {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #addProductBtn:hover {
+            background-color: #0056b3;
+        }
+
+        th:nth-child(8) {
+            border-top-right-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        /* Cores de alerta para estoque */
+        .stock-low { background-color: #fff3cd !important; } /* Amarelo */
+        .stock-very-low { background-color: #f2c27b !important; } /* Laranja */
+        .stock-critical { background-color: #f6c5c9 !important; } /* Vermelho */
+        tr.stock-out { background-color: #f6c5c9 !important; }
+        /* Garante que a cor da linha sobrescreva a cor de linha par */
+        tr.stock-out:nth-child(even) { background-color: #f6c5c9 !important; }
+        
+        #pagination-container {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .page-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .page-button:hover {
+            background-color: #0056b3;
+        }
+
+        .page-button.active {
+            background-color: #0056b3;
+            font-weight: bold;
+        }
+
+        .actions-cell {
+            position: relative; /* Essencial para o menu de ações */
+            text-align: center;
+        }
+
+        .actions-btn {
+            background: none;
+            border: none;
+            color: #007bff;
+            cursor: pointer;
+            font-size: 1.2em;
+            padding: 5px;
+        }
+        .actions-btn:hover {
+            color: #0056b3;
+        }
+
+        .actions-menu {
+            position: absolute;
+            right: 50px; /* Posiciona o menu à esquerda do botão */
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            z-index: 10;
+            overflow: hidden;
+        }
+        .actions-menu button {
+            display: block;
+            width: 100%;
+            padding: 8px 15px;
+            background: none;
+            border: none;
+            text-align: left;
+            cursor: pointer;
+        }
+        .actions-menu button:hover { background-color: #f0f0f0; }
+        .actions-menu .delete-action { color: #dc3545;
+        }
+
+        /* --- ESTILOS DOS MODAIS --- */
+        #add-product-modal,
+        #password-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            width: 80%;
+            max-width: 750px;
+            position: relative;
+            height: 85vh; /* Altura fixa para evitar redimensionamento */
+            overflow-y: auto; /* Adiciona scroll se o conteúdo ultrapassar */
+        }
+        
+        .modal-content h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+            margin-bottom: 0; /* Remove a margem inferior do grupo quando em linha */
+        }
+
+        .form-group {
+            margin-bottom: 10px; /* Mantém a margem para grupos que não estão em linha */
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        /* --- ESTILOS ESPECÍFICOS DE CADA MODAL --- */
+        #add-product-form input,
+        #add-product-form textarea,
+        #add-product-form select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f8f9fa; /* Cor cinza claro para destaque */
+        }
+
+        #add-product-form textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .kit-item-adder {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        .kit-suggestions {
+            position: absolute;
+            width: 100%;
+            background: white;
+            border: 1px solid #ccc;
+            border-top: none;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 2001; /* Acima do modal */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 0 0 5px 5px;
+        }
+        .kit-suggestions div {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+        .kit-suggestions div:nth-child(even) {
+            background-color: #f8f8f8;
+        }
+        .kit-suggestions div:hover, .kit-suggestions div.selected-suggestion {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .item-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .item-controls button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            padding: 2px;
+            line-height: 1;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .item-controls .remove-item-btn {
+            color: #dc3545;
+            font-size: 1.5em;
+            font-weight: bold;
+            background: none;
+        }
+        .item-controls .edit-quantity-btn {
+            background-color: #28a745;
+            color: white;
+            width: 22px;
+            height: 22px;
+            border-radius: 4px;
+            font-size: 0.8em;
+        }
+        .item-controls .save-quantity-btn {
+            color: #28a745;
+        }
+        .item-quantity-edit {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .item-quantity-edit input {
+            width: 60px; text-align: center; margin-bottom: 0;
+        }
+        #product-composition-container, #product-bundle-container {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        #composition-list, #bundle-list {
+            margin-bottom: 15px;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #composition-list:empty::before, #bundle-list:empty::before {
+            content: 'Nenhum item adicionado.';
+            color: #888;
+            font-style: italic;
+        }
+        .component-item, .bundle-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px;
+            background-color: #f8f9fa;
+            margin-bottom: 5px;
+            border-radius: 3px;
+        }
+
+        .type-btn {
+            flex: 1;
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            background-color: #f8f9fa;
+            color: #333;
+            border-radius: 5px;
+            transition: all 0.2s ease;
+        }
+        .type-btn.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+            font-weight: bold;
+        }
+        #add-product-form h4 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        /* --- ESTILOS DAS VARIÁVEIS SOB MEDIDA --- */
+        #sob-medida-variables-section {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        #add-variable-input-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        #add-variable-input-container input { flex-grow: 1; margin-bottom: 0; }
+        #add-variable-input-container button { padding: 10px 15px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s ease; }
+        #add-variable-input-container button:hover { background-color: #218838; }
+        #sob-medida-variables-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; min-height: 20px; }
+        .variable-tag {
+            background-color: #e7f3ff;
+            border: 1px solid #cce4ff;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .variable-tag .remove-variable-btn { background: none; border: none; color: #007bff; cursor: pointer; font-weight: bold; padding: 0; line-height: 1; }
+
+        /* --- ESTILOS DAS VARIANTES DE PRODUTO (COLEÇÃO) --- */
+        #product-variants-container {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        #add-variant-btn {
+            background-color: #17a2b8;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s ease;
+        }
+        #add-variant-btn:hover { background-color: #138496; }
+        #variants-list {
+            margin-bottom: 15px;
+            max-height: 180px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #variants-list:empty::before {
+            content: 'Nenhuma variante adicionada.';
+            color: #888;
+            font-style: italic;
+        }
+        .variant-item {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 8px;
+            background-color: #f8f9fa;
+            margin-bottom: 5px;
+            border-radius: 3px;
+        }
+        .variant-item input { margin-bottom: 0 !important; }
+        .variant-item .variant-name-input { flex-grow: 1; }
+        .variant-item .variant-stock-input { width: 100px; }
+        .variant-item .remove-variant-btn {
+            color: #dc3545;
+            font-size: 1.5em;
+            font-weight: bold;
+            background: none; border: none; cursor: pointer; padding: 0 5px;
+        }
+        .variant-info-icon {
+            cursor: help;
+            color: #007bff;
+            margin-left: 5px;
+        }
+        .variants-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 5px 0;
+        }
+        .variants-header h4 {
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+        }
+        .toggle-section-btn {
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            color: #6c757d;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .variants-body {
+            max-height: 500px;
+            overflow: hidden;
+            transition: max-height 0.4s ease-in-out, opacity 0.3s ease-in-out, margin-top 0.4s ease-in-out;
+            opacity: 1;
+        }
+        #product-variants-container.collapsed .variants-body {
+            max-height: 0;
+            opacity: 0;
+            margin-top: 0 !important;
+        }
+        #product-variants-container.collapsed .toggle-section-btn { transform: rotate(180deg); }
+
+        #product-type-selector {
+        }
+
+        /* --- ESTILOS DO CONTROLE DE ESTOQUE DETALHADO (AGRUPAMENTO) --- */
+        #agrupamento-container {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        #agrupamento-container h4 { margin-top: 0; }
+        .agrupamento-unidade-item {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 8px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .agrupamento-unidade-item input { margin-bottom: 0 !important; }
+        .agrupamento-unidade-item .remove-agrupamento-btn {
+            color: #dc3545; font-size: 1.4em; background: none; border: none; cursor: pointer; padding: 0 5px;
+        }
+        #add-agrupamento-unidade-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        #add-product-modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        #add-product-modal-buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+        }
+
+        #cancelAddProductBtn {
+            background-color: #6c757d;
+        }
+
+        #confirmAddProductBtn {
+            background-color: #28a745;
+        }
+
+        #custom-confirm-modal .modal-content {
+            text-align: center;
+            max-width: 400px;
+        }
+        
+        #custom-confirm-modal p {
+            font-size: 1.1em;
+            margin: 20px 0;
+        }
+
+        #custom-confirm-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        #custom-confirm-buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            color: white;
+        }
+        
+        #confirm-yes-btn {
+            background-color: #28a745;
+        }
+        
+        #confirm-yes-btn:hover {
+            background-color: #218838;
+        }
+        
+        #confirm-no-btn {
+            background-color: #dc3545;
+        }
+        
+        #confirm-no-btn:hover {
+            background-color: #c82333;
+        }
+        
+        #custom-confirm-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- ESTILOS DO CONSTRUTOR DE FÓRMULA --- */
+        #formula-builder-modal .modal-content {
+            max-width: 600px;
+        }
+        .formula-display-box {
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            min-height: 30px;
+            word-wrap: break-word;
+            display: flex;
+            flex-wrap: wrap; /* Permite que os tokens quebrem a linha */
+            align-items: center;
+            gap: 4px;
+            cursor: text; /* Indica que a área é editável */
+        }
+        .formula-token {
+            padding: 3px 6px; /* Aumenta o padding vertical para melhor visualização */
+            border-radius: 4px;
+            font-weight: 500;
+            white-space: pre;
+        }        
+        .formula-token.variable {
+            background-color: #e7f3ff;
+            border: 1px solid #cce4ff;
+            color: #004085;
+        }
+        .formula-token.operator {
+            background-color: #fff3e0;
+            border: 1px solid #ced4da;
+            color: #495057;
+        }
+        .formula-token.number {
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            color: #495057;
+        }
+        .formula-token.function {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .formula-token.error {
+            background-color: #f8d7da;
+            color: #721c24 !important;
+            border: 1px solid #f5c6cb !important;
+            text-decoration: underline wavy red 1px;
+        }
+        .formula-token.selected {
+            background-color: #f8d7da;
+            color: #721c24;
+            text-decoration: underline wavy red;
+        }
+        #formula-builder-ui {
+            display: flex;
+            gap: 15px;
+        }
+        .formula-variables {
+            flex-basis: 30%;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        #custom-variables-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .formula-keypad {
+            flex-basis: 70%;
+            display: flex;
+        }
+        .formula-numbers {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            flex-grow: 1;
+        }
+        .formula-operators {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-left: 10px;
+        }
+        .formula-btn {
+            padding: 15px;
+            font-size: 1.1em;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .formula-btn:hover { background-color: #e0e0e0; }
+        .formula-variables .formula-btn { background-color: #e7f3ff; }
+        .formula-variables .formula-btn:hover { background-color: #cce4ff; }
+        .formula-operators .formula-btn { background-color: #fff3e0; }
+        .formula-operators .formula-btn:hover { background-color: #ffe0b2; }
+        #formula-builder-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        #formula-builder-wrapper #cancelFormulaBtn, #formula-builder-wrapper #confirmFormulaBtn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; color: white; }
+        #formula-builder-wrapper #cancelFormulaBtn { background-color: #6c757d; }
+        #formula-builder-wrapper #confirmFormulaBtn { background-color: #28a745; }
+
+        /* --- ESTILOS DO NOVO SISTEMA DE NOTIFICAÇÕES (TOAST) --- */
+        #notifications-container {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .toast {
+            background-color: #fff;
+            color: #333;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            min-width: 250px;
+            animation: slideInUp 0.5s ease-out forwards, fadeOut 0.5s 4.5s ease-in forwards;
+        }
+        
+        .toast.success {
+            border-left: 5px solid #28a745;
+        }
+        
+        .toast.error {
+            border-left: 5px solid #dc3545;
+        }
+        
+        .toast-close-btn {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+
+        @keyframes slideInUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-title-wrapper">
+            <img src="IMG/imglogo.png" alt="Logo da Empresa">
+            <h1>Catálogo de Produtos</h1>
+        </div>
+
+        <div class="search-and-buy-mode">
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Buscar por nome, código ou descrição...">
+                <i class="fas fa-search search-icon"></i>
+            </div>
+            <div id="branch-selector-container" class="branch-selector-container">
+                <button id="branch-selector-btn" class="branch-selector-btn">Estoque Total</button>
+                <div id="branch-selector-dropdown" class="branch-selector-dropdown">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            <button id="addProductBtn">Cadastrar Produto</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Nome</th>
+                    <th>Unidade</th>
+                    <th>Descrição</th>
+                    <th>Preço Atacado</th>
+                    <th>Preço Varejo</th>
+                    <th>Estoque</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="productTableBody">
+            </tbody>
+        </table>
+
+        <div id="pagination-container">
+            </div>
+    </div>
+
+    <div id="add-product-modal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeAddProductModalBtn">&times;</span>
+            <h3>Cadastrar Novo Produto</h3>
+            <h4 id="edit-product-type-display" style="display: none; text-align: center; color: #6c757d; margin-top: -15px; margin-bottom: 20px; font-weight: normal; text-transform: capitalize;"></h4>
+
+            <div id="formula-builder-wrapper" style="display: none;">
+                <h3 id="formula-builder-title">Construtor de Fórmula</h3>
+                <div id="formula-display" class="formula-display-box"></div>
+                <div id="formula-builder-ui">
+                    <div class="formula-variables">
+                        <h4>Variáveis</h4>
+                        <div id="custom-variables-container"></div>
+                    </div>
+                    <div class="formula-keypad">
+                        <div class="formula-numbers">
+                            <button class="formula-btn" data-value="7">7</button> <button class="formula-btn" data-value="8">8</button> <button class="formula-btn" data-value="9">9</button>
+                            <button class="formula-btn" data-value="4">4</button> <button class="formula-btn" data-value="5">5</button> <button class="formula-btn" data-value="6">6</button>
+                            <button class="formula-btn" data-value="1">1</button> <button class="formula-btn" data-value="2">2</button> <button class="formula-btn" data-value="3">3</button>
+                            <button class="formula-btn" data-value="0">0</button> <button class="formula-btn" data-value=".">.</button>
+                            <button class="formula-btn" id="formula-backspace-btn"><i class="fas fa-backspace"></i></button>
+                        </div>
+                        <div class="formula-operators">
+                            <button class="formula-btn" data-value=" / ">/</button> <button class="formula-btn" data-value=" * ">*</button> <button class="formula-btn" data-value=" - ">-</button>
+                            <button class="formula-btn" data-value=" + ">+</button> <button class="formula-btn" data-value="(">(</button> <button class="formula-btn" data-value=")">)</button>
+                            <button class="formula-btn" data-value="ROUNDUP(">ROUNDUP</button>
+                            <button class="formula-btn" data-value="ROUNDDOWN(">ROUNDDOWN</button>
+                            <button class="formula-btn" data-value="ROUND(">ROUND</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="formula-builder-buttons">
+                    <button type="button" id="cancelFormulaBtn">Cancelar</button>
+                    <div id="formula-clipboard-buttons">
+                        <button type="button" id="copyFormulaBtn" class="formula-btn" title="Copiar Fórmula"><i class="fas fa-copy"></i></button>
+                        <button type="button" id="pasteFormulaBtn" class="formula-btn" title="Colar Fórmula"><i class="fas fa-paste"></i></button>
+                        <button type="button" id="clearFormulaBtn" class="formula-btn" title="Limpar Fórmula" style="color: #dc3545;"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <button type="button" id="confirmFormulaBtn">Salvar Fórmula</button>
+                </div>
+            </div>
+
+            <div id="product-type-selector">
+                <button class="type-btn" data-type="simples">Simples</button>
+                <button class="type-btn" data-type="kit-item">Kit-Item</button>
+                <button class="type-btn" data-type="kit">Kit</button>
+                <button class="type-btn" data-type="sob-medida">Sob Medida</button>
+                <button class="type-btn" data-type="toldo-completo">Toldo Completo</button>
+            </div>
+
+            <form id="add-product-form">
+                <div class="form-group">
+                    <label for="productNameInput">Nome do Produto</label>
+                    <input type="text" id="productNameInput" placeholder="Nome do Produto" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productCodeInput">Código</label>
+                        <input type="text" id="productCodeInput" placeholder="0000" required pattern="\d{4}" title="O código deve ter 4 dígitos." maxlength="4">
+                    </div>
+                    <div class="form-group" id="unit-field">
+                        <label for="productUnitInput">Unidade</label>
+                        <select id="productUnitInput">
+                            <option value="" disabled selected>Selecione...</option>
+                            <option value="UN">UN - Unidade</option>
+                            <option value="PC">PC - Peça</option>
+                            <option value="CX">CX - Caixa</option>
+                            <option value="M">M - Metro Linear</option>
+                            <option value="M²">M² - Metro Quadrado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group" id="desc-field">
+                    <label for="productDescInput">Descrição</label>
+                    <textarea id="productDescInput" placeholder="Descrição"></textarea>
+                </div>
+
+                <div class="form-row" id="price-fields">
+                    <div class="form-group">
+                        <label for="productPriceAtacadoInput">Preço Atacado</label>
+                        <input type="text" id="productPriceAtacadoInput" placeholder="R$ 10,50" oninput="formatarValorMonetario(this)">
+                    </div>
+                    <div class="form-group">
+                        <label for="productPriceVarejoInput">Preço Varejo</label>
+                        <input type="text" id="productPriceVarejoInput" placeholder="R$ 15,00" oninput="formatarValorMonetario(this)">
+                    </div>
+                </div>
+                <div class="form-row" id="extra-price-fields" style="display: none;">
+                    <div class="form-group">
+                        <label for="productPriceMinimoInput">Preço Mínimo</label>
+                        <input type="text" id="productPriceMinimoInput" placeholder="R$ 8,00" oninput="formatarValorMonetario(this)">
+                    </div>
+                    <div class="form-group">
+                        <label for="productCustoInput">Valor de Custo</label>
+                        <input type="text" id="productCustoInput" placeholder="R$ 5,00" oninput="formatarValorMonetario(this)">
+                    </div>
+                </div>
+
+                <div id="product-fiscal-fields" class="form-group">
+                    <h4>Informações Fiscais Padrão</h4>
+                    <input type="text" id="productNcmInput" placeholder="0000.00.00" oninput="formatNCM(this)" maxlength="10">
+                    <select id="productCfopInput">
+                        <option value="" disabled selected>CFOP Padrão...</option>
+                    </select>
+                    <select id="productCsosnInput">
+                        <option value="" disabled selected>CSOSN Padrão (Simples Nacional)...</option>
+                    </select>
+                    <select id="productCstIcmsInput">
+                        <option value="" disabled selected>CST ICMS Padrão (Lucro Presumido/Real)...</option>
+                    </select>
+                    <select id="productCstIpiInput">
+                        <option value="" disabled selected>CST IPI Padrão...</option>
+                    </select>
+                </div>
+
+                <div id="stock-management-section">
+                    <div class="section-header">
+                        <h4>Gerenciar Estoque</h4>
+                        <button type="button" id="stock-mode-toggle-btn" class="toggle-mode-btn active">Normal</button>
+                    </div>
+
+                    <div id="stock-mode-normal">
+                        <div id="stock-field" style="display: none; margin-top: 15px;"></div>
+                        <div id="agrupamento-container" style="display: none;">
+                            <div class="section-header" style="border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px;">
+                                <h4>Controle de Estoque Detalhado</h4>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                                <input type="checkbox" id="enableAgrupamentoCheck" style="width: auto; margin-bottom: 0;">
+                                <label for="enableAgrupamentoCheck" style="margin-bottom: 0;">Gerenciar estoque por unidade de agrupamento</label>
+                            </div>
+                            <div id="agrupamento-config" style="display: none;">
+                                <input type="text" id="agrupamentoNomeInput" placeholder="Nome da unidade (ex: Rolo, Caixa)">
+                                <div id="agrupamento-list-manager"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="stock-mode-avancado" style="display: none;">
+                        <div id="product-variants-container" style="display: none;">
+                            <div class="variants-header">
+                                <h4>Variantes do Produto (Coleção)</h4>
+                                <button type="button" id="toggle-variants-btn" class="toggle-section-btn" title="Mostrar/Ocultar Variantes">
+                                    <i class="fas fa-chevron-up"></i>
+                                </button>
+                            </div>
+                            <div class="variants-body">
+                                <div id="variant-branch-selector-container" class="branch-selector-container" style="margin-bottom: 15px; display: none;">
+                                    <button type="button" id="variant-branch-selector-btn" class="branch-selector-btn" style="width: 100%;">Selecione uma Filial</button>
+                                    <div id="variant-branch-selector-dropdown" class="branch-selector-dropdown" style="width: 100%;">
+                                        <!-- Populated by JS -->
+                                    </div>
+                                </div>
+                                <div id="variants-list">
+                                    <!-- Variant items will be listed here -->
+                                </div>
+                                <button type="button" id="add-variant-btn">
+                                    <i class="fas fa-folder-plus"></i> Adicionar Variante
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="agrupamento-container" style="display: none;">
+                            <div class="section-header" style="border-top: none; padding-top: 0;">
+                                <h4>Controle de Estoque Detalhado</h4>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                                <input type="checkbox" id="enableAgrupamentoCheck" style="width: auto; margin-bottom: 0;">
+                                <label for="enableAgrupamentoCheck" style="margin-bottom: 0;">Gerenciar estoque por unidade de agrupamento</label>
+                            </div>
+                            <div id="agrupamento-config" style="display: none;">
+                                <input type="text" id="agrupamentoNomeInput" placeholder="Nome da unidade (ex: Rolo, Caixa)">
+                                <div id="agrupamento-list-manager"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="personalizado-options-section" style="display: none;">
+                    <h4>Configurações do Produto Personalizado</h4>
+                    <p>Ative as funcionalidades que este produto terá. As seções correspondentes aparecerão abaixo para configuração.</p>
+                    <div class="config-buttons-container">
+                        <button type="button" class="config-toggle-btn" data-section="product-variants-container">
+                            <i class="fas fa-layer-group"></i> Gerenciar Coleção (Variantes)
+                        </button>
+                        <button type="button" class="config-toggle-btn" data-section="product-composition-container">
+                            <i class="fas fa-cogs"></i> Gerenciar Composição
+                        </button>
+                        <button type="button" class="config-toggle-btn" data-section="sob-medida-variables-section">
+                            <i class="fas fa-ruler-combined"></i> Gerenciar Cálculo (Sob Medida)
+                        </button>
+                        <button type="button" class="config-toggle-btn" data-section="agrupamento-container">
+                            <i class="fas fa-boxes"></i> Gerenciar Agrupamento de Estoque
+                        </button>
+                    </div>
+                </div>
+
+                <div id="sob-medida-variables-section" style="display: none;">
+                    <h4>Variáveis da Medida</h4>
+                    <div id="sob-medida-variables-list">
+                        <!-- Tags de variáveis personalizadas aparecerão aqui -->
+                    </div>
+                    <div id="add-variable-input-container">
+                        <input type="text" id="new-variable-name-input" placeholder="Nome da nova variável (ex: avanço)">
+                        <button type="button" id="add-new-variable-btn">+ Adicionar</button>
+                    </div>
+                </div>
+
+                <div id="toldo-completo-pricing-section" style="display: none;">
+                    <h4>Precificação por Lona (Produto)</h4>
+                    <p style="font-size: 0.9em; color: #666; margin-top: -5px; margin-bottom: 10px;">Busque e adicione os produtos que serão usados como lona e defina o preço de cálculo por m² para cada um.</p>
+                    <div class="kit-item-adder">
+                        <input type="text" id="lona-product-search" placeholder="Buscar produto (lona) para adicionar...">
+                    </div>
+                    <div id="lona-prices-list">
+                        <!-- Price rows will be added here -->
+                    </div>
+                </div>
+
+                <div id="product-composition-container" style="display: none;">
+                    <h4>Composição do Kit-Item (para Estoque)</h4>
+                    <div class="kit-item-adder">
+                        <input type="text" id="component-search" placeholder="Buscar componente para adicionar...">
+                    </div>
+                    <div id="composition-list">
+                        <!-- Components will be listed here -->
+                    </div>
+                </div>
+
+                <div id="product-bundle-container" style="display: none;">
+                    <h4>Itens do Kit (para Venda)</h4>
+                    <div class="kit-item-adder">
+                        <input type="text" id="bundle-search" placeholder="Buscar item para adicionar...">
+                    </div>
+                    <div id="bundle-list">
+                        <!-- Bundle items will be listed here -->
+                    </div>
+                </div>
+
+                <div id="toldo-completo-pricing-section" style="display: none;">
+                    <h4>Precificação por Lona (Produto)</h4>
+                    <p style="font-size: 0.9em; color: #666; margin-top: -5px; margin-bottom: 10px;">Busque e adicione os produtos que serão usados como lona e defina o preço de cálculo por m² para cada um.</p>
+                    <div class="kit-item-adder">
+                        <input type="text" id="lona-product-search" placeholder="Buscar produto (lona) para adicionar...">
+                    </div>
+                    <div id="lona-prices-list">
+                        <!-- Price rows will be added here -->
+                    </div>
+                </div>
+
+                <div id="add-product-modal-buttons">
+                    <button type="button" id="cancelAddProductBtn">Cancelar</button>
+                    <button type="submit" id="confirmAddProductBtn">Salvar Produto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="custom-confirm-modal">
+        <div class="modal-content">
+            <p id="custom-confirm-message"></p>
+            <div id="custom-confirm-buttons">
+                </div>
+        </div>
+    </div>
+
+    <div id="notifications-container"></div>
+
+    <a href="#" id="backToMenuButton">Menu</a>
+
+    <!-- Firebase SDKs -->
+    <script src="firebase-config.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Inicializa o Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let catalogoProdutos = []; // Agora será preenchido pelo Firebase
+        let currentEditingProductId = null;
+        let fiscalConfig = { regime: null, tipo: null };
+        let filiais = []; // Nova variável global para filiais
+        let selectedFilialId = localStorage.getItem('userBranch')?.trim() || null; // Pega a filial do usuário logado ou usa null
+        let lastSearchTerm = '';
+        let fiscalDataSources = {}; // Para armazenar listas fiscais
+        let currentVariantBranchId = null; // Para gerenciar o estoque de variantes no modal
+        
+        const itemsPerPage = 30;
+        let currentPage = 1;
+        let filteredProducts = [];
+        
+        const productTableBody = document.getElementById('productTableBody');
+        const paginationContainer = document.getElementById('pagination-container');
+        const searchInput = document.getElementById('searchInput');
+        
+        const customConfirmModal = document.getElementById('custom-confirm-modal');
+        const customConfirmMessage = document.getElementById('custom-confirm-message');
+        const customConfirmButtons = document.getElementById('custom-confirm-buttons');
+        const notificationsContainer = document.getElementById('notifications-container');
+
+        // Elementos do modal de cadastro de produto
+        const addProductModal = document.getElementById('add-product-modal');
+        const addProductForm = document.getElementById('add-product-form');
+        const closeAddProductModalBtn = document.getElementById('closeAddProductModalBtn');
+        const cancelAddProductBtn = document.getElementById('cancelAddProductBtn');
+        const addProductBtn = document.getElementById('addProductBtn');
+
+        // Auth Guard: Verifica se o usuário está logado ao entrar na página
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                console.log("Usuário não autenticado em produtos.html. Redirecionando para login.");
+                window.location.href = 'index.html';
+            }
+        });
+
+
+        // Elementos do construtor de fórmula
+        const formulaBuilderWrapper = document.getElementById('formula-builder-wrapper');
+        const cancelFormulaBtn = document.getElementById('cancelFormulaBtn');
+        const confirmFormulaBtn = document.getElementById('confirmFormulaBtn');
+        const formulaDisplay = document.getElementById('formula-display');
+        const formulaBuilderUI = document.getElementById('formula-builder-ui');
+        const customVariablesContainer = document.getElementById('custom-variables-container');
+        const stockModeToggleBtn = document.getElementById('stock-mode-toggle-btn');
+
+
+        // --- FUNÇÕES DE FORMATAÇÃO ---
+        function formatNCM(input) {
+            let value = input.value.replace(/\D/g, ''); // Remove non-digits
+            if (value.length > 8) value = value.substring(0, 8);
+
+            let maskedValue = '';
+            if (value.length > 4) {
+                maskedValue += value.substring(0, 4) + '.';
+                if (value.length > 6) {
+                    maskedValue += value.substring(4, 6) + '.' + value.substring(6);
+                } else {
+                    maskedValue += value.substring(4);
+                }
+            } else {
+                maskedValue = value;
+            }
+            input.value = maskedValue;
+        }
+        // Funções do carrinho e da interface
+        function formatarValorMonetario(inputElement) {
+            let valor = inputElement.value;
+            valor = valor.replace(/\D/g, '');
+            if (valor.length === 0) {
+                valor = '0';
+            }
+            let numValue = parseInt(valor, 10);
+            if (numValue === 0) {
+                valor = '000';
+            } else {
+                valor = numValue.toString();
+                while (valor.length < 3) {
+                    valor = '0' + valor;
+                }
+            }
+            const parteInteira = valor.slice(0, -2);
+            const parteDecimal = valor.slice(-2);
+            const valorFormatado = `${parteInteira === '' ? '0' : parteInteira},${parteDecimal}`;
+            inputElement.value = valorFormatado;
+        }
+
+        function getTotalStock(stockData) {
+            if (stockData === null || stockData === undefined) return null;
+            if (typeof stockData === 'number') return stockData; // Retrocompatibilidade
+            if (typeof stockData === 'object') {
+                return Object.values(stockData).reduce((sum, val) => sum + (Number(val) || 0), 0);
+            }
+            // Novo: Se for o novo formato de agrupamento, retorna o total pré-calculado
+            if (typeof stockData === 'object' && stockData !== null && stockData.total !== undefined) {
+                return stockData.total;
+            }
+            return null;
+        }
+
+
+        function showToast(message, type = 'success', duration = 5000) {
+            const toast = document.createElement('div');
+            toast.classList.add('toast', type);
+            toast.innerHTML = `
+                <span>${message}</span>
+                <button class="toast-close-btn">&times;</button>
+            `;
+            
+            notificationsContainer.appendChild(toast);
+            
+            const closeBtn = toast.querySelector('.toast-close-btn');
+            closeBtn.addEventListener('click', () => {
+                toast.remove();
+            });
+            
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, duration);
+        }
+
+        function showConfirmModal(message, callback) {
+            customConfirmMessage.innerText = message;
+            customConfirmButtons.innerHTML = `
+                <button id="confirm-no-btn">Não</button>
+                <button id="confirm-yes-btn">Sim</button>
+            `;
+            
+            customConfirmModal.style.display = 'flex';
+            
+            document.getElementById('confirm-yes-btn').onclick = () => {
+                customConfirmModal.style.display = 'none';
+                callback(true);
+            };
+            
+            document.getElementById('confirm-no-btn').onclick = () => {
+                customConfirmModal.style.display = 'none';
+                callback(false);
+            };
+        }
+
+        function setupBranchSelector() {
+            const btn = document.getElementById('branch-selector-btn');
+            const dropdown = document.getElementById('branch-selector-dropdown');
+            dropdown.innerHTML = '<a href="#" data-filial-id="null">Estoque Total</a>';
+
+            filiais.forEach(filial => {
+                dropdown.innerHTML += `<a href="#" data-filial-id="${filial.id}">${filial.nome}</a>`;
+            });
+            // Event listeners will be attached in DOMContentLoaded
+        }
+
+        // --- FUNÇÕES DO FIREBASE E CADASTRO DE PRODUTOS ---
+        async function fetchFiliais() {
+            try {
+                const snapshot = await db.collection('filiais').orderBy('nome').get();
+                filiais = snapshot.docs.map(doc => ({ id: doc.id, nome: doc.data().nome }));
+                // Valida se a filial do localStorage ainda existe
+                if (selectedFilialId && !filiais.some(f => f.id === selectedFilialId)) {
+                    selectedFilialId = null;
+                }
+            } catch (error) {
+                console.error("Erro ao buscar filiais:", error);
+                showToast('Falha ao carregar filiais.', 'error');
+            }
+        }
+
+        async function loadFiscalDataSources() {
+            // Se já carregou, não faz nada
+            if (Object.keys(fiscalDataSources).length > 0) return;
+            try {
+                const collectionsToFetch = ['cfop', 'csosn', 'cst_icms', 'cst_ipi'];
+                const promises = collectionsToFetch.map(coll => db.collection('dados_fiscais').doc(coll).get());
+                const results = await Promise.all(promises);
+
+                results.forEach((doc, index) => {
+                    if (doc.exists) {
+                        const collectionName = collectionsToFetch[index];
+                        fiscalDataSources[collectionName] = doc.data().items || [];
+                    }
+                });
+            } catch (error) {
+                console.error("Erro ao carregar fontes de dados fiscais:", error);
+                showToast("Falha ao carregar listas fiscais (CFOP, etc).", "error");
+            }
+        }
+
+        async function fetchFiscalConfig() {
+            try {
+                const doc = await db.collection('fiscal').doc('configuracao_global').get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    fiscalConfig.regime = data.regime;
+                    fiscalConfig.tipo = data.tipo;
+                } else {
+                    console.warn("Configuração fiscal global não encontrada. Os campos fiscais podem não ser personalizados.");
+                    showToast('Configuração fiscal não encontrada.', 'error');
+                }
+            } catch (error) {
+                console.error("Erro ao buscar configuração fiscal:", error);
+                showToast('Falha ao carregar configuração fiscal.', 'error');
+            }
+        }
+
+        async function fetchProductsFromFirestore() {
+            productTableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Carregando produtos...</td></tr>';
+            try {
+                const snapshot = await db.collection('produtos').orderBy('nome').get();
+                catalogoProdutos = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return {
+                        id: doc.id,
+                        nome: data.nome || '',
+                        type: data.type || 'simples',
+                        codigo: data.codigo || '',
+                        unidade: data.unidade || '',
+                        descricao: data.descricao || '',
+                        precoAtacado: data.precoAtacado || 0,
+                        precoVarejo: data.precoVarejo || 0,
+                        precoMinimo: data.precoMinimo || 0, // Carrega o preço mínimo
+                        custo: data.custo || 0, // Carrega o valor de custo
+                        estoque: data.estoque, // Pode ser um número (antigo) ou um objeto (novo)
+                        ncm: data.ncm || '',
+                        cfop: data.cfop || '',
+                        csosn: data.csosn || '',
+                        cstIcms: data.cstIcms || '',
+                        cstIpi: data.cstIpi || '',                        
+                        composition: data.composition || [],
+                        bundleItems: data.bundleItems || [],
+                        variants: data.variants || [],
+                        customVariables: data.customVariables || [],
+                        agrupamento: data.agrupamento || null,
+                        precosPorLona: data.precosPorLona || [],
+                        mainPriceFormula: data.mainPriceFormula || null,
+                    };
+                });
+
+                filteredProducts = catalogoProdutos;
+                currentPage = 1;
+                setupPagination(filteredProducts);
+                displayProducts(filteredProducts, currentPage, true);
+
+            } catch (error) {
+                console.error("Erro ao buscar produtos do Firebase:", error);
+                productTableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Erro ao carregar produtos. Verifique o console.</td></tr>';
+                showToast('Falha ao carregar produtos.', 'error');
+            }
+        }
+
+        function populateSelectWithOptions(selectElement, items, valueField, textField, placeholder) {
+            selectElement.innerHTML = `<option value="" disabled selected>${placeholder}</option>`;
+            if (items && items.length > 0) {
+                items.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item[valueField];
+                    option.textContent = `${item[valueField]} - ${item[textField]}`;
+                    selectElement.appendChild(option);
+                });
+            }
+        }
+
+        function openProductModal(productId = null) {
+            const modal = document.getElementById('add-product-modal');
+            const form = document.getElementById('add-product-form');
+            const title = modal.querySelector('h3');
+            const productTypeDisplay = document.getElementById('edit-product-type-display');
+            const submitBtn = modal.querySelector('#confirmAddProductBtn');
+            const typeSelector = modal.querySelector('#product-type-selector');
+            const typeButtons = typeSelector.querySelectorAll('.type-btn');
+
+            form.reset();
+
+            // Limpa listas de composição/kit
+            document.getElementById('composition-list').innerHTML = '';
+            document.getElementById('sob-medida-variables-list').innerHTML = '';
+            document.getElementById('variants-list').innerHTML = '';
+            document.getElementById('bundle-list').innerHTML = '';
+            document.getElementById('agrupamento-config').style.display = 'none';
+            typeButtons.forEach(btn => btn.classList.remove('active'));
+            // Garante que as seções opcionais do tipo "personalizado" estejam ocultas ao abrir
+            document.getElementById('product-variants-container').style.display = 'none';
+            document.getElementById('product-composition-container').style.display = 'none';
+            document.getElementById('sob-medida-variables-section').style.display = 'none';
+            currentEditingProductId = productId;
+            productTypeDisplay.style.display = 'none'; // Oculta por padrão
+
+            let productType = 'simples'; // Padrão para novo produto
+
+            // Popula os selects fiscais
+            populateSelectWithOptions(document.getElementById('productCfopInput'), fiscalDataSources.cfop, 'code', 'desc', 'CFOP Padrão...');
+            populateSelectWithOptions(document.getElementById('productCsosnInput'), fiscalDataSources.csosn, 'code', 'desc', 'CSOSN Padrão...');
+            populateSelectWithOptions(document.getElementById('productCstIcmsInput'), fiscalDataSources.cst_icms, 'code', 'desc', 'CST ICMS Padrão...');
+            populateSelectWithOptions(document.getElementById('productCstIpiInput'), fiscalDataSources.cst_ipi, 'code', 'desc', 'CST IPI Padrão...');
+
+            if (productId) { // Modo Edição
+                title.textContent = 'Editar Produto';
+                submitBtn.textContent = 'Salvar Alterações';
+                typeSelector.style.display = 'none'; // Oculta o seletor de tipo na edição
+                stockModeToggleBtn.style.display = 'none'; // Oculta o botão de alternância no modo de edição
+
+                const product = catalogoProdutos.find(p => p.id === productId);
+                if (!product) {
+                    showToast('Produto não encontrado para edição.', 'error');
+                    return;
+                }
+                // Mostra o tipo do produto
+                productTypeDisplay.textContent = `Tipo: ${product.type || 'simples'}`;
+                productTypeDisplay.style.display = 'block';
+
+                // Define o modo de estoque com base nos dados do produto e o bloqueia
+                if (product.variants && product.variants.length > 0) {
+                    stockModeToggleBtn.classList.remove('active'); // Modo Avançado (com variantes)
+                } else {
+                    stockModeToggleBtn.classList.add('active'); // Modo Normal
+                }
+
+                // Preenche o formulário
+                document.getElementById('productNameInput').value = product.nome;
+                document.getElementById('productCodeInput').value = product.codigo;
+                document.getElementById('productUnitInput').value = product.unidade;
+                document.getElementById('productDescInput').value = product.descricao;
+                document.getElementById('productPriceAtacadoInput').value = product.precoAtacado.toFixed(2).replace('.', ',');
+                document.getElementById('productPriceVarejoInput').value = product.precoVarejo.toFixed(2).replace('.', ',');
+                document.getElementById('productPriceMinimoInput').value = (product.precoMinimo || 0).toFixed(2).replace('.', ',');
+                document.getElementById('productCustoInput').value = (product.custo || 0).toFixed(2).replace('.', ',');
+                document.getElementById('productNcmInput').value = product.ncm || '';
+                document.getElementById('productCfopInput').value = product.cfop || '';
+                document.getElementById('productCsosnInput').value = product.csosn || '';
+                document.getElementById('productCstIcmsInput').value = product.cstIcms || '';
+                document.getElementById('productCstIpiInput').value = product.cstIpi || '';
+
+                // Verifica se o produto usa o sistema de agrupamento
+                const usaAgrupamento = product.agrupamento && product.agrupamento.nome;
+                const checkAgrupamento = document.getElementById('enableAgrupamentoCheck');
+                checkAgrupamento.checked = usaAgrupamento;
+                if (usaAgrupamento) {
+                    document.getElementById('agrupamento-config').style.display = 'block';
+                    document.getElementById('agrupamentoNomeInput').value = product.agrupamento.nome;
+                }
+                checkAgrupamento.dispatchEvent(new Event('change')); // Dispara o evento para atualizar a UI
+                // A visibilidade será controlada pelo updateModalLayout e pelo listener do checkbox
+                // checkAgrupamento.dispatchEvent(new Event('change')); // Dispara o evento para atualizar a UI
+
+                // Popula as variantes se for do tipo 'simples'
+                if (product.type === 'simples') {
+                    if (product.variants && product.variants.length > 0) {
+                        product.variants.forEach(variant => addVariantRow(variant));
+                        setupVariantBranchSelector();
+                    }
+                }
+
+                productType = product.type || 'simples';
+
+                // Popula as variáveis personalizadas se for do tipo 'sob-medida'
+                if (product.type === 'sob-medida' && product.customVariables) {
+                    product.customVariables.forEach(variable => {
+                        addVariableToTagList(variable.name, variable.value);
+                    });
+                }
+
+                // Renderiza a composição/itens do kit existentes
+                if (product.type === 'kit-item' || product.type === 'sob-medida' || product.type === 'toldo-completo') {
+                    renderItemsInList(product.composition, document.getElementById('composition-list'), product.type);
+                } else if (product.type === 'kit') {
+                    renderItemsInList(product.bundleItems, document.getElementById('bundle-list'), product.type);
+                }
+
+                if (product.type === 'toldo-completo') {
+                    // Limpa e popula a lista de preços por lona
+                    const lonaList = document.getElementById('lona-prices-list');
+                    lonaList.innerHTML = '';
+                    lonaList.innerHTML = '';
+                    if (product.precosPorLona) {
+                        product.precosPorLona.forEach(lonaConfig => addLonaProductRow(lonaConfig));
+                    }
+                }
+                // Se for do tipo "personalizado", mostra as seções que contêm dados
+                if (product.type === 'personalizado') {
+                    if (product.variants && product.variants.length > 0) {
+                        document.getElementById('product-variants-container').style.display = 'block';
+                    }
+                    if (product.composition && product.composition.length > 0) {
+                        document.getElementById('product-composition-container').style.display = 'block';
+                    }
+                    if (product.customVariables && product.customVariables.length > 0) {
+                        document.getElementById('sob-medida-variables-section').style.display = 'block';
+                    }
+                    // A lógica de agrupamento já é tratada pelo `checkAgrupamento.dispatchEvent`
+                }
+            } else { // Modo Cadastro
+                title.textContent = 'Cadastrar Novo Produto';
+                submitBtn.textContent = 'Salvar Produto';
+                typeSelector.style.display = 'flex'; // Garante que o seletor esteja visível para novos produtos
+                stockModeToggleBtn.style.display = 'block'; // Mostra o botão para novos produtos
+                stockModeToggleBtn.classList.add('active'); // Padrão para modo Normal
+                productTypeDisplay.style.display = 'none';
+
+                // Gera um código de produto aleatório e único
+                let newCode;
+                let isUnique = false;
+                const existingCodes = new Set(catalogoProdutos.map(p => p.codigo));
+                
+                while (!isUnique) {
+                    newCode = Math.floor(1000 + Math.random() * 9000).toString();
+                    if (!existingCodes.has(newCode)) {
+                        isUnique = true;
+                    }
+                }
+                document.getElementById('productCodeInput').value = newCode;
+
+
+            }
+
+            // Ativa o botão do tipo de produto e atualiza o layout do formulário
+            const activeButton = typeSelector.querySelector(`.type-btn[data-type="${productType}"]`);
+            if (activeButton) activeButton.classList.add('active');
+            updateModalLayout(productType);
+
+            // Após o layout ser definido, verifica se está em modo de edição para aplicar as travas visuais.
+            if (productId) {
+                const product = catalogoProdutos.find(p => p.id === productId);
+                // Se o produto não usa agrupamento, esconde a seção de controle detalhado.
+                const usaAgrupamentoOnEdit = product && product.agrupamento && product.agrupamento.nome;
+                if (!usaAgrupamentoOnEdit) {
+                    document.querySelectorAll('#agrupamento-container').forEach(container => {
+                        container.style.display = 'none';
+                    });
+                }
+            }
+            // Configura o gerenciador de estoque do modal, se aplicável
+            setupModalStockManager(productId);
+
+            modal.style.display = 'flex';
+        }
+
+        function setStockModeVisibility() {
+            const isNormalMode = stockModeToggleBtn.classList.contains('active');
+            const normalModeContainer = document.getElementById('stock-mode-normal');
+            const avancadoModeContainer = document.getElementById('stock-mode-avancado');
+
+            if (isNormalMode) {
+                stockModeToggleBtn.textContent = 'Normal';
+                normalModeContainer.style.display = 'block';
+                avancadoModeContainer.style.display = 'none';
+            } else {
+                stockModeToggleBtn.textContent = 'Avançado';
+                normalModeContainer.style.display = 'none';
+                avancadoModeContainer.style.display = 'block';
+            }
+        }
+
+        function updateModalLayout(type) {
+            const unitField = document.getElementById('unit-field');
+            const descField = document.getElementById('desc-field');
+            const priceFields = document.getElementById('price-fields');
+            const stockField = document.getElementById('stock-field');
+            const extraPriceFields = document.getElementById('extra-price-fields');
+            const fiscalFields = document.getElementById('product-fiscal-fields');
+            const compositionContainer = document.getElementById('product-composition-container');
+            const bundleContainer = document.getElementById('product-bundle-container');
+            const sobMedidaVariablesSection = document.getElementById('sob-medida-variables-section');
+            const productVariantsContainer = document.getElementById('product-variants-container');
+            const agrupamentoContainer = document.getElementById('agrupamento-container');
+            const personalizadoOptionsSection = document.getElementById('personalizado-options-section');
+            const stockManagementSection = document.getElementById('stock-management-section');
+
+            document.getElementById('toldo-completo-pricing-section').style.display = 'none';
+            stockField.innerHTML = ''; // Limpa o container de estoque sempre
+            // Oculta todas as seções opcionais
+            unitField.style.display = 'none';
+            descField.style.display = 'none';
+            priceFields.style.display = 'none';
+            stockField.style.display = 'none';
+            extraPriceFields.style.display = 'none';
+            fiscalFields.style.display = 'none';
+            compositionContainer.style.display = 'none';
+            bundleContainer.style.display = 'none';
+            sobMedidaVariablesSection.style.display = 'none';
+            productVariantsContainer.style.display = 'none';
+            agrupamentoContainer.style.display = 'none';
+            personalizadoOptionsSection.style.display = 'none';
+            stockManagementSection.style.display = 'none';
+
+            // Desativa a obrigatoriedade de todos os campos dentro das seções
+            [
+                unitField.querySelector('select'),
+                descField.querySelector('textarea'),
+                stockField.querySelector('input'),
+                ...priceFields.querySelectorAll('input'),
+                ...extraPriceFields.querySelectorAll('input'),
+                ...fiscalFields.querySelectorAll('input'),
+                ...fiscalFields.querySelectorAll('select')
+            ].forEach(el => { if (el) el.required = false; });
+
+            // Esconde os campos fiscais específicos por padrão
+            const cfopInput = document.getElementById('productCfopInput');
+            const csosnInput = document.getElementById('productCsosnInput');
+            const cstIcmsInput = document.getElementById('productCstIcmsInput');
+            const cstIpiInput = document.getElementById('productCstIpiInput');
+            csosnInput.style.display = 'none';
+            cfopInput.style.display = 'block'; // CFOP é sempre visível
+            cstIcmsInput.style.display = 'none';
+            cstIpiInput.style.display = 'none';
+
+            if (type === 'simples' || type === 'kit-item') {
+                unitField.style.display = 'block';
+                descField.style.display = 'block';
+                priceFields.style.display = 'flex';
+                extraPriceFields.style.display = 'flex';
+                fiscalFields.style.display = 'block';
+                stockManagementSection.style.display = 'block';
+
+                setStockModeVisibility(); // Aplica a visibilidade correta para o modo de estoque
+
+                const isNormalMode = stockModeToggleBtn.classList.contains('active');
+                if (isNormalMode) {
+                    stockField.style.display = 'block';
+                    stockField.innerHTML = `
+                        <div class="modal-stock-manager">
+                            <div id="modal-branch-selector-container" class="branch-selector-container" style="width: 100%;">
+                                <button type="button" id="modal-branch-selector-btn" class="branch-selector-btn" style="width: 100%;">Selecione uma Filial</button>
+                                <div id="modal-branch-selector-dropdown" class="branch-selector-dropdown" style="width: 100%;">
+                                    <!-- Populated by JS -->
+                                </div>
+                                <div id="modal-stock-input-container" style="margin-top: 15px;">
+                                    <!-- Stock input will be injected here -->
+                                </div>
+                            </div>
+                        `;
+                    agrupamentoContainer.style.display = 'block'; // Mostra o container do checkbox
+                    // Dispara o evento do checkbox para definir a visibilidade correta do campo de estoque simples vs. detalhado
+                    document.getElementById('enableAgrupamentoCheck').dispatchEvent(new Event('change'));
+                } else { // Modo Avançado
+                    productVariantsContainer.style.display = 'block';
+                    agrupamentoContainer.style.display = 'block';
+                    agrupamentoContainer.style.display = 'none'; // Esconde o container principal no modo avançado
+                }
+                if (type === 'kit-item') {
+                    compositionContainer.style.display = 'block';
+                }
+                // Define campos obrigatórios
+                document.getElementById('productUnitInput').required = true;
+                document.getElementById('productPriceAtacadoInput').required = true;
+                document.getElementById('productPriceVarejoInput').required = true;
+                document.getElementById('productNcmInput').required = true;
+                cfopInput.required = true;
+
+                // Mostra e torna obrigatório o campo fiscal correto com base no regime
+                if (fiscalConfig.regime === 'simples') {
+                    csosnInput.style.display = 'block';
+                    csosnInput.required = true;
+                } else if (fiscalConfig.regime === 'presumido' || fiscalConfig.regime === 'real') {
+                    cstIcmsInput.style.display = 'block';
+                    cstIpiInput.style.display = 'block';
+                    cstIcmsInput.required = true;
+                    cstIpiInput.required = true;
+                }
+            } else if (type === 'kit') {
+                descField.style.display = 'block';
+                priceFields.style.display = 'flex';
+                bundleContainer.style.display = 'block';
+                // Define campos obrigatórios para 'kit'
+                document.getElementById('productPriceAtacadoInput').required = true;
+                document.getElementById('productPriceVarejoInput').required = true;
+            } else if (type === 'sob-medida') {
+                descField.style.display = 'block';
+                fiscalFields.style.display = 'block';
+                compositionContainer.style.display = 'block';
+                compositionContainer.style.marginTop = '0';
+                sobMedidaVariablesSection.style.display = 'block';
+                // Define campos obrigatórios para 'sob-medida'
+                document.getElementById('productDescInput').required = true;
+            } else if (type === 'toldo-completo') {
+                // Mostra campos relevantes para este tipo
+                descField.style.display = 'block';
+                fiscalFields.style.display = 'block';
+                compositionContainer.style.display = 'block'; // Para definir o kit padrão
+                document.getElementById('toldo-completo-pricing-section').style.display = 'block';
+                sobMedidaVariablesSection.style.display = 'block'; // Para adicionar variáveis
+
+                // Define campos obrigatórios
+                document.getElementById('productDescInput').required = true;
+                document.getElementById('productNcmInput').required = true;
+                cfopInput.required = true;
+
+                // Mostra e torna obrigatório o campo fiscal correto com base no regime
+                if (fiscalConfig.regime === 'simples') {
+                    csosnInput.style.display = 'block';
+                    csosnInput.required = true;
+                } else if (fiscalConfig.regime === 'presumido' || fiscalConfig.regime === 'real') {
+                    cstIcmsInput.style.display = 'block';
+                    cstIpiInput.style.display = 'block';
+                    cstIcmsInput.required = true;
+                    cstIpiInput.required = true;
+                }
+            } else if (type === 'personalizado') {
+                // Mostra campos básicos que são sempre necessários
+                unitField.style.display = 'block';
+                descField.style.display = 'block';
+                priceFields.style.display = 'flex';
+                fiscalFields.style.display = 'block';
+                stockManagementSection.style.display = 'block';
+                personalizadoOptionsSection.style.display = 'block';
+
+                // A visibilidade das seções de funcionalidades (variantes, composição, etc.)
+                // é controlada em `openProductModal` (para edição) e pelos botões de configuração.
+                // Aqui, apenas garantimos que o container de estoque principal esteja visível.
+                setStockModeVisibility();
+
+                // Define campos obrigatórios
+                document.getElementById('productUnitInput').required = true;
+                document.getElementById('productPriceAtacadoInput').required = true;
+                document.getElementById('productPriceVarejoInput').required = true;
+                document.getElementById('productNcmInput').required = true;
+                cfopInput.required = true;
+
+                // Lógica fiscal já tratada em outros tipos, pode ser reutilizada se necessário
+                updateConfigButtonsState();
+            }
+        }
+
+        function closeProductModal() {
+            addProductModal.style.display = 'none';
+            // Garante que o formulário principal esteja visível e o construtor oculto na próxima vez que o modal for aberto
+            document.getElementById('add-product-form').style.display = 'block';
+            document.getElementById('formula-builder-wrapper').style.display = 'none';
+            // Limpa as variáveis personalizadas criadas
+            document.getElementById('sob-medida-variables-list').innerHTML = '';
+            document.getElementById('variants-list').innerHTML = '';
+            document.getElementById('lona-prices-list').innerHTML = '';
+            document.getElementById('lona-prices-list').innerHTML = '';
+        }
+
+        function addLonaProductRow(lonaConfig = { productId: null, preco: 0 }) {
+            const product = catalogoProdutos.find(p => p.id === lonaConfig.productId);
+            if (!product) return; // Não adiciona se o produto não for encontrado
+
+            const list = document.getElementById('lona-prices-list');
+
+            // Verifica se a lona já foi adicionada
+            if (list.querySelector(`[data-product-id="${lonaConfig.productId}"]`)) {
+                showToast(`A lona "${product.nome}" já foi adicionada.`, 'error');
+                return;
+            }
+
+            const row = document.createElement('div');
+            row.className = 'form-row lona-price-item';
+            row.dataset.productId = lonaConfig.productId;
+            row.innerHTML = `
+                <div class="form-group" style="flex-grow: 2;">
+                    <span style="display: block; padding: 8px; background-color: #e9ecef; border-radius: 5px;">${product.nome}</span>
+                </div>
+                <div class="form-group">
+                    <input type="text" class="lona-preco-input" placeholder="R$ 0,00/m²" value="${String(lonaConfig.preco.toFixed(2)).replace('.',',')}" oninput="formatarValorMonetario(this)">
+                </div>
+                <button type="button" class="remove-item-btn" onclick="this.parentElement.remove()" style="align-self: center; margin-bottom: 10px;">&times;</button>
+            `;
+            list.appendChild(row);
+        }
+
+        function updateConfigButtonsState() {
+            document.querySelectorAll('.config-toggle-btn').forEach(btn => {
+                const sectionId = btn.dataset.section;
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    const isActive = section.style.display !== 'none';
+                    btn.classList.toggle('active', isActive);
+                }
+            });
+        }
+
+        function addVariableToTagList(name, value) {
+            const list = document.getElementById('sob-medida-variables-list');
+            
+            // Verifica se a variável já existe (pelo valor sanitizado)
+            if (list.querySelector(`.variable-tag[data-value="${value}"]`)) {
+                showToast(`A variável "${name}" já existe.`, 'error');
+                return false;
+            }
+
+            const tag = document.createElement('div');
+            tag.className = 'variable-tag';
+            tag.dataset.name = name;
+            tag.dataset.value = value;
+            tag.innerHTML = `
+                <span>${name}</span>
+                <button type="button" class="remove-variable-btn">&times;</button>
+            `;
+            list.appendChild(tag);
+            document.getElementById('new-variable-name-input').value = ''; // Limpa o input
+            return true;
+        }
+
+        function addVariantRow(variant = {}) {
+            const list = document.getElementById('variants-list');
+            const item = document.createElement('div');
+            item.className = 'variant-item';
+
+            const name = variant.name || '';
+            // Armazena os dados originais da variante para preservar o estoque de outras filiais ao salvar.
+            item.dataset.originalVariantData = JSON.stringify(variant);
+
+            item.innerHTML = `
+                <div style="flex-grow: 1;">
+                    <label style="font-size: 0.9em; display: block; color: #555; margin-bottom: 5px;">Nome da Variante:</label>
+                    <input type="text" class="variant-name-input" placeholder="ex: Branco GL" value="${name}" required>
+                </div>
+                <div class="variant-stock-container" style="min-width: 150px; text-align: center;">
+                    <!-- O conteúdo do estoque será injetado dinamicamente -->
+                </div>
+                <button type="button" class="remove-variant-btn">&times;</button>
+            `;
+            list.appendChild(item);
+            
+            // Esconde o campo de estoque principal quando variantes estão em uso
+            const stockField = document.getElementById('stock-field');
+            stockField.style.display = 'none';
+            stockField.innerHTML = '';
+
+            // Esconde o container de agrupamento principal também
+            document.getElementById('agrupamento-container').style.display = 'none';
+        }
+
+        function updateVariantStockInputs(branchId) {
+            const variantItems = document.querySelectorAll('#variants-list .variant-item');
+            const product = currentEditingProductId ? catalogoProdutos.find(p => p.id === currentEditingProductId) : null;
+            const agrupamentoNome = product?.agrupamento?.nome || 'Unidade';
+
+            // Salva os dados de agrupamento da filial atual antes de trocar
+            saveCurrentAgrupamentoData(currentVariantBranchId, '.variant-item');
+
+            // Salva o valor do estoque da filial atual antes de trocar
+            if (currentVariantBranchId) {
+                variantItems.forEach(item => {
+                    const stockInput = item.querySelector('.variant-stock-input');
+                    if (stockInput) {
+                        const originalVariantData = JSON.parse(item.dataset.originalVariantData || '{}');
+                        if (!originalVariantData.stock) originalVariantData.stock = {};
+                        originalVariantData.stock[currentVariantBranchId] = parseFloat(stockInput.value) || 0;
+                        item.dataset.originalVariantData = JSON.stringify(originalVariantData);
+                    }
+                });
+            }
+
+            currentVariantBranchId = branchId;
+            const unit = document.getElementById('productUnitInput').value;
+            const step = (unit === 'M' || unit === 'M²') ? '0.01' : '1';
+            const branch = filiais.find(f => f.id === branchId);
+            const branchName = branch ? `(${branch.nome})` : '';
+
+            variantItems.forEach(item => {
+                const originalVariantData = JSON.parse(item.dataset.originalVariantData || '{}');
+                const stockData = originalVariantData.stock || {};
+                const stockContainer = item.querySelector('.variant-stock-container');
+                const branchStock = stockData[branchId];
+
+                // Verifica se o estoque da filial é um objeto de agrupamento
+                if (branchStock && typeof branchStock === 'object' && branchStock.unidades) {
+                    renderAgrupamentoManager(stockContainer, branchStock, agrupamentoNome);
+                } else {
+                    // Fallback para o sistema de estoque antigo/simples
+                    const stockValue = branchStock || 0;
+                    stockContainer.innerHTML = `
+                        <div class="variant-stock-group" style="text-align: left;">
+                            <label style="font-size: 0.9em; display: block; color: #555; margin-bottom: 5px;">Estoque:</label>
+                            <input type="number" class="variant-stock-input" value="${stockValue}" min="0" step="${step}" required style="width: 100px;">
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        function setupVariantBranchSelector() {
+            const container = document.getElementById('variant-branch-selector-container');
+            if (!container) return;
+            const btn = document.getElementById('variant-branch-selector-btn');
+            const dropdown = document.getElementById('variant-branch-selector-dropdown');
+
+            if (filiais.length === 0) {
+                container.style.display = 'none';
+                return; // Don't show selector if no branches
+            }
+            
+            container.style.display = 'block';
+            
+            // Populate dropdown
+            dropdown.innerHTML = '';
+            filiais.forEach(filial => {
+                dropdown.innerHTML += `<a href="#" data-filial-id="${filial.id}">${filial.nome}</a>`;
+            });
+
+            // Add event listeners
+            btn.onclick = (e) => { e.stopPropagation(); dropdown.classList.toggle('show'); };
+            dropdown.onclick = (e) => {
+                if (e.target.tagName === 'A') {
+                    e.preventDefault();
+                    const filialId = e.target.dataset.filialId;
+                    btn.textContent = e.target.textContent;
+                    dropdown.classList.remove('show');
+                    updateVariantStockInputs(filialId);
+                }
+            };
+
+            // Set initial state
+            const userBranchId = localStorage.getItem('userBranch')?.trim();
+            let initialBranch = filiais.find(f => f.id === userBranchId);
+            if (!initialBranch) {
+                initialBranch = filiais[0]; // Default to the first branch
+            }
+            
+            btn.textContent = initialBranch.nome;
+            updateVariantStockInputs(initialBranch.id);
+        }
+
+        function renderAgrupamentoManager(container, stockData, unitName) {
+            const unit = document.getElementById('productUnitInput').value;
+            const step = (unit === 'M' || unit === 'M²') ? '0.01' : '1';
+            const unidades = stockData?.unidades || [];
+
+            container.innerHTML = `
+                <div class="agrupamento-list-manager">
+                    <div class="agrupamento-unidades-list">
+                        ${unidades.map((unidade, index) => `
+                            <div class="agrupamento-unidade-item" data-index="${index}">
+                                <input type="text" class="agrupamento-id-input" placeholder="Lote/${unitName} nº" value="${unidade.id || ''}" style="flex-basis: 120px;">
+                                <input type="number" class="agrupamento-qtde-input" placeholder="Qtde" value="${unidade.qtde || 0}" min="0" step="${step}" required style="flex-grow: 1;">
+                                <button type="button" class="remove-agrupamento-btn">&times;</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button type="button" class="add-agrupamento-unidade-btn">+ Adicionar ${unitName}</button>
+                </div>
+            `;
+        }
+
+        function saveCurrentAgrupamentoData(branchId, parentSelector = null) {
+            if (!branchId) return;
+
+            const parentElement = parentSelector ? document.querySelector(parentSelector) : document;
+            if (!parentElement) return;
+
+            const manager = parentElement.querySelector('.agrupamento-list-manager');
+            if (!manager) return; // Se o gerenciador não está visível, não há o que salvar
+
+            const unidades = [];
+            let total = 0;
+            manager.querySelectorAll('.agrupamento-unidade-item').forEach(item => {
+                const id = item.querySelector('.agrupamento-id-input').value.trim();
+                const qtde = parseFloat(item.querySelector('.agrupamento-qtde-input').value) || 0;
+                unidades.push({ id, qtde });
+                total += qtde;
+            });
+
+            const agrupamentoNome = document.getElementById('agrupamentoNomeInput').value.trim();
+            const newStockData = { nome: agrupamentoNome, unidades, total };
+
+            // Salva no dataset do elemento pai (seja um .variant-item ou o form principal)
+            if (parentSelector) {
+                const originalVariantData = JSON.parse(parentElement.dataset.originalVariantData || '{}');
+                if (!originalVariantData.stock) originalVariantData.stock = {};
+                originalVariantData.stock[branchId] = newStockData;
+                parentElement.dataset.originalVariantData = JSON.stringify(originalVariantData);
+            } else {
+                // Lógica para o estoque principal (não variante)
+                const product = currentEditingProductId ? catalogoProdutos.find(p => p.id === currentEditingProductId) : {};
+                if (!product.estoque) product.estoque = {};
+                product.estoque[branchId] = newStockData;
+            }
+        }
+
+        function setupModalStockManager(productId) {
+        const container = document.getElementById('modal-branch-selector-container');
+        if (!container) return; // Seletor não está no layout atual do modal
+
+        const btn = document.getElementById('modal-branch-selector-btn');
+        const dropdown = document.getElementById('modal-branch-selector-dropdown');
+        const stockInputContainer = document.getElementById('modal-stock-input-container');
+        const product = productId ? catalogoProdutos.find(p => p.id === productId) : null;
+
+        const usaAgrupamento = document.getElementById('enableAgrupamentoCheck').checked;
+        if (usaAgrupamento) {
+            // Se usar agrupamento, a lógica de estoque é diferente e gerenciada em outro lugar
+            container.parentElement.style.display = 'none'; // Esconde o seletor de filial antigo
+            renderAgrupamentoManager(document.getElementById('agrupamento-list-manager'), product?.estoque, product?.agrupamento?.nome || 'Unidade');
+            return;
+        }
+
+        // Função auxiliar para renderizar os inputs de estoque
+        const renderStockInputs = (filialId, filialName) => {
+            const unit = document.getElementById('productUnitInput').value;
+            const step = (unit === 'M' || unit === 'M²') ? '0.01' : '1';
+            const stockData = (product && product.estoque && typeof product.estoque === 'object') ? product.estoque : {};
+
+            stockInputContainer.innerHTML = ''; // Limpa antes de adicionar
+
+            if (filialId === 'all') {
+                filiais.forEach(filial => {
+                    const currentStock = stockData[filial.id] || 0;
+                    const inputGroup = document.createElement('div');
+                    inputGroup.style.cssText = 'display: flex; align-items: center; gap: 10px; margin-bottom: 10px;';
+                    inputGroup.innerHTML = `
+                        <label for="modal-stock-input-${filial.id}" style="flex-basis: 120px; text-align: right;">${filial.nome}</label>
+                        <input type="number" id="modal-stock-input-${filial.id}" class="modal-product-stock-branch-input" 
+                                data-filial-id="${filial.id}" value="${currentStock}" min="0" step="${step}" required 
+                                style="flex-grow: 1; margin-bottom: 0;">
+                    `;
+                    stockInputContainer.appendChild(inputGroup);
+                });
+            } else {
+                const currentStock = stockData[filialId] || 0;
+                stockInputContainer.innerHTML = `
+                    <input type="number" id="modalProductStockInput" data-filial-id="${filialId}" 
+                            value="${currentStock}" min="0" step="${step}" required 
+                            placeholder="Estoque para ${filialName}" style="width: 100%;"
+                    >
+                `;
+            }
+        };
+
+        if (!productId) { // --- MODO CADASTRO ---
+            btn.textContent = 'Todas as Filiais';
+            btn.disabled = true;
+            dropdown.innerHTML = ''; // Limpa para não haver interação
+            renderStockInputs('all', 'Todas as Filiais');
+            return; // Impede que o resto da função seja executado
+        }
+
+        // --- MODO EDIÇÃO ---
+        btn.disabled = false; // Garante que o botão está habilitado
+
+        // Popula o dropdown com as filiais
+        dropdown.innerHTML = '';
+        dropdown.innerHTML += '<a href="#" data-filial-id="all">Todas as Filiais</a>';
+        filiais.forEach(filial => {
+            dropdown.innerHTML += `<a href="#" data-filial-id="${filial.id}">${filial.nome}</a>`;
+        });
+
+        // Adiciona listeners de clique (usando .onclick para substituir listeners antigos a cada abertura do modal)
+        btn.onclick = (e) => { e.stopPropagation(); dropdown.classList.toggle('show'); };
+        dropdown.onclick = (e) => {
+            if (e.target.tagName === 'A') {
+                e.preventDefault();
+                const filialId = e.target.dataset.filialId;
+                const filialName = e.target.textContent;
+                btn.textContent = filialName;
+                dropdown.classList.remove('show');
+                renderStockInputs(filialId, filialName);
+            }
+        };
+
+        // Define o estado inicial para o modo de edição
+        const userBranchId = localStorage.getItem('userBranch')?.trim();
+        const filialDoUsuario = filiais.find(f => f.id === userBranchId);
+
+        if (filialDoUsuario) {
+            btn.textContent = filialDoUsuario.nome;
+            renderStockInputs(filialDoUsuario.id, filialDoUsuario.nome);
+        } else {
+            // Fallback caso não encontre a filial do usuário
+            btn.textContent = 'Selecione uma Filial';
+            stockInputContainer.innerHTML = '';
+        }
+    }
+
+        function renderItemsInList(items, listElement, productType) {
+            listElement.innerHTML = '';
+            if (!items) return;
+ 
+            const isFormulaBased = listElement.id === 'composition-list' && (productType === 'sob-medida' || productType === 'toldo-completo');
+
+            items.forEach(item => {
+                const product = catalogoProdutos.find(p => p.id === item.productId);
+                if (product) {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = listElement.id === 'composition-list' ? 'component-item' : 'bundle-item';
+                    itemDiv.dataset.productId = item.productId;
+                    if (isFormulaBased) {
+                        const formula = item.formula || '1';
+                        itemDiv.dataset.formula = formula;
+                        itemDiv.innerHTML = `
+                            <span class="item-name">${product.nome}</span>
+                            <div class="item-controls">
+                                <div class="reorder-controls">
+                                    <button type="button" class="move-item-btn move-up-btn" title="Mover para cima">▲</button>
+                                    <button type="button" class="move-item-btn move-down-btn" title="Mover para baixo">▼</button>
+                                </div>
+                                <span class="item-quantity-display">Fórmula: ${formula}</span>
+                                <button type="button" class="edit-quantity-btn"><i class="fas fa-pencil-alt"></i></button>
+                                <button type="button" class="remove-item-btn">&times;</button>
+                            </div>`;
+                    } else {
+                        const quantity = item.quantity || 1;
+                        itemDiv.dataset.quantity = quantity;
+                        itemDiv.innerHTML = `
+                            <span class="item-name">${product.nome}</span>
+                            <div class="item-controls">
+                                <div class="reorder-controls">
+                                    <button type="button" class="move-item-btn move-up-btn" title="Mover para cima">▲</button>
+                                    <button type="button" class="move-item-btn move-down-btn" title="Mover para baixo">▼</button>
+                                </div>
+                                <span class="item-quantity-display">Qtd: ${quantity}</span>
+                                <div class="item-quantity-edit" style="display: none;">
+                                    <input type="number" value="${quantity}" min="0.01" step="0.01">
+                                    <button type="button" class="save-quantity-btn"><i class="fas fa-check"></i></button>
+                                </div>
+                                <button type="button" class="edit-quantity-btn"><i class="fas fa-pencil-alt"></i></button>
+                                <button type="button" class="remove-item-btn">&times;</button>
+                            </div>`;
+                    }
+                    listElement.appendChild(itemDiv);
+                }
+            });
+            updateMoveButtons(listElement);
+        }
+
+        async function handleSaveProduct(event) {
+            event.preventDefault();
+            // --- Lógica de Estoque ---
+            let originalProduct = currentEditingProductId ? catalogoProdutos.find(p => p.id === currentEditingProductId) : null;
+
+            const activeTypeButton = document.querySelector('#add-product-modal .type-btn.active');
+            const productType = activeTypeButton ? activeTypeButton.dataset.type : 'simples';
+
+            const newProduct = {
+                nome: document.getElementById('productNameInput').value,
+                codigo: document.getElementById('productCodeInput').value,
+                type: productType,
+                unidade: null, descricao: null, precoAtacado: 0, precoVarejo: 0, estoque: null,
+                ncm: null, cfop: null, csosn: null, cstIcms: null, cstIpi: null,
+                precoMinimo: 0,
+                custo: 0,
+                agrupamento: null,
+                composition: [], bundleItems: [], customVariables: [], variants: []
+            };
+
+            if (productType === 'simples' || productType === 'kit-item') {
+                newProduct.unidade = document.getElementById('productUnitInput').value;
+                newProduct.ncm = document.getElementById('productNcmInput').value.trim();
+                newProduct.cfop = document.getElementById('productCfopInput').value.trim();
+                newProduct.csosn = document.getElementById('productCsosnInput').value.trim();
+                newProduct.cstIcms = document.getElementById('productCstIcmsInput').value.trim();
+            }
+
+            // --- Lógica de Agrupamento ---
+            const usaAgrupamento = document.getElementById('enableAgrupamentoCheck').checked;
+            if (usaAgrupamento) {
+                const nomeAgrupamento = document.getElementById('agrupamentoNomeInput').value.trim();
+                if (nomeAgrupamento) {
+                    newProduct.agrupamento = { nome: nomeAgrupamento };
+                }
+            }
+
+            if (productType === 'simples') {
+                const variantItems = document.querySelectorAll('#variants-list .variant-item');
+                if (variantItems.length > 0) {
+                    // Salva os dados da última filial selecionada no modal de variantes
+                    if (currentVariantBranchId) {
+                        variantItems.forEach(item => {
+                            const stockContainer = item.querySelector('.variant-stock-container');
+                            const isAgrupamento = !!stockContainer.querySelector('.agrupamento-list-manager');
+                            if (isAgrupamento) {
+                                saveCurrentAgrupamentoData(currentVariantBranchId, `#${item.id}`); // Precisa de um ID no item
+                            } else {
+                                const stockInput = item.querySelector('.variant-stock-input');
+                                const originalVariantData = JSON.parse(item.dataset.originalVariantData || '{}');
+                                if (!originalVariantData.stock) originalVariantData.stock = {};
+                                originalVariantData.stock[currentVariantBranchId] = parseFloat(stockInput.value) || 0;
+                                item.dataset.originalVariantData = JSON.stringify(originalVariantData);
+                            }
+                        });
+                    }
+
+                    newProduct.variants = [];
+                    variantItems.forEach((item, index) => {
+                        const name = item.querySelector('.variant-name-input').value.trim();
+                        // Pega os dados originais da variante, incluindo o mapa de estoque completo
+                        const originalVariantData = JSON.parse(item.dataset.originalVariantData || '{}');
+                        const stockMap = (originalVariantData.stock && originalVariantData.stock !== null) ? { ...originalVariantData.stock } : {};
+                        
+                        // O estoque já foi atualizado no dataset pela lógica acima e ao trocar de filial
+                        if (name) {
+                            newProduct.variants.push({ name, stock: stockMap });
+                        }
+                    });
+                    newProduct.estoque = null; // O estoque é gerenciado dentro das variantes
+                } else {
+                    const stockMap = (originalProduct && typeof originalProduct.estoque === 'object' && originalProduct.estoque !== null) ? { ...originalProduct.estoque } : {};
+                    if (usaAgrupamento) {
+                        // Salva o estado atual do gerenciador de agrupamento
+                        const manager = document.getElementById('agrupamento-list-manager');
+                        const unidades = [];
+                        let total = 0;
+                        manager.querySelectorAll('.agrupamento-unidade-item').forEach(item => {
+                            const id = item.querySelector('.agrupamento-id-input').value.trim();
+                            const qtde = parseFloat(item.querySelector('.agrupamento-qtde-input').value) || 0;
+                            unidades.push({ id, qtde });
+                            total += qtde;
+                        });
+                        newProduct.estoque = { nome: newProduct.agrupamento.nome, unidades, total };
+                    } else {
+                        // Lógica de estoque simples
+                        const modalStockInput = document.getElementById('modalProductStockInput'); // Input único
+                        const multiStockInputs = document.querySelectorAll('.modal-product-stock-branch-input'); // Múltiplos inputs
+
+                        if (modalStockInput && modalStockInput.dataset.filialId) { // Modo de edição de filial única
+                            const filialId = modalStockInput.dataset.filialId;
+                            const stockValue = parseFloat(modalStockInput.value) || 0;
+                            stockMap[filialId] = stockValue;
+                        } else if (multiStockInputs.length > 0) { // Modo de edição "Todas as Filiais"
+                            multiStockInputs.forEach(input => {
+                                const filialId = input.dataset.filialId;
+                                if (filialId) stockMap[filialId] = parseFloat(input.value) || 0;
+                            });
+                        }
+                    }
+                    newProduct.estoque = stockMap;
+                }
+            } else {
+                // Para outros tipos de produto, apenas preserva o que já existia
+                if (originalProduct) {
+                    newProduct.estoque = originalProduct.estoque;
+                    newProduct.variants = originalProduct.variants;
+                    newProduct.agrupamento = originalProduct.agrupamento;
+                }
+            }
+
+            // Lê os preços de custo e mínimo, que agora são comuns a mais tipos de produto
+            newProduct.precoMinimo = parseFloat(document.getElementById('productPriceMinimoInput').value.replace(',', '.')) || 0;
+            newProduct.custo = parseFloat(document.getElementById('productCustoInput').value.replace(',', '.')) || 0;
+            newProduct.cstIpi = document.getElementById('productCstIpiInput').value.trim();
+
+            if (productType === 'simples' || productType === 'kit-item' || productType === 'kit' || productType === 'sob-medida') {
+                newProduct.descricao = document.getElementById('productDescInput').value;
+            }
+
+            if (productType === 'sob-medida') {
+                newProduct.unidade = 'Sob Medida';
+                newProduct.precoAtacado = parseFloat(document.getElementById('productPriceAtacadoInput').value.replace(',', '.')) || 0;
+                newProduct.precoVarejo = parseFloat(document.getElementById('productPriceVarejoInput').value.replace(',', '.')) || 0;
+                // Salva dados fiscais para sob-medida
+                newProduct.ncm = document.getElementById('productNcmInput').value.trim();
+                newProduct.cfop = document.getElementById('productCfopInput').value.trim();
+                newProduct.csosn = document.getElementById('productCsosnInput').value.trim();
+                newProduct.cstIcms = document.getElementById('productCstIcmsInput').value.trim();
+                newProduct.cstIpi = document.getElementById('productCstIpiInput').value.trim();
+                // Salva as variáveis personalizadas
+                document.querySelectorAll('#sob-medida-variables-list .variable-tag').forEach(tag => {
+                    newProduct.customVariables.push({
+                        name: tag.dataset.name, value: tag.dataset.value
+                    });
+                });
+            }
+
+            if (productType === 'simples' || productType === 'kit-item' || productType === 'kit') {
+                newProduct.precoAtacado = parseFloat(document.getElementById('productPriceAtacadoInput').value.replace(',', '.')) || 0;
+                newProduct.precoVarejo = parseFloat(document.getElementById('productPriceVarejoInput').value.replace(',', '.')) || 0;
+            }
+
+            if (productType === 'kit-item' || productType === 'sob-medida') {
+                const isSobMedida = productType === 'sob-medida';
+                document.querySelectorAll('#composition-list .component-item').forEach(item => {
+                    const componentData = {};
+                    componentData.productId = item.dataset.productId;
+
+                    if (isSobMedida) {
+                        componentData.formula = item.dataset.formula || '1';
+                    } else {
+                        componentData.quantity = parseFloat(item.dataset.quantity) || 1;
+                    }
+
+                    // CORREÇÃO: Encontra o componente original no produto que está sendo editado
+                    const originalComponent = originalProduct?.composition?.find(c => c.productId === item.dataset.productId);
+                    if (originalComponent && originalComponent.variants) {
+                        componentData.variants = originalComponent.variants; // Preserva as variantes
+                    }
+
+                    newProduct.composition.push(componentData);
+                });
+            } else if (productType === 'kit') {
+                document.querySelectorAll('#bundle-list .bundle-item').forEach(item => {
+                    newProduct.bundleItems.push({
+                        productId: item.dataset.productId,
+                        quantity: parseFloat(item.dataset.quantity)
+                    });
+                });
+            } else if (productType === 'toldo-completo') {
+                newProduct.descricao = document.getElementById('productDescInput').value;
+                newProduct.unidade = 'M²'; // Unidade fixa para este tipo
+
+                // Salva dados fiscais
+                newProduct.ncm = document.getElementById('productNcmInput').value.trim();
+                newProduct.cfop = document.getElementById('productCfopInput').value.trim();
+                newProduct.csosn = document.getElementById('productCsosnInput').value.trim();
+                newProduct.cstIcms = document.getElementById('productCstIcmsInput').value.trim();
+                newProduct.cstIpi = document.getElementById('productCstIpiInput').value.trim();
+
+                // Salva os preços por marca de lona
+                newProduct.precosPorLona = [];
+                document.querySelectorAll('#lona-prices-list .lona-price-item').forEach(row => {
+                    const productId = row.dataset.productId;
+                    const precoStr = row.querySelector('.lona-preco-input').value;
+                    const preco = parseFloat(precoStr.replace(/\./g, '').replace(',', '.')) || 0;
+                    if (productId && preco > 0) {
+                        newProduct.precosPorLona.push({ productId, preco });
+                    }
+                });
+
+                // Salva a composição padrão do kit
+                newProduct.composition = Array.from(document.querySelectorAll('#composition-list .component-item')).map(item => ({ productId: item.dataset.productId, formula: item.dataset.formula || '1' }));
+
+                // Salva as variáveis personalizadas
+                newProduct.customVariables = Array.from(document.querySelectorAll('#sob-medida-variables-list .variable-tag'))
+                    .map(tag => ({
+                        name: tag.dataset.name, value: tag.dataset.value
+                    }));
+            } else if (productType === 'personalizado') {
+                // Coleta dados básicos
+                newProduct.unidade = document.getElementById('productUnitInput').value;
+                newProduct.descricao = document.getElementById('productDescInput').value;
+                newProduct.precoAtacado = parseFloat(document.getElementById('productPriceAtacadoInput').value.replace(',', '.')) || 0;
+                newProduct.precoVarejo = parseFloat(document.getElementById('productPriceVarejoInput').value.replace(',', '.')) || 0;
+                newProduct.ncm = document.getElementById('productNcmInput').value.trim();
+                newProduct.cfop = document.getElementById('productCfopInput').value.trim();
+                newProduct.csosn = document.getElementById('productCsosnInput').value.trim();
+                newProduct.cstIcms = document.getElementById('productCstIcmsInput').value.trim();
+                newProduct.cstIpi = document.getElementById('productCstIpiInput').value.trim();
+
+                // Coleta dados das seções ativadas
+                if (document.getElementById('product-variants-container').style.display !== 'none') {
+                    // ... lógica de variantes ...
+                }
+                if (document.getElementById('product-composition-container').style.display !== 'none') {
+                    // ... lógica de composição ...
+                }
+                if (document.getElementById('sob-medida-variables-section').style.display !== 'none') {
+                    // ... lógica de variáveis sob medida ...
+                }
+            }
+
+            try {
+                if (currentEditingProductId) {
+                    await db.collection('produtos').doc(currentEditingProductId).update(newProduct);
+                    showToast('Produto atualizado com sucesso!', 'success');
+                } else {
+                    await db.collection('produtos').add(newProduct);
+                    showToast('Produto cadastrado com sucesso!', 'success');
+                }
+                closeProductModal();
+                await fetchProductsFromFirestore(); // Recarrega a lista
+            } catch (error) {
+                console.error("Erro ao salvar produto:", error);
+                showToast('Erro ao salvar o produto.', 'error');
+            }
+        }
+
+        async function handleDeleteProduct(productId) {
+            const product = catalogoProdutos.find(p => p.id === productId);
+            const productName = product ? product.nome : 'este produto';
+
+            showConfirmModal(`Tem certeza que deseja excluir "${productName}"? Esta ação não pode ser desfeita.`, async (confirmed) => {
+                if (confirmed) {
+                    try {
+                        await db.collection('produtos').doc(productId).delete();
+                        showToast('Produto excluído com sucesso!', 'success');
+                        await fetchProductsFromFirestore();
+                    } catch (error) {
+                        console.error("Erro ao excluir produto:", error);
+                        showToast('Falha ao excluir o produto.', 'error');
+                    }
+                }
+            });
+        }
+
+        // Funções de paginação e pesquisa do catálogo
+        function addExitAnimationAndRedirect() {
+            document.body.classList.add('fade-zoom-out');
+            setTimeout(() => {
+                window.location.href = 'menu.html';
+            }, 500);
+        }
+        
+        function displayProducts(products, page, animate = false) {
+            const tableBody = productTableBody;
+
+            const _populateTable = (withAnimation) => {
+                tableBody.innerHTML = ''; // Limpa a tabela
+                const startIndex = (page - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                const paginatedItems = products.slice(startIndex, endIndex);
+
+                if (paginatedItems.length === 0) {
+                    const noResultRow = tableBody.insertRow();
+                    const cell = noResultRow.insertCell();
+                    cell.colSpan = 8;
+                    cell.style.textAlign = 'center';
+                    cell.textContent = 'Nenhum produto encontrado.';
+                    if (withAnimation) noResultRow.classList.add('fade-in-individual');
+                    return;
+                }
+
+                paginatedItems.forEach((product, index) => {
+                    const row = tableBody.insertRow();
+                    row.dataset.id = product.id;
+                    
+                    let stockValue;
+                    let stockBreakdownTitle = '', iconClass = 'fas fa-info-circle';
+
+                    // Calcula o valor de estoque a ser exibido na célula, baseado na filial selecionada
+                    if (selectedFilialId) {
+                        if (product.variants && product.variants.length > 0) {
+                            stockValue = product.variants.reduce((sum, v) => sum + (Number(v.stock?.[selectedFilialId]) || 0), 0);
+                        } else {
+                            const stockData = product.estoque;
+                            if (typeof stockData === 'object' && stockData !== null) {
+                                stockValue = stockData[selectedFilialId] || 0;
+                            } else {
+                                stockValue = 0; // Se não for objeto, não há estoque por filial
+                            }
+                        }
+                    } else { // "Estoque Total" selecionado
+                        if (product.variants && product.variants.length > 0) {
+                            stockValue = product.variants.reduce((sum, v) => sum + getTotalStock(v.stock), 0);
+                        } else {
+                            stockValue = getTotalStock(product.estoque);
+                        }
+                    }
+
+                    // Se for sistema de agrupamento, o tooltip pode ser mais detalhado
+                    if (product.agrupamento && product.estoque && typeof product.estoque === 'object' && product.estoque.unidades) {
+                        const unitName = product.agrupamento.nome || 'unidade';
+                        const count = product.estoque.unidades.length;
+                        stockBreakdownTitle = `${count} ${unitName}(s) no total.`;
+                    }
+
+                    if (product.variants && product.variants.length > 0) {
+                        const branchTotals = {};
+                        let hasBranchData = false;
+                        product.variants.forEach(variant => {
+                            if (typeof variant.stock === 'object' && variant.stock !== null) {
+                                hasBranchData = true;
+                                for (const filialId in variant.stock) {
+                                    const filial = filiais.find(f => f.id === filialId);
+                                    const filialName = filial ? filial.nome : filialId;
+                                    if (!branchTotals[filialName]) branchTotals[filialName] = 0;
+                                    branchTotals[filialName] += Number(variant.stock[filialId]) || 0;
+                                }
+                            }
+                        });
+                        if (hasBranchData) {
+                            stockBreakdownTitle = "Estoque por Filial (Total):\n" + Object.entries(branchTotals).map(([name, stock]) => `${name}: ${stock}`).join('\n');
+                        } else {
+                            stockBreakdownTitle = product.variants.map(v => `${v.name}: ${getTotalStock(v.stock)}`).join('\n');
+                            iconClass = 'fas fa-layer-group';
+                        }
+                    } else {
+                        if (typeof product.estoque === 'object' && product.estoque !== null) {
+                            stockBreakdownTitle = "Estoque por Filial:\n" + filiais.map(f => `${f.nome}: ${product.estoque[f.id] || 0}`).join('\n');
+                        }
+                    }
+                    
+                    let stockCellClass = '', rowClass = '';
+                    if (stockValue !== null && stockValue !== undefined) {
+                        if (stockValue <= 0) rowClass = 'stock-out';
+                        else if (stockValue <= 10) stockCellClass = 'stock-critical';
+                        else if (stockValue <= 20) stockCellClass = 'stock-very-low';
+                        else if (stockValue <= 50) stockCellClass = 'stock-low';
+                    }
+
+                    if (withAnimation) {
+                        rowClass = `${rowClass} fade-in-individual`.trim();
+                    }
+                    if (rowClass) row.className = rowClass;
+
+                    let stockDisplayValue = (stockValue !== null && stockValue !== undefined) ? stockValue : 'N/A';
+                    let stockCellHtml;
+                    if (stockBreakdownTitle) {
+                        stockCellHtml = `<td class="${stockCellClass}" title="${stockBreakdownTitle}">${stockDisplayValue}</td>`;
+                    } else {
+                        stockCellHtml = `<td class="${stockCellClass}">${stockDisplayValue}</td>`;
+                    }
+
+                    row.innerHTML = `
+                        <td>${product.codigo}</td>
+                        <td>${product.nome}</td>
+                        <td>${product.unidade}</td>
+                        <td>${product.descricao}</td>
+                        <td>R$ ${Number(product.precoAtacado).toFixed(2)}</td>
+                        <td>R$ ${Number(product.precoVarejo).toFixed(2)}</td>
+                        ${stockCellHtml}
+                        <td class="actions-cell"><button class="actions-btn" data-id="${product.id}"><i class="fas fa-ellipsis-v"></i></button></td>
+                    `;
+                    if (withAnimation) row.style.animationDelay = `${index * 0.04}s`;
+                });
+            };
+
+            if (animate) {
+                const rows = Array.from(tableBody.children);
+                if (rows.length > 0 && rows[0].cells.length > 1) {
+                    let maxDelay = 0;
+                    rows.forEach((row, index) => {
+                        const delay = index * 0.02;
+                        row.style.animationDelay = `${delay}s`;
+                        row.classList.add('fade-out-individual');
+                        if (delay > maxDelay) maxDelay = delay;
+                    });
+                    const totalAnimationTime = (maxDelay * 1000) + 200;
+                    setTimeout(() => _populateTable(true), totalAnimationTime);
+                } else {
+                    _populateTable(true);
+                }
+            } else {
+                _populateTable(false);
+            }
+        }
+        
+        function setupPagination(products) {
+            paginationContainer.innerHTML = '';
+            const pageCount = Math.ceil(products.length / itemsPerPage);
+            if (pageCount <= 1) return; // Não mostra paginação se houver apenas uma página
+
+            for (let i = 1; i <= pageCount; i++) {
+                const btn = document.createElement('button');
+                btn.classList.add('page-button');
+                btn.innerText = i;
+                if (i === currentPage) {
+                    btn.classList.add('active');
+                }
+                btn.addEventListener('click', () => {
+                    currentPage = i;
+                    displayProducts(products, currentPage, true); // Anima a troca de página
+                    const currentActiveBtn = document.querySelector('.page-button.active');
+                    if (currentActiveBtn) {
+                        currentActiveBtn.classList.remove('active');
+                    }
+                    btn.classList.add('active');
+                });
+                paginationContainer.appendChild(btn);
+            }
+        }
+        
+        function normalizeString(str) {
+            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        }
+
+        function searchProducts() {
+            const searchTerm = searchInput.value.toLowerCase();
+            if (searchTerm === lastSearchTerm) {
+                return; // Evita animação desnecessária
+            }
+            lastSearchTerm = searchTerm;
+
+            const normalizedSearchTerm = normalizeString(searchTerm);
+
+            filteredProducts = catalogoProdutos.filter(product => {
+                const normalizedProductName = normalizeString(product.nome.toLowerCase());
+                const normalizedProductDesc = normalizeString(product.descricao.toLowerCase());
+                return normalizedProductName.includes(normalizedSearchTerm) || 
+                        product.codigo.toLowerCase().includes(searchTerm) ||
+                        normalizedProductDesc.includes(normalizedSearchTerm);
+            });
+            currentPage = 1;
+            setupPagination(filteredProducts);
+            displayProducts(filteredProducts, currentPage, true);
+        }
+
+        function addItemToList(product, listElement) {
+            const existingItem = listElement.querySelector(`[data-product-id="${product.id}"]`);
+            if (existingItem) {
+                showToast(`O item "${product.nome}" já foi adicionado.`, 'error');
+                return;
+            }
+
+            const activeTypeButton = document.querySelector('#add-product-modal .type-btn.active');
+            const productType = activeTypeButton ? activeTypeButton.dataset.type : 'unidade';
+            const isFormulaBased = listElement.id === 'composition-list' && (productType === 'sob-medida' || productType === 'toldo-completo');
+
+            const itemDiv = document.createElement('div');
+            itemDiv.className = listElement.id === 'composition-list' ? 'component-item' : 'bundle-item';
+            itemDiv.dataset.productId = product.id;
+
+            if (isFormulaBased) {
+                itemDiv.dataset.formula = '1'; // Fórmula padrão
+                itemDiv.innerHTML = `
+                    <span class="item-name">${product.nome}</span>
+                    <div class="item-controls">
+                        <div class="reorder-controls">
+                            <button type="button" class="move-item-btn move-up-btn" title="Mover para cima">▲</button>
+                            <button type="button" class="move-item-btn move-down-btn" title="Mover para baixo">▼</button>
+                        </div>
+                        <span class="item-quantity-display">Fórmula: 1</span>
+                        <button type="button" class="edit-quantity-btn"><i class="fas fa-pencil-alt"></i></button>
+                        <button type="button" class="remove-item-btn">&times;</button>
+                    </div>`;
+            } else {
+                itemDiv.dataset.quantity = 1; // Quantidade padrão
+                itemDiv.innerHTML = `
+                    <span class="item-name">${product.nome}</span>
+                    <div class="item-controls">
+                        <div class="reorder-controls">
+                            <button type="button" class="move-item-btn move-up-btn" title="Mover para cima">▲</button>
+                            <button type="button" class="move-item-btn move-down-btn" title="Mover para baixo">▼</button>
+                        </div>
+                        <span class="item-quantity-display">Qtd: 1</span>
+                        <div class="item-quantity-edit" style="display: none;">
+                            <input type="number" value="1" min="0.01" step="0.01">
+                            <button type="button" class="save-quantity-btn"><i class="fas fa-check"></i></button>
+                        </div>
+                        <button type="button" class="edit-quantity-btn"><i class="fas fa-pencil-alt"></i></button>
+                        <button type="button" class="remove-item-btn">&times;</button>
+                    </div>`;
+            }
+            listElement.appendChild(itemDiv);
+            updateMoveButtons(listElement);
+        }
+
+        // CORREÇÃO: Adiciona a função 'updateMoveButtons' que estava faltando.
+        function updateMoveButtons(listElement) {
+            const items = listElement.querySelectorAll('.component-item, .bundle-item');
+            items.forEach((item, index) => {
+                const upBtn = item.querySelector('.move-up-btn');
+                const downBtn = item.querySelector('.move-down-btn');
+                if (upBtn) {
+                    upBtn.disabled = (index === 0);
+                }
+                if (downBtn) {
+                    downBtn.disabled = (index === items.length - 1);
+                }
+            });
+        }
+
+        function setupKitItemSearch(searchInputEl, targetListEl) {
+            const parentAdder = searchInputEl.parentElement;
+            let suggestionsContainer = parentAdder.querySelector('.kit-suggestions');
+            if (!suggestionsContainer) {
+                suggestionsContainer = document.createElement('div');
+                suggestionsContainer.className = 'kit-suggestions';
+                parentAdder.appendChild(suggestionsContainer);
+            }
+            let selectedSuggestionIndex = -1;
+
+            searchInputEl.addEventListener('input', () => {
+                const searchTerm = searchInputEl.value.toLowerCase();
+                suggestionsContainer.innerHTML = '';
+                suggestionsContainer.style.display = 'none';
+                selectedSuggestionIndex = -1; // Reseta o índice no input
+
+                if (searchTerm.length < 1) {
+                    return;
+                }
+
+                const normalizedSearchTerm = normalizeString(searchTerm);
+                const isComposition = targetListEl.id === 'composition-list';
+
+                const filtered = catalogoProdutos.filter(p => {
+                    return p.type === 'simples' && (normalizeString(p.nome.toLowerCase()).includes(normalizedSearchTerm) || p.codigo.toLowerCase().includes(searchTerm));
+                });
+
+                if (filtered.length > 0) {
+                    suggestionsContainer.style.display = 'block';
+                    filtered.forEach(product => {
+                        const suggestionItem = document.createElement('div');
+                        suggestionItem.textContent = `${product.nome} (${product.codigo})`;
+                        
+                        suggestionItem.addEventListener('mousedown', (e) => {
+                            e.preventDefault();
+                            addItemToList(product, targetListEl);
+                            searchInputEl.value = '';
+                            suggestionsContainer.style.display = 'none';
+                        });
+                        suggestionsContainer.appendChild(suggestionItem);
+                    });
+                }
+            });
+
+            searchInputEl.addEventListener('blur', () => {
+                // Atraso para permitir o clique na sugestão
+                setTimeout(() => {
+                    suggestionsContainer.style.display = 'none';
+                }, 150);
+            });
+
+            searchInputEl.addEventListener('keydown', (e) => {
+                const suggestions = suggestionsContainer.querySelectorAll('div');
+                if (suggestions.length === 0 || suggestionsContainer.style.display === 'none') return;
+
+                let newIndex = selectedSuggestionIndex;
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    newIndex = selectedSuggestionIndex < suggestions.length - 1 ? selectedSuggestionIndex + 1 : 0;
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    newIndex = selectedSuggestionIndex > 0 ? selectedSuggestionIndex - 1 : suggestions.length - 1;
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (selectedSuggestionIndex !== -1) {
+                        suggestions[selectedSuggestionIndex].dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+                    }
+                    return;
+                } else {
+                    return; // Não faz nada para outras teclas
+                }
+
+                // Remove a seleção do item antigo
+                if (selectedSuggestionIndex !== -1) {
+                    suggestions[selectedSuggestionIndex].classList.remove('selected-suggestion');
+                }
+                
+                // Adiciona a seleção ao novo item
+                suggestions[newIndex].classList.add('selected-suggestion');
+                suggestions[newIndex].scrollIntoView({ block: 'nearest' });
+
+                selectedSuggestionIndex = newIndex;
+            });
+        }
+
+        // --- FUNÇÕES DO CONSTRUTOR DE FÓRMULA ---
+        function getCurrentModalProductType() {
+            if (currentEditingProductId) {
+                const product = catalogoProdutos.find(p => p.id === currentEditingProductId);
+                return product ? product.type : 'simples';
+            } else {
+                const activeTypeButton = document.querySelector('#add-product-modal .type-btn.active');
+                return activeTypeButton ? activeTypeButton.dataset.type : 'simples';
+            }
+        }
+
+        function openFormulaBuilder(targetElement) {
+            currentFormulaTarget = targetElement;
+            const currentFormula = targetElement.dataset.formula || '';
+            const productName = targetElement.querySelector('.item-name').textContent;
+        
+            document.getElementById('formula-builder-title').textContent = `Fórmula para: ${productName}`;            
+            // Preenche as variáveis na calculadora
+            const customVariablesList = document.getElementById('sob-medida-variables-list');
+        
+            // Adiciona a variável 'preco_lona' se for um Toldo Completo
+            const productType = getCurrentModalProductType();
+            const formulaVariablesContainer = document.getElementById('custom-variables-container');
+            formulaVariablesContainer.innerHTML = ''; // Limpa variáveis anteriores
+        
+            if (productType === 'toldo-completo') {
+                const precoLonaBtn = document.createElement('button');
+                precoLonaBtn.className = 'formula-btn';
+                precoLonaBtn.dataset.value = 'preco_lona';
+                precoLonaBtn.dataset.type = 'variable';
+                precoLonaBtn.textContent = 'Preço da Lona';
+                formulaVariablesContainer.appendChild(precoLonaBtn);
+            }
+
+
+            // Remove as variáveis padrão 'altura' e 'comprimento'
+            // Apenas as variáveis criadas pelo usuário serão adicionadas
+            customVariablesList.querySelectorAll('.variable-tag').forEach(tag => {
+                const newVarBtn = document.createElement('button');
+                newVarBtn.className = 'formula-btn';
+                newVarBtn.dataset.value = tag.dataset.value;
+                newVarBtn.dataset.type = 'variable'; // Marca como variável
+                newVarBtn.textContent = tag.dataset.name;
+                formulaVariablesContainer.appendChild(newVarBtn);
+            });
+        
+            // Adiciona o atributo contenteditable e foca no campo
+            formulaDisplay.contentEditable = 'true';
+            renderFormulaFromString(currentFormula); // Renderiza a fórmula
+            formulaDisplay.focus();
+            // Move o cursor para o final do conteúdo
+            setCursorToEnd(formulaDisplay);
+        
+            // Alterna a visibilidade dentro do modal principal
+            addProductForm.style.display = 'none';
+            formulaBuilderWrapper.style.display = 'block';
+        }
+
+        function closeFormulaBuilder() {
+            // Alterna a visibilidade de volta para o formulário
+            formulaBuilderWrapper.style.display = 'none';
+            formulaDisplay.contentEditable = 'false'; // Desativa a edição ao fechar
+            addProductForm.style.display = 'block';
+            currentFormulaTarget = null;
+        }
+        
+        function handleConfirmFormula() {
+            if (currentFormulaTarget) {
+                const newFormula = getFormulaStringFromDisplay();
+                if (newFormula) { // Salva a nova fórmula
+                    currentFormulaTarget.dataset.formula = newFormula;
+                    const controls = currentFormulaTarget.querySelector('.item-controls');
+                    controls.querySelector('.item-quantity-display').textContent = `Fórmula: ${newFormula}`;
+                } else { // Se a fórmula ficar vazia, reseta para '1'
+                    currentFormulaTarget.dataset.formula = '1';
+                    currentFormulaTarget.querySelector('.item-quantity-display').textContent = 'Fórmula: 1';
+                    showToast('A fórmula não pode ser vazia. Redefinida para "1".', 'error');
+                }
+                closeFormulaBuilder();
+            }
+        }
+        
+        // --- NOVAS FUNÇÕES DE CURSOR E RENDERIZAÇÃO ---
+        
+        function saveCursorPosition(context) {
+            const selection = window.getSelection();
+            if (selection.rangeCount === 0) return null;
+            const range = selection.getRangeAt(0);
+            const preSelectionRange = range.cloneRange();
+            preSelectionRange.selectNodeContents(context);
+            preSelectionRange.setEnd(range.startContainer, range.startOffset);
+            return preSelectionRange.toString().length;
+        }
+        
+        function restoreCursorPosition(context, savedPosition) {
+            if (savedPosition === null) return;
+            const selection = window.getSelection();
+            const range = document.createRange();
+            let charCount = 0;
+            let found = false;
+        
+            function findNode(node) {
+                if (found) return;
+                if (node.nodeType === Node.TEXT_NODE) {
+                    const nextCharCount = charCount + node.length;
+                    if (savedPosition <= nextCharCount) {
+                        range.setStart(node, savedPosition - charCount);
+                        range.collapse(true);
+                        found = true;
+                    } else {
+                        charCount = nextCharCount;
+                    }
+                } else {
+                    for (let i = 0; i < node.childNodes.length; i++) {
+                        findNode(node.childNodes[i]);
+                        if (found) break;
+                    }
+                }
+            }
+            findNode(context);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+        
+        function setCursorToEnd(element) {
+            const range = document.createRange();
+            const sel = window.getSelection();
+            // Seleciona todo o conteúdo dentro do elemento
+            range.selectNodeContents(element);
+            // Colapsa a seleção para o final, movendo o cursor para lá
+            range.collapse(false); // false para colapsar no final
+            sel.removeAllRanges(); // Limpa seleções existentes
+            sel.addRange(range);
+            element.focus();
+        }
+        
+        function renderFormulaFromString(formulaString) {
+            const savedCursorPos = saveCursorPosition(formulaDisplay);
+            const content = (typeof formulaString === 'string') ? formulaString : formulaDisplay.textContent;
+            formulaDisplay.innerHTML = ''; // Limpa o conteúdo atual
+            if (!content) return;
+        
+            // Regex melhorado para capturar tokens e espaços
+            const regex = /([a-zA-Z_][a-zA-Z0-9_]*)|([0-9\.]+)|([\+\-\*\/\(\)])|(\s+)|(.)/g;
+            let match;
+            const allVariableNames = new Map();
+            document.querySelectorAll('.formula-variables .formula-btn').forEach(btn => {
+                allVariableNames.set(btn.dataset.value, btn.textContent);
+            });
+        
+            // Adiciona a variável 'preco_lona' se for um Toldo Completo
+            const productType = getCurrentModalProductType();
+            if (productType === 'toldo-completo') {
+                if (!allVariableNames.has('preco_lona')) {
+                    allVariableNames.set('preco_lona', 'Preço da Lona');
+                }
+            }
+
+            const tokens = content.match(/([a-zA-Z_][a-zA-Z0-9_]+)|([\+\-\*\/\(\)])|([0-9\.]+)|(\s+)|(.)/g) || [];
+
+            tokens.forEach(token => {
+                let type = 'error'; // Padrão para tokens não reconhecidos
+                const trimmedToken = token.trim();
+
+                if (allVariableNames.has(token)) {
+                    type = 'variable';
+                } else if (!isNaN(parseFloat(token))) {
+                    type = 'number';
+                } else if (/^[\+\-\*\/\(\)]$/.test(token)) {
+                    type = 'operator';
+                } else if (/^(ROUNDUP|ROUNDDOWN|ROUND)$/i.test(token)) {
+                    type = 'function';
+                } else if (/^\s+$/.test(token)) {
+                    // É um espaço em branco, não cria um token, apenas um nó de texto
+                    formulaDisplay.appendChild(document.createTextNode(token));
+                    return;
+                }
+
+                const tokenSpan = document.createElement('span');
+                tokenSpan.className = `formula-token ${type}`;
+                tokenSpan.textContent = token;
+                formulaDisplay.appendChild(tokenSpan);
+            });
+        }
+
+        // Variável global para o construtor de fórmula
+        let currentFormulaTarget = null;
+
+        function getFormulaStringFromDisplay() {
+            return formulaDisplay.textContent.trim();
+        }
+
+        let formulaClipboard = '';
+        let selectedToken = null;
+
+        // Adição dos listeners de eventos
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadFiscalDataSources();
+            await fetchFiscalConfig();
+            await fetchFiliais();
+            
+            // Configura o seletor de filial principal
+            setupBranchSelector();
+            const mainSelectorBtn = document.getElementById('branch-selector-btn');
+            const mainSelectorDropdown = document.getElementById('branch-selector-dropdown');
+
+            // Define o estado inicial do botão principal
+            if (selectedFilialId) {
+                const userBranch = filiais.find(f => f.id === selectedFilialId);
+                if (userBranch) mainSelectorBtn.textContent = userBranch.nome;
+            }
+
+            // Adiciona os eventos ao seletor principal
+            mainSelectorBtn.addEventListener('click', (e) => { e.stopPropagation(); mainSelectorDropdown.classList.toggle('show'); });
+            mainSelectorDropdown.addEventListener('click', (e) => {
+                if (e.target.tagName === 'A') {
+                    e.preventDefault();
+                    const filialId = e.target.dataset.filialId === 'null' ? null : e.target.dataset.filialId;
+                    selectedFilialId = filialId;
+                    mainSelectorBtn.textContent = e.target.textContent;
+                    mainSelectorDropdown.classList.remove('show');
+                    displayProducts(filteredProducts, currentPage, true);
+                }
+            });
+
+            setupKitItemSearch(document.getElementById('component-search'), document.getElementById('composition-list'));
+            setupKitItemSearch(document.getElementById('bundle-search'), document.getElementById('bundle-list'));            function setupLonaProductSearch() {
+                const searchInputEl = document.getElementById('lona-product-search');
+                const parentAdder = searchInputEl.parentElement;
+                let suggestionsContainer = parentAdder.querySelector('.kit-suggestions');
+                if (!suggestionsContainer) {
+                    suggestionsContainer = document.createElement('div');
+                    suggestionsContainer.className = 'kit-suggestions';
+                    parentAdder.appendChild(suggestionsContainer);
+                }
+
+                searchInputEl.addEventListener('input', () => {
+                    const searchTerm = searchInputEl.value.toLowerCase();
+                    suggestionsContainer.innerHTML = '';
+                    suggestionsContainer.style.display = 'none';
+
+                    if (searchTerm.length < 1) return;
+
+                    const normalizedSearchTerm = normalizeString(searchTerm);
+                    const filtered = catalogoProdutos.filter(p => {
+                        const normalizedProductName = normalizeString(p.nome.toLowerCase());
+                        return (p.type === 'simples') && (normalizedProductName.includes(normalizedSearchTerm) || p.codigo.toLowerCase().includes(searchTerm));
+                    });
+
+                    if (filtered.length > 0) {
+                        suggestionsContainer.style.display = 'block';
+                        filtered.forEach(product => {
+                            const suggestionItem = document.createElement('div');
+                            suggestionItem.textContent = `${product.nome} (${product.codigo})`;
+                            suggestionItem.addEventListener('mousedown', (e) => {
+                                e.preventDefault();
+                                addLonaProductRow({ productId: product.id, preco: 0 });
+                                searchInputEl.value = '';
+                                suggestionsContainer.style.display = 'none';
+                            });
+                            suggestionsContainer.appendChild(suggestionItem);
+                        });
+                    }
+                });
+                searchInputEl.addEventListener('blur', () => { setTimeout(() => { suggestionsContainer.style.display = 'none'; }, 150); });
+            }
+            setupLonaProductSearch();
+
+            document.getElementById('backToMenuButton').addEventListener('click', (event) => {
+                event.preventDefault();
+                document.body.classList.add('fade-zoom-out');
+                setTimeout(() => { window.location.href = 'menu.html'; }, 500);
+            });
+
+            await fetchProductsFromFirestore(); // Carrega os produtos após toda a configuração inicial
+
+            document.getElementById('add-new-variable-btn').addEventListener('click', () => {
+                const input = document.getElementById('new-variable-name-input');
+                const varName = input.value.trim();
+                if (!varName) return;
+                
+                // Limpa o nome para usar como um valor de dados válido
+                const sanitizedValue = varName.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+                if (sanitizedValue.length === 0) {
+                    showToast('Nome de variável inválido. Use apenas letras e números.', 'error');
+                    return;
+                }
+                addVariableToTagList(varName, sanitizedValue);
+            });
+
+            // Listener para remover tags de variáveis
+            document.getElementById('sob-medida-variables-list').addEventListener('click', (e) => {
+                if (e.target.classList.contains('remove-variable-btn')) {
+                    e.target.closest('.variable-tag').remove();
+                }
+            });
+
+            document.getElementById('add-variant-btn').addEventListener('click', () => {
+                addVariantRow(); // Adiciona a linha da variante
+                const variantSelectorContainer = document.getElementById('variant-branch-selector-container');
+                if (variantSelectorContainer.style.display === 'none') {
+                    setupVariantBranchSelector(); // Se for a primeira variante, inicializa o seletor de filial
+                } else {
+                    // Se o seletor já existe, apenas atualiza a nova linha com o input de estoque correto
+                    updateVariantStockInputs(currentVariantBranchId);
+                }
+            });
+
+            document.getElementById('productUnitInput').addEventListener('change', (e) => {
+                const unit = e.target.value;
+                const step = (unit === 'M' || unit === 'M²') ? '0.01' : '1';
+                
+                // Atualiza o passo para todos os tipos de input de estoque que podem estar visíveis
+                const singleStockInput = document.getElementById('modalProductStockInput');
+                if (singleStockInput) singleStockInput.step = step;
+
+                document.querySelectorAll('.modal-product-stock-branch-input').forEach(input => input.step = step);
+                document.querySelectorAll('.variant-stock-input').forEach(input => input.step = step);
+            });
+        });
+        
+        // Listener para campos de estoque para limitar o tamanho e limpar o zero
+        addProductForm.addEventListener('input', (e) => {
+            if (e.target.type === 'number' && (e.target.classList.contains('modal-product-stock-branch-input') || e.target.classList.contains('variant-stock-input') || e.target.id === 'modalProductStockInput')) {
+                if (e.target.value.length > 6) {
+                    e.target.value = e.target.value.slice(0, 6);
+                }
+            }
+        });
+
+
+        document.getElementById('enableAgrupamentoCheck').addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            const configDiv = document.getElementById('agrupamento-config');
+
+            configDiv.style.display = isChecked ? 'block' : 'none';
+
+            if (isChecked) {
+                const product = currentEditingProductId ? catalogoProdutos.find(p => p.id === currentEditingProductId) : null;
+                const stockData = product?.estoque || {};
+                const unitName = product?.agrupamento?.nome || document.getElementById('agrupamentoNomeInput').value.trim() || 'Unidade';
+                renderAgrupamentoManager(document.getElementById('agrupamento-list-manager'), stockData, unitName);
+            }
+        });
+
+        document.getElementById('agrupamento-container').addEventListener('click', (e) => {
+            if (e.target.classList.contains('add-agrupamento-unidade-btn')) {
+                const list = e.target.previousElementSibling;
+                const unitName = document.getElementById('agrupamentoNomeInput').value.trim() || 'Unidade';
+                const unit = document.getElementById('productUnitInput').value;
+                const step = (unit === 'M' || unit === 'M²') ? '0.01' : '1';
+                const newItem = document.createElement('div');
+                newItem.className = 'agrupamento-unidade-item';
+                newItem.innerHTML = `
+                    <input type="text" class="agrupamento-id-input" placeholder="Lote/${unitName} nº" style="flex-basis: 120px;">
+                    <input type="number" class="agrupamento-qtde-input" placeholder="Qtde" value="0" min="0" step="${step}" required style="flex-grow: 1;">
+                    <button type="button" class="remove-agrupamento-btn">&times;</button>`;
+                list.appendChild(newItem);
+            } else if (e.target.classList.contains('remove-agrupamento-btn')) {
+                e.target.closest('.agrupamento-unidade-item').remove();
+            }
+        });
+
+        const modalTypeSelector = document.querySelector('#add-product-modal #product-type-selector');
+        modalTypeSelector.addEventListener('click', (event) => {
+            if (event.target.classList.contains('type-btn')) {
+                modalTypeSelector.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+                const selectedType = event.target.dataset.type;
+                updateModalLayout(selectedType);
+                setupModalStockManager(currentEditingProductId);
+            }
+        });
+
+        document.getElementById('enableAgrupamentoCheck').addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            const configDiv = document.getElementById('agrupamento-config');
+            const stockField = document.getElementById('stock-field');
+
+            configDiv.style.display = isChecked ? 'block' : 'none';
+            stockField.style.display = isChecked ? 'none' : 'block';
+
+            if (isChecked) {
+                const product = currentEditingProductId ? catalogoProdutos.find(p => p.id === currentEditingProductId) : null;
+                const stockData = product?.estoque || {};
+                const unitName = product?.agrupamento?.nome || document.getElementById('agrupamentoNomeInput').value.trim() || 'Unidade';
+                renderAgrupamentoManager(document.getElementById('agrupamento-list-manager'), stockData, unitName);
+            } else {
+                // Se desmarcar, precisa re-inicializar o seletor de filial do modo simples
+                setupModalStockManager(currentEditingProductId);
+            }
+        });
+
+        addProductBtn.addEventListener('click', () => openProductModal());
+        closeAddProductModalBtn.addEventListener('click', closeProductModal);
+        cancelAddProductBtn.addEventListener('click', closeProductModal);
+        addProductForm.addEventListener('submit', handleSaveProduct);
+
+        // Listener delegado para os controles de itens de kit/composição
+            stockModeToggleBtn.addEventListener('click', () => {
+                stockModeToggleBtn.classList.toggle('active');
+                const activeTypeButton = document.querySelector('#add-product-modal .type-btn.active');
+                const productType = activeTypeButton ? activeTypeButton.dataset.type : 'unidade';
+                updateModalLayout(productType);
+            });
+        addProductForm.addEventListener('click', (e) => {
+            const editBtn = e.target.closest('.edit-quantity-btn');
+            if (editBtn) {
+                const controls = editBtn.closest('.item-controls');
+                const componentItem = controls.closest('.component-item, .bundle-item');
+
+                const productType = getCurrentModalProductType();
+                const isFormulaBasedItem = (productType === 'sob-medida' || productType === 'toldo-completo') && componentItem.parentElement.id === 'composition-list';
+
+                if (isFormulaBasedItem) {
+                    openFormulaBuilder(componentItem);
+                } else {
+                    controls.querySelector('.item-quantity-display').style.display = 'none';
+                    editBtn.style.display = 'none';
+                    controls.querySelector('.item-quantity-edit').style.display = 'flex';
+                    controls.querySelector('input').focus();
+                }
+            }
+
+            const saveBtn = e.target.closest('.save-quantity-btn');
+            if (saveBtn) {
+                const controls = saveBtn.closest('.item-controls');
+                const componentItem = controls.closest('.component-item, .bundle-item');
+                const input = controls.querySelector('input');
+
+                // Esta lógica agora só se aplica a itens com quantidade, não fórmulas.
+                const newQuantity = parseFloat(input.value);
+                if (newQuantity > 0) {
+                    componentItem.dataset.quantity = newQuantity;
+                    controls.querySelector('.item-quantity-display').textContent = `Qtd: ${newQuantity}`;
+                }
+
+                controls.querySelector('.item-quantity-display').style.display = 'inline';
+                controls.querySelector('.edit-quantity-btn').style.display = 'inline-block';
+                controls.querySelector('.item-quantity-edit').style.display = 'none';
+                return;
+            }
+
+            const removeBtn = e.target.closest('.remove-item-btn');
+            if (removeBtn) {
+                removeBtn.closest('.component-item, .bundle-item').remove();
+                return;
+            }
+
+            const moveUpBtn = e.target.closest('.move-up-btn');
+            if (moveUpBtn) {
+                const item = moveUpBtn.closest('.component-item, .bundle-item');
+                if (item && item.previousElementSibling) {
+                    item.parentElement.insertBefore(item, item.previousElementSibling);
+                    updateMoveButtons(item.parentElement);
+                }
+                return;
+            }
+
+            const moveDownBtn = e.target.closest('.move-down-btn');
+            if (moveDownBtn) {
+                const item = moveDownBtn.closest('.component-item, .bundle-item');
+                if (item && item.nextElementSibling) {
+                    item.parentElement.insertBefore(item.nextElementSibling, item);
+                    updateMoveButtons(item.parentElement);
+                }
+                return;
+            }
+
+            const removeVariantBtn = e.target.closest('.remove-variant-btn');
+            if (removeVariantBtn) {
+                removeVariantBtn.closest('.variant-item').remove();
+                // Se não houver mais variantes, mostra o campo de estoque principal novamente
+                const productType = getCurrentModalProductType();
+                if (productType === 'simples') {
+                    updateModalLayout('simples');
+                }
+                return;
+            }
+
+            const toggleBtn = e.target.closest('.variants-header');
+            if (toggleBtn) {
+                document.getElementById('product-variants-container').classList.toggle('collapsed');
+            }
+        });
+
+        // Listeners do construtor de fórmula
+        formulaDisplay.addEventListener('click', (e) => {
+            if (selectedToken) selectedToken.classList.remove('selected');
+            const clickedToken = e.target.closest('.formula-token');
+            if (clickedToken) {
+                selectedToken = clickedToken;
+                selectedToken.classList.add('selected');
+            } else {
+                selectedToken = null;
+            }
+        });
+
+        formulaDisplay.addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace' || e.key === 'Delete') {
+                e.preventDefault();
+                if (selectedToken) {
+                    const nextSibling = selectedToken.nextElementSibling;
+                    const prevSibling = selectedToken.previousElementSibling;
+                    selectedToken.remove();
+                    selectedToken = (e.key === 'Backspace' ? prevSibling : nextSibling) || null;
+                    if (selectedToken) selectedToken.classList.add('selected');
+                }
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                if (selectedToken && selectedToken.nextElementSibling) {
+                    selectedToken.classList.remove('selected');
+                    selectedToken = selectedToken.nextElementSibling;
+                    selectedToken.classList.add('selected');
+                }
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                if (selectedToken && selectedToken.previousElementSibling) {
+                    selectedToken.classList.remove('selected');
+                    selectedToken = selectedToken.previousElementSibling;
+                    selectedToken.classList.add('selected');
+                }
+            }
+        });
+
+        // Lógica de Copiar/Colar Aprimorada
+        document.getElementById('copyFormulaBtn').addEventListener('click', async () => {
+            const formulaString = getFormulaStringFromDisplay();
+            if (!formulaString) return;
+            try {
+                await navigator.clipboard.writeText(formulaString);
+                showToast('Fórmula copiada para a área de transferência!', 'success');
+            } catch (err) {
+                console.error('Falha ao copiar fórmula: ', err);
+                showToast('Não foi possível copiar a fórmula.', 'error');
+            }
+        });
+
+        document.getElementById('pasteFormulaBtn').addEventListener('click', async () => {
+            try {
+                const textToPaste = await navigator.clipboard.readText();
+                if (textToPaste) {
+                    document.execCommand('insertText', false, textToPaste);
+                } else {
+                    showToast('Nenhuma fórmula na área de transferência.', 'error');
+                }
+            } catch (err) {
+                console.error('Falha ao colar fórmula: ', err);
+                showToast('Não foi possível colar. Verifique as permissões do navegador.', 'error');
+            }
+        });
+
+        document.getElementById('clearFormulaBtn').addEventListener('click', () => {
+            formulaDisplay.innerHTML = '';
+        });
+
+        // Listener para os botões da calculadora de fórmula
+        document.getElementById('formula-builder-ui').addEventListener('click', (e) => {
+            const btn = e.target.closest('.formula-btn');
+            if (!btn) return;
+
+            if (btn.id === 'formula-backspace-btn') {
+                document.execCommand('delete', false, null);
+            } else {
+                // Insere o valor do botão no ponto do cursor
+                document.execCommand('insertText', false, btn.dataset.value);
+            }
+        });
+
+        confirmFormulaBtn.addEventListener('click', handleConfirmFormula);
+        cancelFormulaBtn.addEventListener('click', closeFormulaBuilder);
+
+        // Listener unificado para a tabela de produtos (ações)
+        productTableBody.addEventListener('click', (event) => {
+            const actionsBtn = event.target.closest('.actions-btn');
+
+            if (!actionsBtn) {
+                document.querySelectorAll('.actions-menu').forEach(menu => menu.remove());
+            }
+
+            if (actionsBtn) {
+                event.stopPropagation(); // Impede que o clique feche o menu imediatamente
+                // Fecha outros menus antes de abrir um novo
+                document.querySelectorAll('.actions-menu').forEach(menu => menu.remove());
+
+                const productId = actionsBtn.dataset.id;
+                const menu = document.createElement('div');
+                menu.className = 'actions-menu';
+                menu.innerHTML = `
+                    <button data-action="edit" data-id="${productId}">Editar</button>
+                    <button data-action="delete" data-id="${productId}" class="delete-action">Excluir</button>
+                `;
+                actionsBtn.parentElement.appendChild(menu);
+                return;
+            }
+
+            const actionMenuItem = event.target.closest('.actions-menu button');
+            if (actionMenuItem) {
+                const action = actionMenuItem.dataset.action;
+                const productId = actionMenuItem.dataset.id;
+                if (action === 'edit') openProductModal(productId);
+                else if (action === 'delete') handleDeleteProduct(productId);
+                actionMenuItem.closest('.actions-menu').remove();
+                return;
+            }
+        });
+
+        // Listener para limpar o valor '0' dos campos de estoque ao focar
+        addProductForm.addEventListener('focusin', (event) => {
+            const target = event.target;
+            if (target.type === 'number' && (target.classList.contains('modal-product-stock-branch-input') || target.classList.contains('variant-stock-input') || target.id === 'modalProductStockInput')) {
+                if (target.value === '0') {
+                    target.value = '';
+                }
+            }
+        });
+
+        // Listener global para fechar o menu de ações ao clicar fora
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.actions-cell')) {
+                document.querySelectorAll('.actions-menu').forEach(menu => menu.remove());
+            }
+            // Adicionado para fechar seletores de filial ao clicar fora
+            if (!e.target.closest('.branch-selector-container')) {
+                document.querySelectorAll('.branch-selector-dropdown.show').forEach(dropdown => {
+                    dropdown.classList.remove('show');
+                });
+            }
+        });
+        searchInput.addEventListener('keyup', searchProducts);
+
+    </script>
+</body>
+</html>

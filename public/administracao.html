@@ -1,0 +1,2059 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administração</title>
+    <link rel="icon" type="image/png" href="IMG/imgfavicon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        /* --- ESTILOS CSS REUTILIZADOS DO SEU CÓDIGO --- */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: #333;
+            background-image: url(img/imgsalvati.png);
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            overflow: hidden; /* Impede a barra de rolagem durante a animação de entrada */
+            opacity: 0;
+            transform: scale(1.03); /* Efeito de zoom mais sutil */
+            animation: fadeZoomIn 0.7s ease-out forwards; /* Animação mais rápida e fluida */
+        }
+
+        @keyframes fadeZoomIn {
+            from { opacity: 0; transform: scale(1.03); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+
+        body.fade-zoom-out {
+            animation: fadeZoomOut 0.5s ease-in forwards; /* Duração ajustada para transição mais suave */
+        }
+
+        @keyframes fadeZoomOut {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0.95); }
+        }
+
+        .container {
+            position: relative; /* Para posicionar o botão de voltar */
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+
+        .header-title-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+            padding-top: 30px;
+        }
+
+        .header-title-wrapper img {
+            max-height: 100px;
+            width: auto;
+            margin-bottom: 10px;
+        }
+
+        .header-title-wrapper h1 {
+            color: #333;
+            font-size: 2.2em;
+            margin: 0;
+            padding: 0;
+            line-height: 1.2;
+            display: block;
+        }
+        
+        .admin-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+            width: 100%;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap; /* Para melhor responsividade */
+        }
+
+        .admin-actions button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .admin-actions button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        #monthly-usage-btn { background-color: #17a2b8; }
+        #monthly-usage-btn:hover { background-color: #138496; }
+        }
+
+        #view-reports-btn { background-color: #28a745; }
+        #view-reports-btn:hover { background-color: #218838; }
+
+        #manage-fiscal-btn { background-color: #fd7e14; } /* Laranja */
+        #manage-fiscal-btn:hover { background-color: #e66a00; }
+
+        #manage-branches-btn { background-color: #6c757d; }
+        #manage-branches-btn:hover { background-color: #5a6268; }
+
+        #backToMenuButton {
+            position: fixed; /* 'fixed' para manter no lugar mesmo com scroll */
+            bottom: 20px;
+            right: 20px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            text-decoration: none;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        #backToMenuButton:hover {
+            background-color: #c82333;
+            transform: translateY(-2px);
+        }
+
+        /* Estilos do Modal (Pop-up) */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 20px 40px 30px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h2 { text-align: center; margin-top: 10px; margin-bottom: 30px; }
+        .close-btn { color: #aaa; position: absolute; top: 10px; right: 20px; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close-btn:hover { color: black; }
+
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+
+        .modal-content button[type="submit"] {
+            width: 100%; padding: 12px; margin-top: 10px; background-color: #28a745;
+            color: white; border: none; border-radius: 5px; cursor: pointer;
+            font-size: 16px; font-weight: bold;
+        }
+        .modal-content button[type="submit"]:hover { background-color: #218838; }
+
+        /* Lista de Funcionários */
+        #employee-list-container { text-align: left; }
+        .employee-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .employee-item:last-child { border-bottom: none; }
+        .employee-info .name { font-weight: bold; font-size: 1.1em; }
+        .employee-info .role { color: #666; text-transform: capitalize; }
+
+        .details-btn {
+            background-color: #17a2b8;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s;
+        }
+        .details-btn:hover { background-color: #138496; }
+
+        #details-content p {
+            margin: 5px 0 15px;
+            font-size: 1.1em;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 10px;
+            text-align: left;
+        }
+        #details-content p:last-child { border-bottom: none; }
+        #details-content strong { color: #333; min-width: 90px; display: inline-block; }
+
+        .modal-button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-button-group button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        #edit-info-btn {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        #edit-info-btn:hover { background-color: #e0a800; }
+
+        #delete-employee-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+        #delete-employee-btn:hover { background-color: #c82333; }
+
+        #reset-password-btn {
+            background-color: #6c757d;
+            color: white;
+        }
+        #reset-password-btn:hover { background-color: #5a6268; }
+
+        /* --- ESTILOS DO NOVO SISTEMA DE NOTIFICAÇÕES (TOAST) --- */
+        #notifications-container {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .toast {
+            background-color: #fff;
+            color: #333;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            min-width: 250px;
+            animation: slideInUp 0.5s ease-out forwards, fadeOut 0.5s 4.5s ease-in forwards;
+        }
+        
+        .toast.success {
+            border-left: 5px solid #28a745;
+        }
+        
+        .toast.error {
+            border-left: 5px solid #dc3545;
+        }
+        
+        .toast-close-btn {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+
+        @keyframes slideInUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+
+        /* Estilos do Modal de Relação */
+        #reports-modal .modal-content {
+            max-width: 650px; /* Aumenta a largura para acomodar os botões de filtro lado a lado */
+        }
+        .report-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .report-city-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.3s;
+        }
+        .report-city-btn:hover {
+            background-color: #0056b3;
+        }
+        #report-details-content {
+            text-align: left;
+            margin-top: 20px;
+            font-size: 1.1em;
+        }
+        .report-payment-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 5px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .report-payment-item:last-child {
+            border-bottom: none;
+        }
+        .report-payment-item .method {
+            font-weight: bold;
+            color: #333;
+            text-transform: capitalize;
+        }
+        .report-payment-item .value {
+            color: #28a745; /* Verde para valores monetários */
+            font-weight: 500;
+        }
+
+        #report-details-container {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        /* Estilos para o modal de filiais */
+        #add-branch-btn {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        #add-branch-btn:hover { background-color: #0056b3; }
+
+        #branch-list-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* 2 colunas */
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .branch-btn {
+            background-color: #f8f9fa;
+            color: #343a40;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            text-align: center;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .branch-btn:hover {
+            background-color: #e9ecef;
+        }
+
+        /* Botão de edição dentro de um modal */
+        .modal-edit-btn {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            background-color: #28a745; /* Verde */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .modal-edit-btn:hover {
+            background-color: #218838;
+        }
+
+        /* Lista de funcionários no modal de filial */
+        #branch-employees-container {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        #branch-employees-container h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            text-align: left;
+            font-size: 1.2em;
+            color: #333;
+        }
+        .branch-employee-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 1em;
+        }
+        .branch-employee-item .name { font-weight: 500; }
+        .branch-employee-item .role { color: #666; text-transform: capitalize; }
+    </style>
+    <style>
+        /* Estilos para os controles de filtro do relatório */
+        #report-filter-controls {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+        }
+
+        .simple-filters {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .simple-filters input[type="date"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .simple-filters button {
+            padding: 9px 15px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        #report-filter-btn {
+            background-color: #007bff;
+            color: white;
+        }
+        #report-filter-btn:hover { background-color: #0056b3; }
+
+        #report-clear-btn {
+            background-color: #6c757d;
+            color: white;
+        }
+        #report-clear-btn:hover { background-color: #5a6268; }
+
+        #report-advanced-filter-btn {
+            background-color: #17a2b8;
+            color: white;
+        }
+        #report-advanced-filter-btn:hover { background-color: #138496; }
+
+        /* Estilos para a lista de sugestões de clientes */
+        .suggestions-list {
+            display: none; /* Oculta por padrão */
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            z-index: 1002; /* Acima do conteúdo do modal */
+            top: 100%; /* Posiciona logo abaixo do input */
+            left: 0;
+            right: 0;
+            max-height: 220px; /* Altura para aprox. 5-7 itens */
+            overflow-y: auto;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        }
+        .suggestion-item {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f1f1;
+        }
+        .suggestion-item:last-child { border-bottom: none; }
+        .suggestion-item:hover { background-color: #f8f9fa; }
+        .suggestion-item.active {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="notifications-container"></div>
+
+    <div class="container">
+        <div class="header-title-wrapper">
+            <img src="img/imglogo.png" alt="Logo da Empresa">
+            <h1>Painel de Administração</h1>
+        </div>
+
+        <div class="admin-actions">
+            <div class="button-row">
+                <button id="register-employee-btn"><i class="fas fa-user-plus"></i> Cadastrar Funcionário</button>
+                <button id="view-employees-btn"><i class="fas fa-users"></i> Ver Funcionários</button>
+                <button id="sales-report-btn"><i class="fas fa-box"></i> Relatório de Vendas</button>
+                <button id="view-reports-btn"><i class="fas fa-chart-line"></i> Relação</button>
+                <button id="monthly-usage-btn"><i class="fas fa-tachometer-alt"></i> Mensalidade</button>
+            </div>
+            <button id="manage-branches-btn" style="flex-grow: 1;"><i class="fas fa-store"></i> Filiais</button>
+            <button id="manage-fiscal-btn" style="flex-grow: 1;"><i class="fas fa-file-invoice-dollar"></i> Fiscal</button>
+        </div>
+    </div>
+
+    <a href="menu.html" id="backToMenuButton">Menu</a>
+
+    <!-- Nova Seção para a Mensalidade -->
+    <div id="monthly-usage-view" class="container" style="display: none;">
+        <span class="close-btn" data-view-id="monthly-usage-view">&times;</span>
+        <h2><i class="fas fa-tachometer-alt"></i> Uso do Sistema (Estimativa)</h2>
+        <p style="text-align: center; color: #6c757d; margin-top: -15px; margin-bottom: 25px;">Esta é uma contagem de operações importantes realizadas no sistema. Não representa o uso exato do Firebase.</p>
+        
+        <div id="usage-stats-container">
+            <p style="text-align: center;">Carregando estatísticas...</p>
+        </div>
+    </div>
+
+    <!-- Modal de Relatório de Vendas -->
+    <div id="sales-report-modal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <span class="close-btn" data-modal="sales-report-modal">&times;</span>
+            <h2>Relatório de Vendas por Produto</h2>
+            <div id="sales-report-filters" class="simple-filters" style="padding: 15px; border: 1px solid #eee; border-radius: 8px; background-color: #f8f9fa;">
+                <label for="sales-report-start-date">De:</label>
+                <input type="date" id="sales-report-start-date">
+                <label for="sales-report-end-date">Até:</label>
+                <input type="date" id="sales-report-end-date">
+                <button id="generate-sales-report-btn" class="report-filter-btn">Gerar Relatório</button>
+                <button id="export-sales-report-csv-btn" class="report-filter-btn" style="background-color: #28a745;">Exportar CSV</button>
+            </div>
+            <div id="sales-report-container" style="margin-top: 20px; max-height: 60vh; overflow-y: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="padding: 10px; text-align: left; background-color: #f2f2f2;">Produto</th>
+                            <th style="padding: 10px; text-align: left; background-color: #f2f2f2;">Código</th>
+                            <th style="padding: 10px; text-align: right; background-color: #f2f2f2;">Qtd. Vendida</th>
+                            <th style="padding: 10px; text-align: right; background-color: #f2f2f2;">Valor Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sales-report-tbody">
+                        <tr><td colspan="4" style="text-align: center; padding: 20px;">Selecione um período e gere o relatório.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Cadastro -->
+    <div id="register-employee-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" data-modal="register-employee-modal">&times;</span>
+            <h2>Cadastrar Novo Funcionário</h2>
+            <form id="employee-form">
+                <div class="input-group"><label for="employee-name">Nome Completo:</label><input type="text" id="employee-name" required autocomplete="name"></div>
+                <div class="input-group"><label for="employee-nickname">Apelido (login):</label><input type="text" id="employee-nickname" required autocomplete="username"></div>
+                <div class="input-group">
+                    <label for="employee-branch">Filial:</label>
+                    <select id="employee-branch" class="branch-select" required>
+                        <option value="" disabled selected>Carregando filiais...</option>
+                        <!-- Opções serão carregadas dinamicamente -->
+                    </select>
+                </div>
+                <div class="input-group"><label for="employee-email">Email:</label><input type="email" id="employee-email" required autocomplete="email"></div>
+                <div class="input-group"><label for="employee-cpf">CPF:</label><input type="text" id="employee-cpf" placeholder="000.000.000-00" required autocomplete="off"></div>
+                <div class="input-group"><label for="employee-password">Senha Provisória:</label><input type="password" id="employee-password" required autocomplete="new-password"></div>
+                <div class="input-group">
+                    <label for="employee-role">Cargo:</label>
+                    <select id="employee-role" required>
+                        <option value="" disabled selected>Selecione o cargo</option>
+                        <option value="cortador">Cortador</option>
+                        <option value="vendedor">Vendedor</option>
+                        <option value="gerente">Gerente</option>
+                        <option value="patrao">Patrão</option>
+                    </select>
+                </div>
+                <button type="submit">Salvar Funcionário</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Edição de Funcionário -->
+    <div id="edit-employee-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" data-modal="edit-employee-modal">&times;</span>
+            <h2>Editar Funcionário</h2>
+            <form id="edit-employee-form">
+                <input type="hidden" id="edit-employee-id">
+                <div class="input-group"><label for="edit-employee-name">Nome Completo:</label><input type="text" id="edit-employee-name" required></div>
+                <div class="input-group"><label for="edit-employee-nickname">Apelido (login):</label><input type="text" id="edit-employee-nickname" required></div>
+                <div class="input-group">
+                    <label for="edit-employee-branch">Filial:</label><select id="edit-employee-branch" class="branch-select" required></select>
+                </div>
+                <div class="input-group"><label for="edit-employee-email">Email:</label><input type="email" id="edit-employee-email" required readonly title="O email não pode ser alterado."></div>
+                <div class="input-group"><label for="edit-employee-cpf">CPF:</label><input type="text" id="edit-employee-cpf" required></div>
+                <div class="input-group">
+                    <label for="edit-employee-role">Cargo:</label>
+                    <select id="edit-employee-role" required>
+                        <option value="cortador">Cortador</option><option value="vendedor">Vendedor</option><option value="gerente">Gerente</option><option value="patrao">Patrão</option>
+                    </select>
+                </div>
+                <button type="submit">Salvar Alterações</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Visualização -->
+    <div id="view-employees-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" data-modal="view-employees-modal">&times;</span>
+            <h2>Funcionários Cadastrados</h2>
+            <div id="employee-list-container"></div>
+        </div>
+    </div>
+
+    <!-- Modal de Detalhes do Funcionário -->
+    <div id="employee-details-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" data-modal="employee-details-modal">&times;</span>
+            <h2>Detalhes do Funcionário</h2>
+            <div id="details-content">
+                <!-- Os dados do funcionário serão inseridos aqui via JS -->
+            </div>
+            <div class="modal-button-group">
+                <button id="reset-password-btn">Resetar Senha</button>
+                <button id="delete-employee-btn">Excluir Funcionário</button>
+                <button id="edit-info-btn">Editar Informações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Relação (único) -->
+    <div id="reports-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" data-modal="reports-modal">&times;</span>
+            <h2>Gerar Relação por Filial</h2>
+            <div class="report-options">
+                <!-- Botões das filiais serão carregados aqui -->
+            </div>
+            <!-- Container para os detalhes do relatório -->
+            <div id="report-details-container"><!-- Filtros e resultados aparecerão aqui --></div>
+        </div>
+    </div>
+
+    <!-- Modal de Filiais -->
+    <div id="manage-branches-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" data-modal="manage-branches-modal">&times;</span>
+            <h2>Gerenciar Filiais</h2>
+            <button id="add-branch-btn"><i class="fas fa-plus"></i> Cadastrar Nova Filial</button>
+            <div id="branch-list-container">
+                <!-- Botões das filiais cadastradas aparecerão aqui -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Cadastro de Filial -->
+    <div id="add-branch-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" data-modal="add-branch-modal">&times;</span>
+            <h2>Cadastrar Nova Filial</h2>
+            <form id="branch-form">
+                <div class="input-group"><label for="branch-name">Nome da Filial:</label><input type="text" id="branch-name" required></div>
+                <div class="input-group"><label for="branch-cnpj">CNPJ:</label><input type="text" id="branch-cnpj" placeholder="00.000.000/0001-00"></div>
+                <div class="input-group"><label for="branch-cep">CEP:</label><input type="text" id="branch-cep" placeholder="00000-000"></div>
+                <div class="input-group"><label for="branch-address">Endereço:</label><input type="text" id="branch-address" placeholder="Rua, Número, Bairro, Cidade - Estado"></div>
+                <div class="input-group"><label for="branch-phone1">Celular (1):</label><input type="text" id="branch-phone1" placeholder="(21) 99999-9999"></div>
+                <div class="input-group"><label for="branch-phone2">Celular (2):</label><input type="text" id="branch-phone2" placeholder="(21) 98888-8888"></div>
+                <div class="input-group"><label for="branch-notes">Observações:</label><textarea id="branch-notes" rows="3"></textarea></div>
+                <button type="submit">Salvar Filial</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Detalhes da Filial -->
+    <div id="branch-details-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" data-modal="branch-details-modal">&times;</span>
+            <h2 id="branch-details-title">Detalhes da Filial</h2>
+            <div id="branch-details-content">
+                <!-- Os dados da filial serão inseridos aqui via JS -->
+            </div>
+            <div id="branch-employees-container"></div>
+            <button id="edit-branch-btn" class="modal-edit-btn">Editar Filial</button>
+        </div>
+    </div>
+
+    <!-- Modal de Edição de Filial -->
+    <div id="edit-branch-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" data-modal="edit-branch-modal">&times;</span>
+            <h2>Editar Filial</h2>
+            <form id="edit-branch-form">
+                <input type="hidden" id="edit-branch-id">
+                <div class="input-group"><label for="edit-branch-name">Nome da Filial:</label><input type="text" id="edit-branch-name" required></div>
+                <div class="input-group"><label for="edit-branch-cep">CEP:</label><input type="text" id="edit-branch-cep" placeholder="00000-000"></div>
+                <div class="input-group"><label for="edit-branch-cnpj">CNPJ:</label><input type="text" id="edit-branch-cnpj" placeholder="00.000.000/0001-00"></div>
+                <div class="input-group"><label for="edit-branch-address">Endereço:</label><input type="text" id="edit-branch-address" placeholder="Rua, Número, Bairro, Cidade - Estado"></div>
+                <div class="input-group"><label for="edit-branch-phone1">Celular (1):</label><input type="text" id="edit-branch-phone1" placeholder="(21) 99999-9999"></div>
+                <div class="input-group"><label for="edit-branch-phone2">Celular (2):</label><input type="text" id="edit-branch-phone2" placeholder="(21) 98888-8888"></div>
+                <div class="input-group"><label for="edit-branch-notes">Observações:</label><textarea id="edit-branch-notes" rows="3"></textarea></div>
+                <button type="submit">Salvar Alterações</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Configuração Fiscal -->
+    <div id="fiscal-config-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" data-modal="fiscal-config-modal">&times;</span>
+            <h2>Configuração Fiscal Global</h2>
+            <form id="fiscal-config-form">
+                <div class="input-group">
+                    <label for="fiscal-regime">Regime Tributário:</label>
+                    <select id="fiscal-regime" required>
+                        <option value="" disabled selected>Selecione o regime</option>
+                        <option value="simples">Simples Nacional</option>
+                        <option value="presumido">Lucro Presumido</option>
+                        <option value="real">Lucro Real</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="fiscal-company-type">Tipo de Empresa:</label>
+                    <select id="fiscal-company-type" required><option value="" disabled selected>Selecione o tipo</option><option value="mei">MEI</option><option value="slu">SLU (Soc. Lim. Unipessoal)</option><option value="ltda">LTDA (Soc. Limitada)</option><option value="sa">S.A. (Soc. Anônima)</option></select>
+                </div>
+                <button type="submit">Salvar Configuração Fiscal</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Filtro Avançado -->
+    <div id="advanced-filter-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" data-modal="advanced-filter-modal">&times;</span>
+            <h2>Filtro Avançado</h2>
+            <form id="advanced-filter-form">
+                <div class="input-group" style="position: relative;">
+                    <label for="filter-client-name">Nome do Cliente:</label>
+                    <input type="text" id="filter-client-name" placeholder="Digite para buscar um cliente..." autocomplete="off">
+                    <div id="client-suggestions-list" class="suggestions-list"></div>
+                </div>
+                <div class="input-group">
+                    <label for="filter-start-date">Data de Início:</label>
+                    <input type="date" id="filter-start-date">
+                </div>
+                <div class="input-group">
+                    <label for="filter-end-date">Data de Fim:</label>
+                    <input type="date" id="filter-end-date">
+                </div>
+                <button type="submit">Aplicar Filtros</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts do Firebase -->
+    <!-- Usamos a versão 'compat' para manter a sintaxe familiar (similar à v8) -->
+    <script src="firebase-config.js"></script> <!-- Carrega a configuração do Firebase de um arquivo externo -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Garante que o código só rode depois que o HTML estiver pronto e os scripts 'defer' carregados.
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inicializa o Firebase com a configuração do arquivo firebase-config.js
+            firebase.initializeApp(firebaseConfig);
+            const auth = firebase.auth();
+
+            // --- AUTH GUARD ---
+            // Função para redirecionar com animação
+            function addExitAnimationAndRedirect(url) {
+                document.body.classList.add('fade-zoom-out');
+                setTimeout(() => { window.location.href = url; }, 500);
+            }
+
+            // Verifica o estado de autenticação e permissão do usuário
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    try {
+                        const userDoc = await db.collection('funcionarios').doc(user.uid).get();
+                        if (userDoc.exists) {
+                            const userData = userDoc.data();
+                            // Se o cargo não for 'patrao', redireciona para o menu
+                            if (userData.cargo !== 'patrao') {
+                                console.warn("Acesso negado. O usuário não é 'patrao'.");
+                                addExitAnimationAndRedirect('menu.html');
+                            }
+                            // Se for 'patrao', a página continua a carregar normalmente.
+                        } else {
+                            // Se o usuário está autenticado mas não tem registro no Firestore
+                            console.error("Dados do funcionário não encontrados. Redirecionando para login.");
+                            addExitAnimationAndRedirect('index.html');
+                        }
+                    } catch (error) {
+                        console.error("Erro ao verificar permissões:", error);
+                        addExitAnimationAndRedirect('index.html');
+                    }
+                } else {
+                    // Se não há usuário logado, redireciona para a página de login
+                    console.log("Usuário não autenticado. Redirecionando para login.");
+                    addExitAnimationAndRedirect('index.html');
+                }
+            });
+
+            const db = firebase.firestore();
+
+            // --- ELEMENTOS DO DOM ---
+            const registerModal = document.getElementById('register-employee-modal');
+            const viewModal = document.getElementById('view-employees-modal');
+            const detailsModal = document.getElementById('employee-details-modal');
+            const reportsModal = document.getElementById('reports-modal');
+            const editEmployeeModal = document.getElementById('edit-employee-modal');
+            const editEmployeeForm = document.getElementById('edit-employee-form');
+            const manageBranchesBtn = document.getElementById('manage-branches-btn');
+            const manageBranchesModal = document.getElementById('manage-branches-modal');
+            const addBranchModal = document.getElementById('add-branch-modal');
+            const editBranchModal = document.getElementById('edit-branch-modal');
+            const monthlyUsageBtn = document.getElementById('monthly-usage-btn');
+            const monthlyUsageView = document.getElementById('monthly-usage-view');
+            const advancedFilterModal = document.getElementById('advanced-filter-modal');
+            const advancedFilterForm = document.getElementById('advanced-filter-form');
+            const manageFiscalBtn = document.getElementById('manage-fiscal-btn');
+            const fiscalConfigModal = document.getElementById('fiscal-config-modal');
+            const addBranchBtn = document.getElementById('add-branch-btn');
+            const branchDetailsModal = document.getElementById('branch-details-modal');
+            const viewReportsBtn = document.getElementById('view-reports-btn');
+            const employeeForm = document.getElementById('employee-form');
+            const branchForm = document.getElementById('branch-form');
+            const editBranchForm = document.getElementById('edit-branch-form');
+            const employeeListContainer = document.getElementById('employee-list-container');
+            const fiscalConfigForm = document.getElementById('fiscal-config-form');
+            const backToMenuBtn = document.querySelector('#backToMenuButton');
+            const branchListContainer = document.getElementById('branch-list-container');
+            const mainContainer = document.querySelector('.container');
+
+            let currentEditingEmployeeId = null; // Armazena o ID do funcionário em visualização/edição
+            let currentEditingBranchId = null; // Armazena o ID da filial em visualização/edição
+            let currentReportBranchName = null; // Armazena o nome da filial do relatório atual
+            let branchClientsForFilter = []; // Armazena os clientes da filial para o filtro de autocompletar
+            // --- FUNÇÕES ---
+            let catalogoProdutos = []; // Para armazenar os produtos            
+            function showNotification(message, type = 'success', duration = 5000) {
+                const container = document.getElementById('notifications-container');
+                if (!container) return;
+                const toast = document.createElement('div');
+                toast.classList.add('toast', type);
+                toast.innerHTML = `
+                    <span>${message}</span>
+                    <button class="toast-close-btn">&times;</button>
+                `;
+                
+                container.appendChild(toast);
+                
+                const closeBtn = toast.querySelector('.toast-close-btn');
+                closeBtn.addEventListener('click', () => toast.remove());
+                
+                setTimeout(() => {
+                    if (toast.parentNode) toast.remove();
+                }, duration);
+            }
+
+            // --- FUNÇÕES DE MÁSCARA ---
+            const maskCpf = (value) => {
+                let v = value.replace(/\D/g, '').substring(0, 11);
+                v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                return v;
+            };
+
+            const maskCnpj = (value) => {
+                let v = value.replace(/\D/g, '').substring(0, 14);
+                v = v.replace(/^(\d{2})(\d)/, '$1.$2');
+                v = v.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+                v = v.replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3/$4');
+                v = v.replace(/^(\d{2})\.(\d{3})\.(\d{3})\/(\d{4})(\d)/, '$1.$2.$3/$4-$5');
+                return v;
+            };
+
+            const maskCep = (value) => {
+                return value
+                    .replace(/\D/g, '')
+                    .replace(/^(\d{5})(\d)/, '$1-$2')
+                    .substring(0, 9);
+            };
+
+            const maskPhone = (value) => {
+                return value
+                    .replace(/\D/g, "")
+                    .replace(/^(\d{2})(\d)/, "($1) $2")
+                    .replace(/(\d)(\d{4})$/, "$1-$2")
+                    .substring(0, 15);
+            };
+
+            // --- APLICAÇÃO DAS MÁSCARAS ---
+            const applyMasks = () => {
+                // Cadastro de Funcionário
+                document.getElementById('employee-cpf').addEventListener('input', (e) => { e.target.value = maskCpf(e.target.value); });
+                // Edição de Funcionário
+                document.getElementById('edit-employee-cpf').addEventListener('input', (e) => { e.target.value = maskCpf(e.target.value); });
+                // Cadastro de Filial
+                document.getElementById('branch-cnpj').addEventListener('input', (e) => { e.target.value = maskCnpj(e.target.value); });
+                document.getElementById('branch-cep').addEventListener('input', (e) => { e.target.value = maskCep(e.target.value); });
+                document.getElementById('branch-phone1').addEventListener('input', (e) => { e.target.value = maskPhone(e.target.value); });
+                document.getElementById('branch-phone2').addEventListener('input', (e) => { e.target.value = maskPhone(e.target.value); });
+                // Edição de Filial
+                document.getElementById('edit-branch-cnpj').addEventListener('input', (e) => { e.target.value = maskCnpj(e.target.value); });
+                document.getElementById('edit-branch-cep').addEventListener('input', (e) => { e.target.value = maskCep(e.target.value); });
+                document.getElementById('edit-branch-phone1').addEventListener('input', (e) => { e.target.value = maskPhone(e.target.value); });
+                document.getElementById('edit-branch-phone2').addEventListener('input', (e) => { e.target.value = maskPhone(e.target.value); });
+            };
+            applyMasks();
+
+            async function loadProducts() {
+                if (catalogoProdutos.length > 0) return; // Não recarrega se já tiver
+                try {
+                    const snapshot = await db.collection('produtos').get();
+                    catalogoProdutos = snapshot.docs.map(doc => {
+                        const data = doc.data();
+                        return {
+                            id: doc.id,
+                            nome: data.nome || 'Nome não encontrado',
+                            codigo: data.codigo || 'N/A'
+                        };
+                    });
+                } catch (error) {
+                    console.error("Erro ao carregar catálogo de produtos:", error);
+                    showNotification("Falha ao carregar o catálogo de produtos.", "error");
+                }
+            }
+
+            async function loadEmployees() {
+                employeeListContainer.innerHTML = '<p>Carregando funcionários...</p>';
+                try {
+                    const snapshot = await db.collection('funcionarios').orderBy('nome').get();
+                    if (snapshot.empty) {
+                        employeeListContainer.innerHTML = '<p>Nenhum funcionário cadastrado.</p>';
+                        return;
+                    }
+
+                    employeeListContainer.innerHTML = ''; // Limpa a lista antes de adicionar os novos
+                    snapshot.forEach(doc => {
+                        const employee = doc.data();
+                        const employeeElement = document.createElement('div');
+                        employeeElement.classList.add('employee-item');
+                        employeeElement.innerHTML = `
+                            <div class="employee-info">
+                                <div class="name">${employee.nome}</div>
+                                <div class="role">${employee.cargo}</div>
+                            </div>
+                            <button class="details-btn" data-id="${doc.id}">Dados</button>
+                        `;
+                        employeeListContainer.appendChild(employeeElement);
+                    });
+                } catch (error) {
+                    console.error("Erro ao carregar funcionários: ", error);
+                    employeeListContainer.innerHTML = '<p>Erro ao carregar a lista. Tente novamente.</p>';
+                    showNotification('Erro ao carregar funcionários.', 'error');
+                }
+            }
+
+            async function loadBranches() {
+                const branchSelects = document.querySelectorAll('.branch-select');
+                branchListContainer.innerHTML = '';
+                branchSelects.forEach(select => {
+                    select.innerHTML = '<option value="" disabled selected>Selecione a filial</option>';
+                });
+
+                try {
+                    const snapshot = await db.collection('filiais').orderBy('nome').get();
+                    if (snapshot.empty) {
+                        branchListContainer.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">Nenhuma filial cadastrada.</p>';
+                    }
+
+                    snapshot.forEach(doc => {
+                        const branch = doc.data();
+                        const branchButton = document.createElement('button');
+                        branchButton.className = 'branch-btn';
+                        branchButton.textContent = branch.nome;
+                        branchButton.dataset.id = doc.id;
+                        branchListContainer.appendChild(branchButton);
+
+                        branchSelects.forEach(select => {
+                            const option = new Option(branch.nome, branch.nome);
+                            select.add(option);
+                        });
+                    });
+                } catch (error) {
+                    console.error("Erro ao carregar filiais: ", error);
+                    showNotification('Erro ao carregar filiais.', 'error');
+                }
+            }
+
+            async function loadBranchesForReport() {
+                const reportOptionsContainer = document.querySelector('#reports-modal .report-options');
+                reportOptionsContainer.innerHTML = '<p>Carregando filiais...</p>';
+
+                try {
+                    const snapshot = await db.collection('filiais').orderBy('nome').get();
+                    reportOptionsContainer.innerHTML = ''; // Limpa o container
+
+                    if (snapshot.empty) {
+                        reportOptionsContainer.innerHTML = '<p>Nenhuma filial cadastrada para gerar relação.</p>';
+                        return;
+                    }
+
+                    snapshot.forEach(doc => {
+                        const branch = doc.data();
+                        const branchButton = document.createElement('button');
+                        branchButton.className = 'report-city-btn'; // Reutiliza a classe para manter o estilo
+                        branchButton.textContent = branch.nome;
+                        branchButton.dataset.branchName = branch.nome; // Usamos um data-attribute mais claro
+                        reportOptionsContainer.appendChild(branchButton);
+                    });
+                } catch (error) {
+                    console.error("Erro ao carregar filiais para relação: ", error);
+                    reportOptionsContainer.innerHTML = '<p>Erro ao carregar filiais.</p>';
+                    showNotification('Erro ao carregar filiais para a relação.', 'error');
+                }
+            }
+
+            async function loadClientsForFilter(branchName) { // Agora prepara a lista para o autocompletar
+                const clientInput = document.getElementById('filter-client-name');
+                clientInput.placeholder = 'Carregando clientes...';
+                clientInput.disabled = true;
+                branchClientsForFilter = []; // Limpa a lista de clientes anterior
+
+                if (!branchName) {
+                    clientInput.placeholder = 'Selecione uma filial primeiro';
+                    clientInput.disabled = false;
+                    return;
+                }
+
+                try {
+                    // 1. Buscar clientes da filial
+                    const clientesSnapshot = await db.collection('clientes').where('filial', '==', branchName).get();
+
+                    // 2. Criar uma lista única com os nomes
+                    const clientNames = new Set();
+                    clientesSnapshot.forEach(doc => {
+                        const data = doc.data();
+                        // Lógica robusta para encontrar o nome, cobrindo variações comuns de campos ('name', 'razaoSocial', 'nome').
+                        const clientName = data.name || data.razaoSocial || data.nome;
+                        if (clientName) {
+                            clientNames.add(clientName.trim());
+                        }
+                    });
+
+                    // 3. Armazenar a lista ordenada para uso no autocompletar
+                    branchClientsForFilter = Array.from(clientNames).sort((a, b) => a.localeCompare(b));
+
+                    clientInput.placeholder = branchClientsForFilter.length > 0
+                        ? 'Digite para buscar um cliente...'
+                        : 'Nenhum cliente cadastrado nesta filial';
+
+                } catch (error) {
+                    console.error("Erro ao carregar clientes para o filtro:", error);
+                    clientInput.placeholder = 'Erro ao carregar clientes';
+                } finally {
+                    clientInput.disabled = false;
+                }
+            }
+
+            async function generateBranchReport(branchName, filters = {}) {
+                const reportContainer = document.getElementById('report-details-container');
+                reportContainer.innerHTML = '<p style="text-align: center;">Gerando relação, por favor aguarde...</p>';
+                currentReportBranchName = branchName; // Armazena a filial atual para os botões de filtro
+
+                // Objeto para armazenar os totais. Chaves em minúsculo e sem acento para facilitar.
+                const paymentTotals = {
+                    pix: 0,
+                    credito: 0,
+                    debito: 0,
+                    dinheiro: 0
+                };
+
+                try {
+                    // 1. Encontrar todos os funcionários da filial selecionada.
+                    console.log(`Buscando funcionários da filial: "${branchName}"`);
+                    const employeesSnapshot = await db.collection('funcionarios').where('filial', '==', branchName).get();
+
+                    if (employeesSnapshot.empty) {
+                        reportContainer.innerHTML = `<h3 style="text-align: center; margin-bottom: 20px;">Relação - ${branchName}</h3><p>Nenhum funcionário encontrado para esta filial.</p>`;
+                        return;
+                    }
+
+                    // 2. Criar uma lista com os nomes dos funcionários.
+                    // Nota: A cláusula 'in' do Firestore tem um limite de 30 itens.
+                    const employeeNames = employeesSnapshot.docs.map(doc => doc.data().nome);
+                    console.log(`Funcionários encontrados: ${employeeNames.join(', ')}`);
+
+                    // 3. Buscar todos os orçamentos onde o campo 'vendedor' corresponde a um dos nomes da lista.
+                    console.log(`Buscando orçamentos dos funcionários da filial...`);
+                    const snapshot = await db.collection('orcamentos').where('vendedor', 'in', employeeNames).get();
+
+                    console.log(`Encontrados ${snapshot.size} orçamentos para os funcionários desta filial.`);
+
+                    // 4. FILTRAGEM NO LADO DO CLIENTE (para contornar limitações do Firestore)
+                    const filteredDocs = snapshot.docs.filter(doc => {
+                        const saleData = doc.data();
+
+                        // --- Validação de Data ---
+                        const saleTimestamp = saleData.saveTimestamp;
+                        // Garante que o campo de data existe e é um timestamp válido do Firestore
+                        if (!saleTimestamp || typeof saleTimestamp.toDate !== 'function') {
+                            return false; // Ignora vendas sem data de salvamento válida
+                        }
+                        const saleDate = saleTimestamp.toDate();
+
+                        // Filtro por data de início
+                        if (filters.startDate && saleDate < filters.startDate) {
+                            return false;
+                        }
+                        // Filtro por data de fim
+                        if (filters.endDate && saleDate > filters.endDate) {
+                            return false;
+                        }
+                        // --- Validação de Cliente ---
+                        // Filtro por nome do cliente (parcial e insensível a maiúsculas/minúsculas)
+                        if (filters.clientName) {
+                            // Lógica robusta para encontrar o nome do cliente no orçamento,
+                            // funcionando tanto se 'cliente' for um objeto (com 'nome') ou apenas uma string.
+                            const clientNameInBudget = (typeof saleData.cliente === 'object' && saleData.cliente !== null)
+                                ? saleData.cliente.nome || ''
+                                : (typeof saleData.cliente === 'string' ? saleData.cliente : '');
+                            if (clientNameInBudget.toLowerCase() !== filters.clientName.toLowerCase()) {
+                                return false;
+                            }
+                        }
+                        return true; // Mantém o documento se passar por todos os filtros
+                    });
+
+                    console.log(`${filteredDocs.length} orçamentos após a filtragem.`);
+
+                    // 5. Processar os orçamentos filtrados e somar os totais.
+                    filteredDocs.forEach(orcamentoDoc => {
+                        const saleData = orcamentoDoc.data();
+                        
+                        // Verifica se existe o array 'payments' e se ele é de fato um array
+                        if (Array.isArray(saleData.payments)) {
+                            saleData.payments.forEach(payment => {
+                                const paymentType = (payment.tipo || '').toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                                const paymentValue = Number(payment.valor) || 0;
+
+                                if (paymentType.includes('pix')) {
+                                    paymentTotals.pix += paymentValue;
+                                } else if (paymentType.includes('credito')) {
+                                    paymentTotals.credito += paymentValue;
+                                } else if (paymentType.includes('debito')) {
+                                    paymentTotals.debito += paymentValue;
+                                } else if (paymentType.includes('dinheiro')) {
+                                    paymentTotals.dinheiro += paymentValue;
+                                }
+                            });
+                        }
+                    });
+
+                    const formatCurrency = (value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+                    // Mapeia as chaves internas para nomes amigáveis na exibição
+                    const displayNames = {
+                        pix: 'Pix',
+                        credito: 'Crédito',
+                        debito: 'Débito',
+                        dinheiro: 'Dinheiro'
+                    };
+
+                    let html = '';
+                    Object.keys(paymentTotals).forEach(methodKey => {
+                        html += `
+                            <div class="report-payment-item">
+                                <span class="method">${displayNames[methodKey]}</span>
+                                <span class="value">${formatCurrency(paymentTotals[methodKey])}</span>
+                            </div>
+                        `;
+                    });
+                    
+                    const filterControlsHTML = `
+                        <div id="report-filter-controls">
+                            <div class="simple-filters">
+                                <input type="date" id="report-daily-date" title="Filtrar por um dia específico">
+                                <button id="report-filter-btn">Filtrar Dia</button>
+                                <button id="report-advanced-filter-btn">Filtro Avançado</button>
+                                <button id="report-clear-btn">Limpar Filtros</button>
+                            </div>
+                        </div>
+                    `;
+
+                    const resultsHTML = (filteredDocs.length > 0)
+                        ? `<div id="report-details-content">${html}</div>`
+                        : `<p>Nenhuma venda encontrada para os filtros aplicados.</p>`;
+
+                    reportContainer.innerHTML = `
+                        <h3 style="text-align: center; margin-bottom: 20px;">Relação - ${branchName}</h3>
+                        ${filterControlsHTML} ${resultsHTML}
+                    `;
+
+                } catch (error) {
+                    console.error("Erro ao gerar relação: ", error);
+                    reportContainer.innerHTML = '<p>Ocorreu um erro ao gerar a relação. Verifique o console para mais detalhes.</p>';
+                    showNotification('Erro ao gerar relação.', 'error');
+                }
+            }
+
+            async function showUsageStats() {
+                mainContainer.style.display = 'none';
+                monthlyUsageView.style.display = 'block';
+                const statsContainer = document.getElementById('usage-stats-container');
+                statsContainer.innerHTML = '<p style="text-align: center;">Calculando...</p>';
+
+                try {
+                    // 1. Contar Orçamentos/Vendas
+                    const orcamentosSnapshot = await db.collection('orcamentos').get();
+                    const totalOrcamentos = orcamentosSnapshot.size;
+
+                    // 2. Contar Produtos
+                    const produtosSnapshot = await db.collection('produtos').get();
+                    const totalProdutos = produtosSnapshot.size;
+
+                    // 3. Contar Clientes
+                    const clientesSnapshot = await db.collection('clientes').get();
+                    const totalClientes = clientesSnapshot.size;
+
+                    // 4. Contar Funcionários
+                    const funcionariosSnapshot = await db.collection('funcionarios').get();
+                    const totalFuncionarios = funcionariosSnapshot.size;
+
+                    // Renderiza os cards com os resultados
+                    statsContainer.innerHTML = `
+                        <div class="usage-card">
+                            <strong>Orçamentos e Vendas Criados:</strong> ${totalOrcamentos}
+                        </div>
+                        <div class="usage-card">
+                            <strong>Produtos Cadastrados:</strong> ${totalProdutos}
+                        </div>
+                        <div class="usage-card">
+                            <strong>Clientes Cadastrados:</strong> ${totalClientes}
+                        </div>
+                        <div class="usage-card">
+                            <strong>Funcionários no Sistema:</strong> ${totalFuncionarios}
+                        </div>
+                    `;
+
+                } catch (error) {
+                    console.error("Erro ao calcular estatísticas de uso:", error);
+                    statsContainer.innerHTML = '<p style="text-align: center; color: red;">Erro ao carregar as estatísticas.</p>';
+                    showNotification("Erro ao carregar estatísticas.", "error");
+                }
+            }
+
+            async function loadFiscalConfig() {
+                const regimeSelect = document.getElementById('fiscal-regime');
+                const typeSelect = document.getElementById('fiscal-company-type');
+                try {
+                    const doc = await db.collection('fiscal').doc('configuracao_global').get();
+                    if (doc.exists) {
+                        const data = doc.data();
+                        regimeSelect.value = data.regime || '';
+                        typeSelect.value = data.tipo || '';
+                    } else {
+                        // Se não existe, reseta para os valores padrão
+                        regimeSelect.value = '';
+                        typeSelect.value = '';
+                    }
+                } catch (error) {
+                    console.error("Erro ao carregar configuração fiscal: ", error);
+                    showNotification('Erro ao carregar dados fiscais.', 'error');
+                }
+            }
+
+            function exportSalesReportToCSV() {
+                const reportTbody = document.getElementById('sales-report-tbody');
+                const rows = reportTbody.querySelectorAll('tr');
+
+                if (rows.length === 0 || (rows.length === 1 && rows[0].querySelector('td')?.colSpan === 4)) {
+                    showNotification('Não há dados na tabela para exportar.', 'error');
+                    return;
+                }
+
+                const headers = "Produto,Código,Quantidade Vendida,Valor Total\r\n";
+                let csvContent = "";
+
+                rows.forEach(row => {
+                    const cols = row.querySelectorAll('td');
+                    const productName = `"${cols[0].innerText.replace(/"/g, '""')}"`; // Trata aspas no nome
+                    const productCode = cols[1].innerText;
+                    const quantity = cols[2].innerText;
+                    // Converte o valor para o formato numérico padrão (ex: 1500.50)
+                    const totalValue = cols[3].innerText.replace('R$', '').trim().replace(/\./g, '').replace(',', '.');
+
+                    csvContent += `${productName},${productCode},${quantity},${totalValue}\r\n`;
+                });
+
+                const blob = new Blob([headers + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                const startDate = document.getElementById('sales-report-start-date').value || 'inicio';
+                const endDate = document.getElementById('sales-report-end-date').value || 'fim';
+                link.setAttribute("download", `relatorio_vendas_${startDate}_a_${endDate}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            async function generateSalesReport() {
+                const reportTbody = document.getElementById('sales-report-tbody');
+                const generateBtn = document.getElementById('generate-sales-report-btn');
+                reportTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Gerando relatório...</td></tr>';
+                generateBtn.disabled = true;
+                generateBtn.textContent = 'Gerando...';
+
+                const startDateStr = document.getElementById('sales-report-start-date').value;
+                const endDateStr = document.getElementById('sales-report-end-date').value;
+
+                if (!startDateStr || !endDateStr) {
+                    showNotification('Por favor, selecione as datas de início e fim.', 'error');
+                    reportTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Datas inválidas.</td></tr>';
+                    generateBtn.disabled = false;
+                    generateBtn.textContent = 'Gerar Relatório';
+                    return;
+                }
+
+                const startDate = new Date(startDateStr + 'T00:00:00');
+                const endDate = new Date(endDateStr + 'T23:59:59');
+
+                try {
+                    await loadProducts(); // Garante que o catálogo de produtos está carregado
+
+                    const salesQuery = db.collection('orcamentos')
+                        .where('tipoDocumento', '==', 'venda')
+                        .where('saveTimestamp', '>=', startDate)
+                        .where('saveTimestamp', '<=', endDate);
+
+                    const snapshot = await salesQuery.get();
+
+                    if (snapshot.empty) {
+                        reportTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Nenhuma venda encontrada para o período selecionado.</td></tr>';
+                        return;
+                    }
+
+                    const productSales = {};
+
+                    snapshot.forEach(doc => {
+                        const sale = doc.data();
+                        if (sale.items && Array.isArray(sale.items)) {
+                            sale.items.forEach(item => {
+                                if (!item.removed) {
+                                    if (!productSales[item.productId]) {
+                                        productSales[item.productId] = { quantity: 0, totalValue: 0 };
+                                    }
+                                    const quantity = parseFloat(item.quantidade) || 0;
+                                    const price = parseFloat(item.preco) || 0;
+                                    productSales[item.productId].quantity += quantity;
+                                    productSales[item.productId].totalValue += quantity * price;
+                                }
+                            });
+                        }
+                    });
+
+                    reportTbody.innerHTML = '';
+                    for (const productId in productSales) {
+                        const productInfo = catalogoProdutos.find(p => p.id === productId);
+                        const productName = productInfo ? productInfo.nome : 'Produto Desconhecido';
+                        const productCode = productInfo ? productInfo.codigo : 'N/A';
+                        const salesData = productSales[productId];
+
+                        const row = reportTbody.insertRow();
+                        row.innerHTML = `
+                            <td style="padding: 10px;">${productName}</td>
+                            <td style="padding: 10px;">${productCode}</td>
+                            <td style="padding: 10px; text-align: right;">${salesData.quantity}</td>
+                            <td style="padding: 10px; text-align: right;">${salesData.totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                        `;
+                    }
+
+                } catch (error) {
+                    console.error("Erro ao gerar relatório de vendas:", error);
+                    reportTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: red;">Erro ao gerar relatório.</td></tr>';
+                } finally {
+                    generateBtn.disabled = false;
+                    generateBtn.textContent = 'Gerar Relatório';
+                }
+            }
+
+            async function handleFiscalSubmit(event) {
+                event.preventDefault();
+                const regime = document.getElementById('fiscal-regime').value;
+                const tipo = document.getElementById('fiscal-company-type').value;
+
+                if (!regime || !tipo) {
+                    showNotification('Ambos os campos fiscais são obrigatórios.', 'error');
+                    return;
+                }
+
+                try {
+                    // Usamos .set() para criar o documento se não existir, ou sobrescrevê-lo se existir.
+                    await db.collection('fiscal').doc('configuracao_global').set({
+                        regime: regime,
+                        tipo: tipo,
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    showNotification('Configuração fiscal salva com sucesso!', 'success');
+                    fiscalConfigModal.style.display = 'none';
+                } catch (error) {
+                    console.error("Erro ao salvar configuração fiscal: ", error);
+                    showNotification('Erro ao salvar a configuração fiscal.', 'error');
+                }
+            }
+
+            async function handleRegisterSubmit(event) {
+                event.preventDefault();
+                const nome = document.getElementById('employee-name').value;
+                const apelido = document.getElementById('employee-nickname').value.trim().toLowerCase();
+                const email = document.getElementById('employee-email').value.trim();
+                const cpf = document.getElementById('employee-cpf').value.trim();
+                const senha = document.getElementById('employee-password').value;
+                const cargo = document.getElementById('employee-role').value;
+                const filial = document.getElementById('employee-branch').value;
+
+                if (!nome || !apelido || !email || !cpf || !senha || !cargo || !filial) {
+                    showNotification('Todos os campos são obrigatórios.', 'error');
+                    return;
+                }
+
+                try {
+                    // 1. Cria o usuário no Firebase Authentication
+                    const userCredential = await auth.createUserWithEmailAndPassword(email, senha);
+                    const user = userCredential.user;
+
+                    // 2. Salva os dados adicionais no Firestore
+                    // Usamos o UID do usuário como ID do documento para fácil referência
+                    await db.collection('funcionarios').doc(user.uid).set({
+                        nome: nome,
+                        apelido: apelido,
+                        email: email,
+                        cpf: cpf,
+                        cargo: cargo,
+                        filial: filial,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    showNotification(`Funcionário ${nome} cadastrado com sucesso!`, 'success');
+                    employeeForm.reset();
+                    registerModal.style.display = 'none';
+
+                } catch (error) {
+                    console.error("Erro ao cadastrar funcionário: ", error);
+                    let friendlyMessage = 'Ocorreu um erro ao cadastrar.';
+                    if (error.code === 'auth/email-already-in-use') {
+                        friendlyMessage = 'Este email já está em uso por outra conta.';
+                    } else if (error.code === 'auth/weak-password') {
+                        friendlyMessage = 'A senha é muito fraca. Use pelo menos 6 caracteres.';
+                    } else if (error.code === 'auth/invalid-email') {
+                        friendlyMessage = 'O formato do email é inválido.';
+                    }
+                    showNotification(friendlyMessage, 'error');
+                }
+            }
+
+            async function handleBranchSubmit(event) {
+                event.preventDefault();
+                const branchNameInput = document.getElementById('branch-name');
+                const branchName = branchNameInput.value.trim();
+                const cnpj = document.getElementById('branch-cnpj').value.trim();
+                const endereco = document.getElementById('branch-address').value.trim();
+                const cep = document.getElementById('branch-cep').value.trim();
+                const celular1 = document.getElementById('branch-phone1').value.trim();
+                const celular2 = document.getElementById('branch-phone2').value.trim();
+                const observacoes = document.getElementById('branch-notes').value.trim();
+
+                if (!branchName) {
+                    showNotification('O nome da filial não pode estar vazio.', 'error');
+                    return;
+                }
+
+                try {
+                    await db.collection('filiais').add({
+                        nome: branchName,
+                        cnpj: cnpj,
+                        cep: cep,
+                        endereco: endereco,
+                        celular1: celular1,
+                        celular2: celular2,
+                        observacoes: observacoes,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    showNotification(`Filial "${branchName}" cadastrada com sucesso!`, 'success');
+                    branchForm.reset();
+                    addBranchModal.style.display = 'none';
+                    await loadBranches(); // Recarrega a lista de filiais
+                } catch (error) {
+                    console.error("Erro ao cadastrar filial: ", error);
+                    showNotification('Erro ao cadastrar a filial.', 'error');
+                }
+            }
+
+            async function handleEditBranchSubmit(event) {
+                event.preventDefault();
+                const branchId = document.getElementById('edit-branch-id').value;
+                if (!branchId) {
+                    showNotification('ID da filial não encontrado.', 'error');
+                    return;
+                }
+
+                const updatedData = {
+                    nome: document.getElementById('edit-branch-name').value.trim(),
+                    cnpj: document.getElementById('edit-branch-cnpj').value.trim(),
+                    cep: document.getElementById('edit-branch-cep').value.trim(),
+                    endereco: document.getElementById('edit-branch-address').value.trim(),
+                    celular1: document.getElementById('edit-branch-phone1').value.trim(),
+                    celular2: document.getElementById('edit-branch-phone2').value.trim(),
+                    observacoes: document.getElementById('edit-branch-notes').value.trim()
+                };
+
+                if (!updatedData.nome) {
+                    showNotification('O nome da filial não pode estar vazio.', 'error');
+                    return;
+                }
+
+                try {
+                    await db.collection('filiais').doc(branchId).update(updatedData);
+                    showNotification('Filial atualizada com sucesso!', 'success');
+                    editBranchModal.style.display = 'none';
+                    await loadBranches(); // Recarrega a lista de filiais
+                } catch (error) {
+                    console.error("Erro ao atualizar filial: ", error);
+                    showNotification('Erro ao salvar as alterações da filial.', 'error');
+                }
+            }
+
+            async function handleEditSubmit(event) {
+                event.preventDefault();
+                const employeeId = document.getElementById('edit-employee-id').value;
+                
+                const updatedData = {
+                    nome: document.getElementById('edit-employee-name').value,
+                    apelido: document.getElementById('edit-employee-nickname').value.trim().toLowerCase(),
+                    cpf: document.getElementById('edit-employee-cpf').value.trim(),
+                    cargo: document.getElementById('edit-employee-role').value,
+                    filial: document.getElementById('edit-employee-branch').value
+                };
+
+                if (!updatedData.nome || !updatedData.apelido || !updatedData.cpf || !updatedData.cargo || !updatedData.filial) {
+                    showNotification('Todos os campos são obrigatórios.', 'error');
+                    return;
+                }
+
+                try {
+                    await db.collection('funcionarios').doc(employeeId).update(updatedData);
+                    showNotification('Funcionário atualizado com sucesso!', 'success');
+                    editEmployeeModal.style.display = 'none';
+                    await loadEmployees(); // Atualiza a lista principal
+                } catch (error) {
+                    console.error("Erro ao atualizar funcionário: ", error);
+                    showNotification('Erro ao salvar as alterações.', 'error');
+                }
+            }
+
+            // --- EVENT LISTENERS (OUVINTES DE EVENTO) ---
+            document.getElementById('register-employee-btn').onclick = () => { loadBranches(); registerModal.style.display = 'flex'; };
+
+            document.getElementById('view-employees-btn').onclick = () => {
+                loadEmployees();
+                viewModal.style.display = 'flex';
+            };
+
+            manageBranchesBtn.onclick = () => {
+                loadBranches();
+                manageBranchesModal.style.display = 'flex';
+            };
+
+            addBranchBtn.onclick = () => {
+                addBranchModal.style.display = 'flex';
+            }
+
+            viewReportsBtn.onclick = () => {
+                // Limpa o conteúdo anterior antes de mostrar
+                document.getElementById('report-details-container').innerHTML = '';
+                loadBranchesForReport();
+                reportsModal.style.display = 'flex';
+            };
+
+            document.getElementById('sales-report-btn').onclick = () => {
+                document.getElementById('sales-report-modal').style.display = 'flex';
+            };
+            document.getElementById('generate-sales-report-btn').addEventListener('click', generateSalesReport);
+            document.getElementById('export-sales-report-csv-btn').addEventListener('click', exportSalesReportToCSV);
+
+            manageFiscalBtn.onclick = () => {
+                loadFiscalConfig();
+                fiscalConfigModal.style.display = 'flex';
+            };
+
+            monthlyUsageBtn.onclick = () => {
+                // Chama a função para calcular e mostrar as estatísticas
+                showUsageStats();
+            };
+
+            document.querySelectorAll('.close-btn').forEach(btn => {
+                btn.onclick = () => {
+                    document.getElementById(btn.dataset.modal).style.display = 'none';
+                }
+            });
+
+            window.onclick = (event) => {
+                // Adicionado para fechar a nova view
+                if (event.target == monthlyUsageView || event.target.closest('[data-view-id="monthly-usage-view"]')) {
+                    monthlyUsageView.style.display = 'none';
+                    mainContainer.style.display = 'block';
+                }
+
+                if (event.target == registerModal) registerModal.style.display = 'none';
+                if (event.target == viewModal) viewModal.style.display = 'none';
+                if (event.target == detailsModal) detailsModal.style.display = 'none';
+                if (event.target == reportsModal) reportsModal.style.display = 'none';
+                if (event.target == editEmployeeModal) editEmployeeModal.style.display = 'none';
+                if (event.target == manageBranchesModal) manageBranchesModal.style.display = 'none';
+                if (event.target == addBranchModal) addBranchModal.style.display = 'none';
+                if (event.target == branchDetailsModal) branchDetailsModal.style.display = 'none';
+                if (event.target == editBranchModal) editBranchModal.style.display = 'none';
+                if (event.target == fiscalConfigModal) fiscalConfigModal.style.display = 'none';
+                if (event.target == advancedFilterModal) advancedFilterModal.style.display = 'none';
+                if (event.target == document.getElementById('sales-report-modal')) document.getElementById('sales-report-modal').style.display = 'none';
+            };
+
+            employeeForm.addEventListener('submit', handleRegisterSubmit);
+            editEmployeeForm.addEventListener('submit', handleEditSubmit);
+            branchForm.addEventListener('submit', handleBranchSubmit);
+            fiscalConfigForm.addEventListener('submit', handleFiscalSubmit);
+            editBranchForm.addEventListener('submit', handleEditBranchSubmit);
+
+            employeeListContainer.addEventListener('click', async (event) => {
+                if (event.target.classList.contains('details-btn')) {
+                    const employeeId = event.target.dataset.id;
+                    const detailsContent = document.getElementById('details-content');
+                    if (!employeeId) return;
+
+                    currentEditingEmployeeId = employeeId; // Armazena o ID para a função de edição
+                    try {
+                        const doc = await db.collection('funcionarios').doc(employeeId).get();
+                        if (!doc.exists) {
+                            showNotification('Funcionário não encontrado.', 'error');
+                            return;
+                        }
+                        const data = doc.data();
+                        detailsContent.dataset.email = data.email; // Armazena o email para o reset de senha
+                        detailsContent.innerHTML = `
+                            <p><strong>Nome:</strong> ${data.nome}</p>
+                            <p><strong>Apelido:</strong> ${data.apelido}</p>
+                            <p><strong>Email:</strong> ${data.email}</p>
+                            <p><strong>CPF:</strong> ${data.cpf}</p>
+                            <p><strong>Cargo:</strong> <span style="text-transform: capitalize;">${data.cargo}</span></p>
+                            <p><strong>Filial:</strong> ${data.filial || 'Não informada'}</p>
+                        `;
+                        detailsModal.style.display = 'flex';
+                    } catch (error) {
+                        showNotification('Erro ao buscar detalhes do funcionário.', 'error');
+                        console.error("Erro ao buscar detalhes: ", error);
+                    }
+                }
+            });
+
+            document.getElementById('delete-employee-btn').addEventListener('click', async () => {
+                if (!currentEditingEmployeeId) {
+                    showNotification('ID do funcionário não encontrado.', 'error');
+                    return;
+                }
+
+                // Dupla confirmação para segurança
+                if (!confirm('Tem certeza que deseja excluir este funcionário?')) {
+                    return;
+                }
+                if (!confirm('Esta ação é IRREVERSÍVEL e removerá os dados do funcionário do sistema. Confirma a exclusão?')) {
+                    return;
+                }
+
+                try {
+                    // Exclui o documento do funcionário do Firestore
+                    await db.collection('funcionarios').doc(currentEditingEmployeeId).delete();
+                    showNotification('Funcionário excluído com sucesso.', 'success');
+                    detailsModal.style.display = 'none';
+                    await loadEmployees(); // Recarrega a lista de funcionários
+                } catch (error) {
+                    console.error("Erro ao excluir funcionário: ", error);
+                    showNotification('Ocorreu um erro ao excluir o funcionário.', 'error');
+                }
+            });
+
+            document.getElementById('reset-password-btn').addEventListener('click', async () => {
+                const detailsContent = document.getElementById('details-content');
+                const emailToReset = detailsContent.dataset.email;
+
+                if (!emailToReset) {
+                    showNotification('Não foi possível encontrar o email do funcionário.', 'error');
+                    return;
+                }
+
+                if (!confirm(`Tem certeza que deseja enviar um email de redefinição de senha para ${emailToReset}?`)) {
+                    return;
+                }
+
+                try {
+                    await auth.sendPasswordResetEmail(emailToReset);
+                    showNotification(`Email de redefinição enviado para ${emailToReset}.`, 'success');
+                    detailsModal.style.display = 'none';
+                } catch (error) {
+                    console.error("Erro ao enviar email de redefinição de senha: ", error);
+                    const friendlyMessage = error.code === 'auth/user-not-found' ? 'Nenhum usuário encontrado com este email.' : 'Ocorreu um erro ao enviar o email.';
+                    showNotification(friendlyMessage, 'error');
+                }
+            });
+
+            branchListContainer.addEventListener('click', async (event) => {
+                if (event.target.classList.contains('branch-btn')) {
+                    const branchId = event.target.dataset.id;
+                    if (!branchId) return;
+
+                    currentEditingBranchId = branchId; // Armazena o ID para a função de edição
+
+                    try {
+                        const doc = await db.collection('filiais').doc(branchId).get();
+                        if (!doc.exists) {
+                            showNotification('Filial não encontrada.', 'error');
+                            return;
+                        }
+                        const data = doc.data();
+                        const detailsTitle = document.getElementById('branch-details-title');
+                        const detailsContent = document.getElementById('branch-details-content');
+                        const employeesContainer = document.getElementById('branch-employees-container');
+
+                        detailsTitle.textContent = `Detalhes - ${data.nome}`;
+                        detailsContent.innerHTML = `
+                            <p><strong>CNPJ:</strong> ${data.cnpj || 'Não informado'}</p>
+                            <p><strong>CEP:</strong> ${data.cep || 'Não informado'}</p>
+                            <p><strong>Endereço:</strong> ${data.endereco || 'Não informado'}</p>
+                            <p><strong>Celular 1:</strong> ${data.celular1 || 'Não informado'}</p>
+                            <p><strong>Celular 2:</strong> ${data.celular2 || 'Não informado'}</p>
+                            <p><strong>Observações:</strong> ${data.observacoes || 'Nenhuma'}</p>
+                        `;
+
+                        // Carrega os funcionários da filial
+                        employeesContainer.innerHTML = '<h3>Funcionários:</h3><p>Carregando...</p>';
+                        const employeesSnapshot = await db.collection('funcionarios').where('filial', '==', data.nome).get();
+
+                        if (employeesSnapshot.empty) {
+                            employeesContainer.innerHTML = '<h3>Funcionários:</h3><p>Nenhum funcionário cadastrado nesta filial.</p>';
+                        } else {
+                            let employeesHtml = '<h3>Funcionários:</h3>';
+                            employeesSnapshot.forEach(empDoc => {
+                                const employee = empDoc.data();
+                                employeesHtml += `
+                                    <div class="branch-employee-item">
+                                        <span class="name">${employee.nome}</span>
+                                        <span class="role">${employee.cargo}</span>
+                                    </div>
+                                `;
+                            });
+                            employeesContainer.innerHTML = employeesHtml;
+                        }
+
+                        branchDetailsModal.style.display = 'flex';
+                    } catch (error) {
+                        showNotification('Erro ao buscar detalhes da filial.', 'error');
+                        console.error("Erro ao buscar detalhes da filial: ", error);
+                    }
+                }
+            });
+
+            reportsModal.addEventListener('click', async (event) => {
+                if (event.target.classList.contains('report-city-btn')) {
+                    const branchName = event.target.dataset.branchName;
+                    if (branchName) await generateBranchReport(branchName, {}); // Chama com filtros vazios
+                }
+
+                if (event.target.id === 'report-advanced-filter-btn') {
+                    loadClientsForFilter(currentReportBranchName); // Carrega os clientes da filial atual
+                    advancedFilterModal.style.display = 'flex'; // Mostra o modal
+                }
+
+                if (event.target.id === 'report-clear-btn') {
+                    if (currentReportBranchName) {
+                        await generateBranchReport(currentReportBranchName, {});
+                    }
+                }
+
+                if (event.target.id === 'report-filter-btn') {
+                    const dailyDate = document.getElementById('report-daily-date').value;
+                    if (!dailyDate) {
+                        showNotification('Por favor, selecione uma data.', 'error');
+                        return;
+                    }
+                    if (currentReportBranchName) {
+                        const startDate = new Date(dailyDate);
+                        startDate.setUTCHours(0, 0, 0, 0); // Início do dia em UTC
+
+                        const endDate = new Date(dailyDate);
+                        endDate.setUTCHours(23, 59, 59, 999); // Fim do dia em UTC
+
+                        await generateBranchReport(currentReportBranchName, { startDate, endDate });
+                    }
+                }
+            });
+
+            // --- LÓGICA DO AUTOCOMPLETAR DE CLIENTES (COM NAVEGAÇÃO POR TECLADO) ---
+            const clientFilterInput = document.getElementById('filter-client-name');
+            const clientSuggestionsList = document.getElementById('client-suggestions-list');
+            let activeSuggestionIndex = -1;
+
+            function highlightSuggestion(index) {
+                const items = clientSuggestionsList.querySelectorAll('.suggestion-item');
+                items.forEach(item => item.classList.remove('active'));
+                if (index > -1 && items[index]) {
+                    items[index].classList.add('active');
+                    items[index].scrollIntoView({ block: 'nearest' });
+                }
+            }
+
+            clientFilterInput.addEventListener('input', () => {
+                const inputText = clientFilterInput.value.trim().toLowerCase();
+                clientSuggestionsList.innerHTML = '';
+                clientSuggestionsList.style.display = 'none';
+                activeSuggestionIndex = -1;
+
+                if (inputText.length > 0) {
+                    const filteredClients = branchClientsForFilter.filter(client =>
+                        client.toLowerCase().includes(inputText)
+                    ).slice(0, 7);
+
+                    if (filteredClients.length > 0) {
+                        filteredClients.forEach(client => {
+                            const item = document.createElement('div');
+                            item.classList.add('suggestion-item');
+                            item.textContent = client;
+                            item.onclick = () => {
+                                clientFilterInput.value = client;
+                                clientSuggestionsList.style.display = 'none';
+                            };
+                            clientSuggestionsList.appendChild(item);
+                        });
+                        clientSuggestionsList.style.display = 'block';
+                    }
+                }
+            });
+
+            clientFilterInput.addEventListener('keydown', (e) => {
+                const items = clientSuggestionsList.querySelectorAll('.suggestion-item');
+                if (clientSuggestionsList.style.display !== 'block' || items.length === 0) return;
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    activeSuggestionIndex = (activeSuggestionIndex + 1) % items.length;
+                    highlightSuggestion(activeSuggestionIndex);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    activeSuggestionIndex = (activeSuggestionIndex - 1 + items.length) % items.length;
+                    highlightSuggestion(activeSuggestionIndex);
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (activeSuggestionIndex > -1) {
+                        items[activeSuggestionIndex].click();
+                    }
+                }
+            });
+
+            document.addEventListener('click', (event) => {
+                if (!clientFilterInput.contains(event.target) && !clientSuggestionsList.contains(event.target)) {
+                    clientSuggestionsList.style.display = 'none';
+                }
+            });
+
+            advancedFilterForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const filters = {};
+                const clientName = document.getElementById('filter-client-name').value.trim();
+                const startDateStr = document.getElementById('filter-start-date').value;
+                const endDateStr = document.getElementById('filter-end-date').value;
+
+                if (clientName) filters.clientName = clientName;
+                if (startDateStr) filters.startDate = new Date(startDateStr + 'T00:00:00');
+                if (endDateStr) filters.endDate = new Date(endDateStr + 'T23:59:59');
+
+                if (currentReportBranchName) await generateBranchReport(currentReportBranchName, filters);
+                advancedFilterModal.style.display = 'none';
+            });
+
+            backToMenuBtn.addEventListener('click', (event) => {
+                event.preventDefault(); // Impede a navegação imediata
+                const destinationUrl = event.currentTarget.href; // Captura a URL de destino
+
+                document.body.classList.add('fade-zoom-out');
+                
+                // Aguarda a animação de saída terminar antes de redirecionar
+                setTimeout(() => {
+                    window.location.href = destinationUrl;
+                }, 500); // Duração DEVE ser igual à da animação CSS (0.5s)
+            });
+
+            document.getElementById('edit-info-btn').addEventListener('click', async () => {
+                const currentUser = auth.currentUser;
+
+                if (!currentUser) {
+                    showNotification('Você precisa estar logado para editar.', 'error');
+                    return;
+                }
+
+                try {
+                    const userDoc = await db.collection('funcionarios').doc(currentUser.uid).get();
+
+                    if (!userDoc.exists) {
+                        showNotification('Usuário logado não encontrado no banco de dados.', 'error');
+                        return;
+                    }
+
+                    const userData = userDoc.data();
+                    // Verifica se o cargo do usuário logado é 'patrao'
+                    if (userData.cargo === 'patrao') {
+                        if (!currentEditingEmployeeId) {
+                            showNotification('ID do funcionário não encontrado para edição.', 'error');
+                            return;
+                        }
+                        
+                        // Carrega as filiais ANTES de preencher o formulário
+                        await loadBranches();
+
+                        const employeeToEditDoc = await db.collection('funcionarios').doc(currentEditingEmployeeId).get();
+                        if (!employeeToEditDoc.exists) {
+                            showNotification('Funcionário a ser editado não encontrado.', 'error');
+                            return;
+                        }
+                        const employeeData = employeeToEditDoc.data();
+
+                        // Preenche o formulário de edição
+                        document.getElementById('edit-employee-id').value = currentEditingEmployeeId;
+                        document.getElementById('edit-employee-name').value = employeeData.nome;
+                        document.getElementById('edit-employee-nickname').value = employeeData.apelido;
+                        document.getElementById('edit-employee-email').value = employeeData.email;
+                        document.getElementById('edit-employee-cpf').value = employeeData.cpf;
+                        document.getElementById('edit-employee-role').value = employeeData.cargo;
+                        document.getElementById('edit-employee-branch').value = employeeData.filial;
+
+                        detailsModal.style.display = 'none';
+                        viewModal.style.display = 'none'; // Fecha o modal da lista de funcionários
+                        editEmployeeModal.style.display = 'flex'; // Abre o modal de edição
+                    } else {
+                        showNotification('Você não tem permissão para editar informações.', 'error');
+                    }
+                } catch (error) {
+                    console.error("Erro ao verificar permissão de edição: ", error);
+                    showNotification('Ocorreu um erro ao verificar suas permissões.', 'error');
+                }
+            });
+
+            document.getElementById('edit-branch-btn').addEventListener('click', async () => {
+                const currentUser = auth.currentUser;
+                if (!currentUser) {
+                    showNotification('Você precisa estar logado para editar.', 'error');
+                    return;
+                }
+
+                try {
+                    const userDoc = await db.collection('funcionarios').doc(currentUser.uid).get();
+                    if (!userDoc.exists) {
+                        showNotification('Usuário logado não encontrado no banco de dados.', 'error');
+                        return;
+                    }
+
+                    const userData = userDoc.data();
+                    if (userData.cargo !== 'patrao') {
+                        showNotification('Você não tem permissão para editar filiais.', 'error');
+                        return;
+                    }
+
+                    if (!currentEditingBranchId) {
+                        showNotification('ID da filial não encontrado para edição.', 'error');
+                        return;
+                    }
+
+                    const branchToEditDoc = await db.collection('filiais').doc(currentEditingBranchId).get();
+                    if (!branchToEditDoc.exists) {
+                        showNotification('Filial a ser editada não encontrada.', 'error');
+                        return;
+                    }
+                    const branchData = branchToEditDoc.data();
+
+                    // Preenche o formulário de edição
+                    document.getElementById('edit-branch-id').value = currentEditingBranchId;
+                    document.getElementById('edit-branch-name').value = branchData.nome || '';
+                    document.getElementById('edit-branch-cnpj').value = branchData.cnpj || '';
+                    document.getElementById('edit-branch-cep').value = branchData.cep || '';
+                    document.getElementById('edit-branch-address').value = branchData.endereco || '';
+                    document.getElementById('edit-branch-phone1').value = branchData.celular1 || '';
+                    document.getElementById('edit-branch-phone2').value = branchData.celular2 || '';
+                    document.getElementById('edit-branch-notes').value = branchData.observacoes || '';
+
+                    branchDetailsModal.style.display = 'none';
+                    editBranchModal.style.display = 'flex';
+                } catch (error) {
+                    console.error("Erro ao preparar edição da filial: ", error);
+                    showNotification('Ocorreu um erro ao preparar a edição.', 'error');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

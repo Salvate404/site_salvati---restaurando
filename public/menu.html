@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Principal</title>
+    <link rel="icon" type="image/png" href="IMG/imgfavicon.png">
+    
+    <style>
+        /* --- ESTILOS CSS REUTILIZADOS DO SEU CÓDIGO --- */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: #333;
+            background-image: url(IMG/imgsalvati.png);
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            overflow: hidden;
+            position: relative;
+            opacity: 0;
+            transform: scale(1.05);
+            animation: fadeZoomIn 1.0s ease-out forwards;
+        }
+
+        @keyframes fadeZoomIn {
+            from { opacity: 0; transform: scale(1.05); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        body.fade-zoom-out {
+            animation: fadeZoomOut 0.55s ease-in forwards;
+        }
+
+        @keyframes fadeZoomOut {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0.95); }
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            /* A altura máxima do contêiner principal já estava correta */
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+
+        .header-title-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+            gap: 10px;
+            padding-top: 30px;
+        }
+
+        .header-title-wrapper img {
+            max-height: 100px;
+            width: auto;
+            margin-bottom: 10px;
+        }
+
+        .header-title-wrapper h1 {
+            color: #000000;
+            font-size: 2.2em;
+            margin: 0;
+            padding: 0;
+            line-height: 1.2;
+            display: block;
+        }
+        
+        .header-title-wrapper h2 {
+            color: #555;
+            font-size: 1.2em;
+            margin-top: 5px;
+            margin-bottom: 20px;
+        }
+
+        .search-container {
+            width: 100%;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .search-container input {
+            width: 100%;
+            padding: 12px 40px 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+        
+        .search-container input:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        
+        .search-container .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #aaa;
+            pointer-events: none;
+        }
+
+        .menu-columns {
+            display: flex;
+            gap: 30px; /* Espaço entre as colunas */
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+
+        .menu-column {
+            flex: 1; /* Faz com que cada coluna ocupe metade do espaço */
+            display: flex;
+            flex-direction: column;
+            gap: 15px; /* Espaço entre os botões dentro de uma coluna */
+        }
+
+        .menu-column h3 {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.4em;
+            text-align: center;
+        }
+
+        .menu-item {
+            /* O menu-item agora é apenas um wrapper para o botão,
+               a lógica de animação de ocultar/mostrar foi movida para ele */
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out, transform 0.3s ease-out, margin-bottom 0.3s ease-out;
+            overflow: hidden;
+            max-height: 100px; /* Altura suficiente para o botão */
+        }
+
+        .menu-item.hidden {
+            opacity: 0;
+            max-height: 0;
+            margin-bottom: 0;
+            transform: scale(0.8);
+            pointer-events: none;
+        }
+
+        .menu-column button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.3em;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            width: 100%;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .menu-column button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        #logoutButton {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            z-index: 10;
+        }
+
+        #logoutButton:hover {
+            background-color: #c82333;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header-title-wrapper">
+            <IMG/img src="IMG/imglogo.png" alt="Logo da Empresa">
+            <h1>Escolha a Calculadora</h1>
+            <h2>Selecione o tipo de toldo para prosseguir</h2>
+        </div>
+        
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Buscar no menu..." onkeyup="filterButtons()">
+            <i class="fas fa-search search-icon"></i>
+        </div>
+
+        <div class="menu-columns">
+            <div class="menu-column">
+                <h3>Essenciais</h3>
+                <div class="menu-item">
+                    <button onclick="redirectTo('orcamento.html')" data-keywords="nota orçamento orcamento venda pdf">Orçamento</button>
+                </div>
+                <div class="menu-item">
+                    <button onclick="redirectTo('relacao.html')" data-keywords="relação relacao problemas viagem frete">Relação</button>
+                </div>
+                <div class="menu-item">
+                    <button onclick="redirectTo('produtos.html')" data-keywords="inventario estoque produtos precos preços preco preço orçamento orcamento catalogo catálogo">Inventário</button>
+                </div>
+                <div class="menu-item" id="adminMenuItem" style="display: none;">
+                    <button onclick="redirectTo('administracao.html')" data-keywords="cadastro cliente funcionário configurações cargos">Administração</button>
+                </div>
+            </div>
+            <div class="menu-column">
+                <h3>Personalizados</h3>
+                <div class="menu-item"><button onclick="redirectTo('hiper_calculator.html')" data-keywords="calculadora toldo convencional simples comum cortina capota completo">Convencionais</button></div>
+                <div class="menu-item"><button onclick="redirectTo('visor_calculator.html')" data-keywords="calculadora toldo visor cristal 0,50 0.50">Com Visor</button></div>
+                <div class="menu-item"><button onclick="redirectTo('articulado_calculator.html')" data-keywords="calculadora toldo articulado motor economico econômico">Articulado e motor</button></div>
+                <div class="menu-item"><button onclick="redirectTo('paleta.html')" data-keywords="cores paleta de cores catalogo cor">Paleta de cores</button></div>
+            </div>
+        </div>
+    </div>
+
+    <a href="#" id="logoutButton" onclick="event.preventDefault(); addExitAnimationAndRedirectToLogin();">Deslogar</a>
+
+    <!-- Firebase SDKs -->
+    <script src="firebase-config.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+
+    <script>
+        // --- VERIFICAÇÃO SÍNCRONA INICIAL ---
+        // Este script roda imediatamente para evitar o "piscar" do botão.
+        (function() {
+            const userRole = localStorage.getItem('tipoUsuario');
+            if (userRole === 'patrao') {
+                document.getElementById('adminMenuItem').style.display = 'block';
+            }
+        })();
+
+        function filterButtons() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const menuItems = document.querySelectorAll('.menu-item');
+            
+            menuItems.forEach(item => {
+                const button = item.querySelector('button');
+                const buttonText = button.textContent.toLowerCase();
+                const keywords = button.getAttribute('data-keywords') ? button.getAttribute('data-keywords').toLowerCase() : '';
+                
+                const searchableText = `${buttonText} ${keywords}`;
+                
+                if (searchableText.includes(filter)) {
+                    item.classList.remove('hidden');
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+        }
+
+        function addExitAnimationAndRedirect(urlDestino) {
+            document.body.classList.add('fade-zoom-out');
+            setTimeout(() => {
+                window.location.href = urlDestino;
+            }, 550);
+        }
+
+        function redirectTo(fileName) {
+            addExitAnimationAndRedirect(fileName);
+        }
+
+        function addExitAnimationAndRedirectToLogin() {
+            document.body.classList.add('fade-zoom-out');
+            // Efetua o logout no Firebase
+            auth.signOut().then(() => {
+                console.log("Logout bem-sucedido.");
+                // Limpa o localStorage após o logout
+                localStorage.clear();
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 550);
+            }).catch(error => {
+                console.error("Erro no logout:", error);
+                // Mesmo que o logout falhe, limpa o local storage e redireciona
+                localStorage.clear();
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 550);
+            });
+        }
+
+        // Inicializa o Firebase e adiciona o Auth Guard
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                console.log("Usuário não autenticado no menu. Redirecionando para login.");
+                window.location.href = 'index.html'; // Redireciona imediatamente
+            } else {
+                // Usuário está logado, vamos verificar o cargo dele.
+                // Esta verificação assíncrona serve como uma confirmação e garantia,
+                // mas a exibição inicial já foi tratada pelo script síncrono acima.
+                const adminMenuItem = document.getElementById('adminMenuItem');
+                try {
+                    const userDoc = await db.collection('funcionarios').doc(user.uid).get();
+                    if (userDoc.exists) {
+                        const userData = userDoc.data();
+                        // Se o cargo for 'patrao', mostra o item de menu
+                        if (userData.cargo === 'patrao') {
+                            adminMenuItem.style.display = 'block';
+                        }
+                    } else {
+                        console.warn("Documento do funcionário não encontrado no Firestore. Acesso administrativo negado.");
+                    }
+                } catch (error) {
+                    console.error("Erro ao verificar permissões do usuário:", error);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

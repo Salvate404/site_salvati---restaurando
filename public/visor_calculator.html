@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visor Calculadora</title>
+    <link rel="icon" type="image/png" href="IMG/imgfavicon.png">
+    
+    <style>
+        /* --- ESTILOS CSS GERAIS E ANIMAÇÕES --- */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: #000000;
+            background-image: url(IMG/imgsalvati.png); /* Certifique-se que o caminho da imagem está correto */
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            overflow: hidden;
+            position: relative;
+            opacity: 0;
+            transform: scale(1.05);
+            animation: fadeZoomIn 1.0s ease-out forwards;
+        }
+
+        @keyframes fadeZoomIn {
+            from { opacity: 0; transform: scale(1.05); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        body.fade-zoom-out {
+            animation: fadeZoomOut 0.55s ease-in forwards;
+        }
+
+        @keyframes fadeZoomOut {
+            from { opacity: 1; transform: scale(1); } 
+            to { opacity: 0; transform: scale(0.95); }
+        }
+
+        /* --- ESTILOS DO CONTAINER PRINCIPAL --- */
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 900px; /* Definido para o tamanho maior fixo */
+            text-align: center;
+            max-height: calc(100vh - 40px);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            gap: 20px;
+            overflow-y: auto; /* Permite rolagem se o conteúdo for muito alto */
+        }
+
+        /* --- ESTILOS DO CABEÇALHO --- */
+        .header-title-wrapper {
+            margin-bottom: 10px;
+        }
+
+        .header-title-wrapper img {
+            max-height: 100px;
+            width: auto;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: #000000;
+            margin-bottom: 0;
+            font-size: 1.8em;
+        }
+
+        h2 {
+            color: #333;
+            margin-top: 5px;
+            margin-bottom: 0;
+            font-size: 1.2em;
+        }
+
+        /* --- ESTILOS DOS BOTÕES DE SELEÇÃO DE TIPO (COM VISOR / DE VISOR) --- */
+        .type-selection-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .type-selection-buttons button {
+            background-color: #007bff; /* Cor verde padrão */
+            color: white;
+            border: none;
+            padding: 15px 10px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .type-selection-buttons button.selected {
+            background-color: #28a745; /* Azul, cor presente em h3 e borda do visor */
+            box-shadow: 0 4px 8px rgba(8, 157, 33, 0.3); /* Sombra mais proeminente */
+            transform: translateY(-2px); /* Mantém o efeito de "levantar" */
+        }
+
+        .type-selection-buttons button:not(.selected):hover { /* Aplicar hover apenas se não estiver selecionado */
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            /* O #007bff estava sobrando aqui na sua versão, causando erro. Removido. */
+        }
+
+        /* --- ESTILOS DAS SEÇÕES DA CALCULADORA --- */
+        .calculator-section {
+            display: none; /* Inicia escondido, JavaScript controla a visibilidade */
+            width: 100%;
+            text-align: left;
+        }
+
+        .calculator-section h3 {
+            color: #007bff;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            text-align: center;
+        }
+
+        /* --- LAYOUT DO CONTEÚDO (DESENHO E CAMPOS) --- */
+        .drawing-input-container {
+            display: flex;
+            gap: 20px; /* Espaçamento entre desenho e campos */
+            align-items: flex-start; /* Alinhar no topo */
+            margin-bottom: 20px; /* Espaço abaixo de cada seção */
+            flex-wrap: wrap; /* Permite que os itens quebrem para a próxima linha em telas menores */
+            justify-content: center; /* Centraliza o desenho e os campos */
+            min-width: 500px; /* Largura mínima para o desenho (200px) + inputs (300px min) */
+        }
+
+        /* --- ESTILOS DO DESENHO BÁSICO DO TOLDO --- */
+        .basic-toldo-drawing {
+            border: 2px solid #333;
+            background-color: #f8f8f8;
+            width: 200px; /* Largura fixa para o desenho */
+            height: 150px; /* Altura fixa para o desenho */
+            position: relative;
+            flex-shrink: 0; /* Garante que o desenho não encolha */
+            margin-bottom: 20px; /* Espaçamento quando os elementos quebram a linha */
+        }
+        @media (min-width: 600px) { /* Remove margin-bottom em telas maiores */
+            .basic-toldo-drawing {
+                margin-bottom: 0;
+            }
+        }
+
+        /* --- ESTILOS PARA OS CONTORNOS DO TOLDO (DESENHO) --- */
+        .toldo-border {
+            position: absolute;
+            background-color: rgba(255, 193, 7, 0.5); /* Cor amarela semi-transparente */
+            z-index: 1;
+        }
+
+        .toldo-border-top-bottom {
+            width: 100%;
+            height: 10px;
+            left: 0;
+        }
+
+        .toldo-border-left-right {
+            width: 10px;
+            height: 100%;
+            top: 0;
+        }
+
+        .toldo-border-top { top: 0; }
+        .toldo-border-bottom { bottom: 0; }
+        .toldo-border-left { left: 0; }
+        .toldo-border-right { right: 0; }
+
+        /* --- ESTILOS DO VISOR DENTRO DO DESENHO --- */
+        .basic-visor {
+            border: 2px dashed #007bff; /* Borda tracejada azul */
+            background-color: rgba(173, 216, 230, 0.5); /* Azul claro semi-transparente */
+            width: 60%;
+            height: 60%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex; /* Para centralizar o texto "Visor" */
+            justify-content: center;
+            align-items: center;
+            font-size: 0.9em;
+            color: #007bff;
+        }
+
+        /* --- ESTILOS DO CONTAINER DOS CAMPOS DE ENTRADA GERAL --- */
+        .input-fields-wrapper {
+            flex-grow: 1; /* Permite que o wrapper dos campos ocupe o espaço restante */
+            display: flex;
+            flex-direction: column; /* Padrão: empilhado, alterado por classes específicas */
+            gap: 10px; /* Espaçamento entre os grupos de input (se for uma coluna) */
+            min-width: 380px; /* Força uma largura mínima para os inputs combinados */
+            flex-shrink: 1; /* Permite que encolha se não houver espaço suficiente */
+        }
+
+        /* Estilos para as colunas na seção "Toldo Com Visor" */
+        .input-fields-wrapper.com-visor-columns {
+            flex-direction: row; /* Coloca os filhos (colunas Lona/Visor) lado a lado */
+            flex-wrap: wrap; /* Permite que as colunas quebrem para a próxima linha em telas menores */
+            justify-content: space-around; /* Distribui o espaço em torno das colunas */
+            align-items: flex-start; /* Alinha os itens ao topo */
+        }
+
+        .com-visor-column-section {
+            flex: 0 0 180px; /* Define uma largura base para cada coluna e evita que encolham */
+            display: flex;
+            flex-direction: column;
+            gap: 10px; /* Espaçamento entre os campos dentro da coluna */
+            box-sizing: border-box;
+        }
+
+        .com-visor-column-section h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #666;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        /* --- ESTILOS DOS GRUPOS DE INPUT (LABEL + INPUT) --- */
+        .input-group {
+            text-align: left;
+            max-width: 100%; /* Garante que não ultrapasse o pai */
+            box-sizing: border-box; /* Inclui padding e border na largura total */
+        }
+
+        /* Para os labels dentro das colunas "LONA" e "VISOR", força a quebra de texto */
+        .de-visor-column-section .input-group label,
+        .com-visor-column-section .input-group label {
+            white-space: normal; /* Permite que o texto quebre linha */
+            word-wrap: break-word; /* Força a quebra de palavras longas */
+            -webkit-hyphens: auto; /* Adicionado para compatibilidade com Safari iOS < 17 */
+            hyphens: auto; /* Opcional: permite hifenização */
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        .input-group input[type="text"] {
+            width: calc(100% - 22px); /* 100% menos padding e border */
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            box-sizing: border-box; /* Inclui padding e border na largura total */
+            text-align: right; /* Alinha o texto à direita para formato de moeda */
+        }
+
+        /* --- LAYOUT ESPECÍFICO PARA "TOLDO DE VISOR" (COLUNAS LONA E VISOR) --- */
+        .input-fields-wrapper.de-visor-columns { /* Adicionado a classe para o wrapper também */
+            flex-direction: row; /* Coloca os filhos (colunas Lona/Visor) lado a lado */
+            flex-wrap: wrap; /* Permite que as colunas quebrem para a próxima linha em telas menores */
+            justify-content: space-around; /* Distribui o espaço em torno das colunas */
+            align-items: flex-start; /* Alinha os itens ao topo */
+            min-width: 380px; /* 2 * 180px (min-width da coluna) + 20px (gap) */
+        }
+
+        .de-visor-column-section {
+            flex: 0 0 180px; /* flex-grow: 0, flex-shrink: 0, flex-basis: 180px */
+            display: flex;
+            flex-direction: column;
+            gap: 10px; /* Espaçamento entre os campos dentro da coluna */
+            box-sizing: border-box; /* Garante que padding e border sejam incluídos na largura */
+        }
+
+        /* Media query para telas muito pequenas, para que as colunas quebrem */
+        @media (max-width: 768px) { /* Reduzido o breakpoint para telas menores */
+            .container { /* Remove container-expanded media query */
+                max-width: 600px; /* Ajusta a largura do container para telas menores */
+            }
+            .drawing-input-container {
+                min-width: unset; /* Remove min-width em telas pequenas para permitir quebra */
+                justify-content: center; /* Centraliza o desenho e os campos quando empilhados */
+            }
+            /* Aplica empilhamento e centralização para ambas as estruturas de colunas em telas menores */
+            .input-fields-wrapper.de-visor-columns,
+            .input-fields-wrapper.com-visor-columns {
+                flex-direction: column; /* Força as colunas Lona e Visor a empilharem */
+                align-items: center; /* Centraliza as colunas empilhadas */
+            }
+            .de-visor-column-section,
+            .com-visor-column-section {
+                flex: 1 1 100%; /* Em telas menores, ocupa 100% para empilhar */
+                max-width: 250px; /* Limita a largura quando empilhado para não ficar muito largo */
+            }
+        }
+        @media (max-width: 480px) { /* Para celulares, ainda mais compacto */
+            .container {
+                padding: 15px;
+            }
+            .type-selection-buttons {
+                grid-template-columns: 1fr; /* Botões empilhados */
+            }
+        }
+
+        .de-visor-column-section h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #666;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        /* --- ESTILOS DOS BOTÕES DE PREÇO (ATACADO/VAREJO) --- */
+        .price-type-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+            justify-content: center; /* Centraliza os botões dentro do input-group */
+        }
+
+        .price-type-buttons .price-button {
+            background-color: #007bff; /* Cor cinza padrão para botões de preço */
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s ease;
+            flex: 1; /* Permite que os botões ocupem o espaço disponível igualmente */
+            max-width: 100px; /* Limita a largura máxima dos botões */
+        }
+
+        .price-type-buttons .price-button:hover:not(.selected) {
+            background-color: #0056b3;
+        }
+
+        .price-type-buttons .price-button.selected {
+            background-color: #28a745; /* Cor verde para o selecionado */
+            box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3);
+        }
+
+        /* --- ESTILO PARA O BOTÃO "MENU" --- */
+        #backToMenuButton {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            z-index: 10;
+        }
+
+        #backToMenuButton:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="mainContainer">
+        <div class="header-title-wrapper">
+            <IMG/img src="IMG/imglogo.png" alt="Logo da Empresa"> 
+            <h1>Visor da Calculadora</h1>
+            <h2>Selecione o tipo de toldo com visor</h2>
+        </div>
+        
+        <div class="type-selection-buttons">
+            <button id="btnShowComVisor">Toldo Com Visor</button>
+            <button id="btnShowDeVisor">Toldo De Visor</button>
+        </div>
+
+        <div id="sectionComVisor" class="calculator-section">
+            <h3>Toldo Com Visor</h3>
+            <div class="drawing-input-container">
+                <div class="basic-toldo-drawing">
+                    <div class="basic-visor">Visor</div>
+                </div>
+                <div class="input-fields-wrapper com-visor-columns">
+                    <div class="com-visor-column-section">
+                        <h4>LONA</h4>
+                        <div class="input-group">
+                            <label for="comVisorLarguraLona">Largura Lona (cm):</label>
+                            <input type="text" id="comVisorLarguraLona" class="currency-input" value="0,00" inputmode="numeric">
+                        </div>
+                        <div class="input-group">
+                            <label for="comVisorCaimentoLona">Caimento Lona (cm):</label>
+                            <input type="text" id="comVisorCaimentoLona" class="currency-input" value="0,00" inputmode="numeric">
+                        </div>
+                    </div>
+
+                    <div class="com-visor-column-section">
+                        <h4>VISOR</h4>
+                        <div class="input-group">
+                            <label for="comVisorLarguraVisor">Largura Visor (cm):</label>
+                            <input type="text" id="comVisorLarguraVisor" class="currency-input" value="0,00" inputmode="numeric">
+                        </div>
+                        <div class="input-group">
+                            <label for="comVisorComprimentoVisor">Comprimento Visor (cm):</label>
+                            <input type="text" id="comVisorComprimentoVisor" class="currency-input" value="0,00" inputmode="numeric">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="sectionDeVisor" class="calculator-section">
+            <h3>Toldo De Visor</h3>
+            <div class="drawing-input-container">
+                <div class="basic-toldo-drawing">
+                    <div class="basic-visor">Visor</div>
+                    <div class="toldo-border toldo-border-top toldo-border-top-bottom"></div> 
+                    <div class="toldo-border toldo-border-bottom toldo-border-top-bottom"></div> 
+                    <div class="toldo-border toldo-border-left toldo-border-left-right"></div> 
+                    <div class="toldo-border toldo-border-right toldo-border-left-right"></div> 
+                </div>
+                <div class="input-fields-wrapper de-visor-columns">
+                    <div class="de-visor-column-section">
+                        <h4>LONA</h4>
+                        <div class="input-group">
+                            <label for="deVisorLonaLaterais">Laterais (cm):</label>
+                            <input type="text" id="deVisorLonaLaterais" class="currency-input" value="0,00" inputmode="numeric">
+                        </div>
+                        <div class="input-group">
+                            <label for="deVisorLonaCima">Cima (cm):</label>
+                            <input type="text" id="deVisorLonaCima" class="currency-input" value="0,00" inputmode="numeric">
+                        </div>
+                        <div class="input-group">
+                            <label for="deVisorLonaBaixo">Baixo (cm):</label>
+                            <input type="text" id="deVisorLonaBaixo" class="currency-input" value="0,00" inputmode="numeric">
+                        </div>
+                        <div class="input-group">
+                            <label for="deVisorLonaBando">Bandô (cm):</label>
+                            <input type="text" id="deVisorLonaBando" class="currency-input" value="0,00" inputmode="numeric">
+                        </div>
+                    </div>
+
+                    <div class="de-visor-column-section">
+                        <h4>VISOR</h4>
+                        <div class="input-group">
+                            <label for="deVisorLargura">Largura (cm):</label>
+                            <input type="text" id="deVisorLargura" class="currency-input" value="0,00" inputmode="numeric">
+                        </div>
+                        <div class="input-group">
+                            <label for="deVisorCaimento">Caimento (cm):</label>
+                            <input type="text" id="deVisorCaimento" class="currency-input" value="0,00" inputmode="numeric">
+                        </div>
+                        <div class="input-group">
+                            <label for="deVisorComprimento">Comprimento (cm):</label>
+                            <input type="text" id="deVisorComprimento" class="currency-input" value="0,00" inputmode="numeric">
+                        </div>
+                        <div class="input-group">
+                            <label>Preço:</label>
+                            <div class="price-type-buttons">
+                                <button type="button" class="price-button" id="deVisorPrecoAtacado">Atacado</button>
+                                <button type="button" class="price-button" id="deVisorPrecoVarejo">Varejo</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <a href="#" id="backToMenuButton" onclick="event.preventDefault(); addExitAnimationAndRedirect('menu.html');">Menu</a>
+
+    <script>
+        // Função para adicionar animação de saída e redirecionar
+        function addExitAnimationAndRedirect(urlDestino) {
+            document.body.classList.add('fade-zoom-out');
+            setTimeout(() => {
+                window.location.href = urlDestino;
+            }, 550); // Deve corresponder à duração da animação CSS
+        }
+
+        // Garante que o script só execute após o HTML carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnComVisor = document.getElementById('btnShowComVisor');
+            const btnDeVisor = document.getElementById('btnShowDeVisor');
+            const sectionComVisor = document.getElementById('sectionComVisor');
+            const sectionDeVisor = document.getElementById('sectionDeVisor');
+            const mainContainer = document.getElementById('mainContainer'); // Obter o contêiner principal
+            const buttons = [btnComVisor, btnDeVisor]; // Array de botões para fácil iteração
+
+            // Função para formatar o valor como moeda (0,00)
+            function formatCurrency(input) {
+                let value = input.value.replace(/\D/g, ''); // Remove tudo que não é dígito
+                
+                if (value === '') {
+                    input.value = '0,00';
+                    return;
+                }
+
+                // Garante pelo menos dois dígitos para os centavos
+                while (value.length < 3) {
+                    value = '0' + value;
+                }
+
+                const integerPart = value.slice(0, -2);
+                const decimalPart = value.slice(-2);
+
+                let formattedValue = integerPart.replace(/^0+/, '') || '0'; // Remove zeros à esquerda, ou deixa '0'
+                formattedValue = formattedValue.replace(/\B(?=(\d{3})+(?!\d))/g, '.'); // Adiciona separador de milhar
+                
+                input.value = formattedValue + ',' + decimalPart;
+            }
+
+            // Aplica a formatação em todos os campos com a classe 'currency-input'
+            document.querySelectorAll('.currency-input').forEach(input => {
+                // Formata no carregamento (se houver valor inicial)
+                formatCurrency(input); 
+
+                input.addEventListener('focus', function() {
+                    // Ao focar, se for "0,00", limpa para digitar do zero
+                    if (this.value === '0,00') {
+                        this.value = '';
+                    } else {
+                        // Remove a formatação temporariamente para facilitar a digitação
+                        this.value = this.value.replace(/\D/g, ''); 
+                    }
+                });
+
+                input.addEventListener('input', function() {
+                    let caretPos = this.selectionStart; // Salva a posição do cursor
+                    const oldValue = this.value;
+
+                    // Remove caracteres não numéricos exceto a vírgula/ponto temporariamente
+                    let rawValue = this.value.replace(/[^\d]/g, ''); 
+
+                    // Garante que o valor sempre tenha pelo menos '00' para os centavos
+                    if (rawValue.length === 0) {
+                        rawValue = '00';
+                    } else if (rawValue.length === 1) {
+                        rawValue = '0' + rawValue; // Ex: '5' -> '05'
+                    }
+
+                    // Insere a vírgula dois dígitos antes do final
+                    let formatted = rawValue.slice(0, -2) + ',' + rawValue.slice(-2);
+                    
+                    // Remove zeros à esquerda, exceto se for "0," ou "0,00"
+                    if (formatted.length > 4 && formatted.startsWith('0,')) {
+                        formatted = formatted.substring(2);
+                    } else if (formatted.startsWith('0') && formatted.length > 1 && !formatted.includes(',')) {
+                             formatted = formatted.substring(1);
+                    }
+
+                    this.value = formatted;
+
+                    // Tenta manter a posição do cursor
+                    const newLength = this.value.length;
+                    const oldLength = oldValue.length;
+                    const diff = newLength - oldLength;
+                    this.setSelectionRange(caretPos + diff, caretPos + diff);
+                });
+
+                input.addEventListener('blur', function() {
+                    formatCurrency(this); // Reforça a formatação ao perder o foco
+                });
+            });
+
+            // Função para mostrar a seção selecionada e gerenciar a classe 'selected' dos botões
+            function showSection(sectionToShow, selectedButton) {
+                // Esconde todas as seções
+                sectionComVisor.style.display = 'none';
+                sectionDeVisor.style.display = 'none';
+
+                // Remove a classe 'selected' de todos os botões
+                buttons.forEach(button => button.classList.remove('selected'));
+
+                // Mostra a seção desejada
+                if (sectionToShow) {
+                    sectionToShow.style.display = 'block';
+                }
+                
+                // Adiciona a classe 'selected' ao botão clicado
+                if (selectedButton) {
+                    selectedButton.classList.add('selected');
+                }
+            }
+
+            // MODIFICADO: Mostra a seção "Toldo Com Visor" e seleciona o botão ao carregar a página inicialmente
+            showSection(sectionComVisor, btnComVisor); 
+
+            // Adiciona event listeners aos botões de seleção de tipo
+            btnComVisor.addEventListener('click', () => {
+                showSection(sectionComVisor, btnComVisor);
+            });
+
+            btnDeVisor.addEventListener('click', () => {
+                showSection(sectionDeVisor, btnDeVisor);
+            });
+
+            // Lógica para os botões Atacado/Varejo na seção "Toldo De Visor"
+            const btnAtacado = document.getElementById('deVisorPrecoAtacado');
+            const btnVarejo = document.getElementById('deVisorPrecoVarejo');
+
+            function handlePriceSelection(selectedButton, otherButton) {
+                selectedButton.classList.add('selected');
+                otherButton.classList.remove('selected');
+            }
+
+            if (btnAtacado && btnVarejo) { // Verifica se os botões existem antes de adicionar listeners
+                btnAtacado.addEventListener('click', () => handlePriceSelection(btnAtacado, btnVarejo));
+                btnVarejo.addEventListener('click', () => handlePriceSelection(btnVarejo, btnAtacado));
+            }
+        });
+    </script>
+</body>
+</html>

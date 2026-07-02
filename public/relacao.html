@@ -1,0 +1,2347 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Pedidos</title> <!-- Changed title -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="icon" type="image/png" href="IMG/imgfavicon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        /* --- ESTILOS CSS REUTILIZADOS DO SEU CÓDIGO --- */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
+            color: #333;
+            background-image: url(IMG/imgsalvati.png);
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            overflow: hidden;
+            position: relative;
+            /* fallback for old browsers */
+            opacity: 0;
+            transform: scale(1.05);
+            animation: fadeZoomIn 1.0s ease-out forwards;
+        }
+
+        @keyframes fadeZoomIn {
+            from { opacity: 0; transform: scale(1.05); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        body.fade-zoom-out {
+            animation: fadeZoomOut 0.55s ease-in forwards;
+        }
+
+        @keyframes fadeZoomOut {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0.95); }
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 1400px; /* Adjusted for ~4 columns */
+            text-align: center;
+            max-height: calc(100vh - 100px); /* Added more vertical margin */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Prevent container scroll, content will scroll */
+        }
+
+        .header-title-wrapper {
+            display: flex;
+            flex-direction: row; /* Side-by-side */
+            align-items: center;
+            justify-content: center; /* Centered header */
+            margin-bottom: 20px;
+            flex-shrink: 0; /* Prevent header from shrinking */
+            gap: 20px; /* Space between image and text */
+        }
+
+        .header-title-wrapper img {
+            max-height: 70px; /* Smaller logo */
+            width: auto;
+            margin-bottom: 0;
+        }
+
+        h1 {
+            color: #000000;
+            font-size: 2em; /* Slightly smaller title */
+            margin: 0;
+        }
+
+        .header-separator {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 0 0 20px 0;
+        }
+
+        /* --- NEW LAYOUT STYLES --- */
+        .page-layout {
+            display: flex;
+            flex-grow: 1;
+            gap: 0; /* Gap is now handled by sidebar/content padding */
+            overflow: hidden; /* Important for child scrolling */
+        }
+
+        .sidebar {
+            flex: 0 0 220px; /* Slightly wider sidebar */
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            border-right: 1px solid #e0e0e0;
+            padding-right: 20px;
+            position: relative; /* For the toggle button */
+            transition: flex-basis 0.3s ease-in-out;
+        }
+
+        .sidebar button {
+            background-color: #f0f2f5;
+            color: #333;
+            border: 1px solid #ddd;
+            padding: 18px; /* Bigger buttons */
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2em; /* Bigger font */
+            text-align: left;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar button:hover {
+            background-color: #e4e6eb;
+            border-color: #ccc;
+        }
+
+        .sidebar button.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+            font-weight: bold;
+        }
+
+        /* Collapsible Sidebar Styles */
+        .sidebar.collapsed {
+            flex-basis: 70px; /* Width for just icons */
+            padding-right: 10px;
+        }
+        .sidebar button span {
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+            transition: opacity 0.2s ease-out 0.1s; /* Fade in with a slight delay */
+            opacity: 1;
+            visibility: visible;
+            white-space: nowrap;
+        }
+        .sidebar.collapsed button span {
+            opacity: 0;
+            visibility: hidden;
+            width: 0;
+            transition: opacity 0.1s ease, visibility 0s linear 0.1s, width 0s linear 0.1s;
+            transition: opacity 0.15s ease-in; /* Fade out a bit faster */
+            pointer-events: none; /* Prevent interaction with invisible text */
+        }
+        #sidebar-toggle-btn {
+            position: static;
+            transform: none;
+            width: 100%;
+            justify-content: center;
+            padding: 10px;
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            margin-bottom: 20px;
+        }
+        #sidebar-toggle-btn i {
+            transition: transform 0.3s ease;
+        }
+        .sidebar.collapsed #sidebar-toggle-btn i {
+            transform: rotate(180deg);
+        }
+
+        .content-area {
+            flex-grow: 1;
+            overflow-y: auto; /* Allow this area to scroll vertically */
+            display: flex;
+            flex-direction: column;
+            padding-left: 20px;
+        }
+
+        /* --- "RELAÇÃO" BOARD STYLES --- */
+        #relacao-board {
+            display: grid; /* Changed to grid for wrapping */
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); /* Wider columns to fit ~4 */
+            gap: 15px;
+            padding-bottom: 15px; /* Space for scrollbar */
+            /* overflow-y: auto; */ /* Scrolling is now handled by the parent .content-area */
+            flex-grow: 1;
+        }
+
+        .branch-column {
+            background-color: #f0f2f5;
+            border-radius: 8px;
+            /* Removed flex properties to allow natural height based on content */
+            /* max-height: 100%; */ /* Removed to allow columns to grow */
+        }
+
+        .column-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            border-bottom: 1px solid #ddd;
+            flex-shrink: 0;
+        }
+
+        .column-header h2 {
+            font-size: 1.2em;
+            margin: 0;
+            color: #333;
+        }
+
+        .add-item-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-size: 1.5em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 0; /* Better for icon centering */
+            padding: 0; /* Helps with perfect centering */
+            transition: background-color 0.3s;
+        }
+
+        .add-item-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .item-list {
+            padding: 10px;
+            /* overflow-y: auto; */ /* Removed to prevent individual scrolling */
+        }
+
+        .item-card {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+            text-align: left;
+            position: relative; /* For positioning the delete button */
+            transition: transform 0.2s ease, box-shadow 0.2s ease; /* Added for hover */
+        }
+
+        .item-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+        }
+
+        .delete-item-btn {
+            position: absolute;
+            top: 5px;
+            right: 8px;
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            color: #aaa;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0;
+        }
+        .delete-item-btn:hover {
+            color: #dc3545;
+        }
+
+        .item-card .product-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .item-card .observation {
+            font-size: 0.95em;
+            color: #555;
+            white-space: pre-wrap; /* Preserve line breaks */
+            overflow-wrap: break-word; /* Break long words */
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed #eee;
+        }
+
+        .item-card .trip-checkbox {
+            display: none;
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            transform: scale(1.5);
+            cursor: pointer;
+        }
+
+        .item-card .trip-checkbox:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        #relacao-board.trip-mode .item-card.has-trip-checkbox {
+            padding-left: 40px; /* Make space for checkbox */
+        }
+
+        #relacao-board.trip-mode .item-card .trip-checkbox {
+            display: block;
+        }
+
+        .item-card.status-on-the-way {
+            background-color: #fffbe6; /* Light yellow */
+            border-left: 4px solid #ffc107; /* Amber color */
+        }
+
+        .item-card .status-badge {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background-color: #ffc107;
+            color: #333;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: bold;
+        }
+
+        /* --- PROBLEMAS VIEW STYLES --- */
+        #problemas-view {
+            display: flex;
+            gap: 20px;
+            height: 100%; /* Make it fill the content area */
+            overflow: hidden;
+        }
+
+        .problemas-list-container {
+            flex: 0 0 350px; /* Fixed width for the list */
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #e0e0e0;
+            padding-right: 20px;
+        }
+
+        .problemas-list-container h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 1.3em;
+        }
+
+        #add-new-problem-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        #add-new-problem-btn:hover {
+            background-color: #c82333;
+        }
+
+        #problemas-list {
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .problema-item {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        .problema-item:hover {
+            background-color: #f8f9fa;
+            border-color: #007bff;
+        }
+        .problema-item.active {
+            background-color: #e7f3ff;
+            border-left: 4px solid #007bff;
+        }
+
+        .problema-item-title {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        .problema-item-meta {
+            font-size: 0.85em;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+        }
+        .problema-item-meta .status-badge {
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: bold;
+            text-transform: capitalize;
+        }
+        .status-badge.aberto { background-color: #ffe0b2; color: #856404; }
+        .status-badge.em_andamento { background-color: #d1ecf1; color: #0c5460; }
+        .status-badge.resolvido { background-color: #d4edda; color: #155724; }
+
+
+        .problemas-detail-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            align-items: center; /* Center content horizontally */
+        }
+
+        .problema-detail-view h2, .new-problem-form h2 {
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .problema-detail-view, .new-problem-form {
+            width: 100%;
+            max-width: 950px; /* Give the content a max width */
+            text-align: left;
+        }
+
+        .problema-detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .problema-status-selector label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .problema-status-selector select {
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .problema-description {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+        }
+
+        .comments-section {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .comments-section h4 {
+            margin-bottom: 10px;
+        }
+        .comments-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+        .comment-item {
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px dashed #f0f0f0;
+        }
+        .comment-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        .comment-header {
+            font-size: 0.9em;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        .comment-header .author { font-weight: bold; }
+        .comment-text {
+            white-space: pre-wrap;
+        }
+
+        .add-comment-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .add-comment-form textarea {
+            width: 100%;
+            min-height: 60px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .add-comment-form button {
+            align-self: flex-end;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .problemas-placeholder {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1; /* Allow it to fill the vertical space */
+            color: #888;
+            text-align: center;
+        }
+        .problemas-placeholder i {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        /* New styles for trip mode buttons */
+        .content-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: #ffffff; /* Fundo branco para a barra */
+            padding-top: 10px; /* Espaçamento acima dos botões */
+            padding-bottom: 15px; /* Espaçamento abaixo dos botões */
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-shrink: 0; /* Impede que a barra encolha */
+        }
+
+        #receive-goods-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        #receive-goods-btn:hover {
+            background-color: #218838;
+        }
+
+        #trip-mode-btn {
+            background-color: #17a2b8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        #trip-mode-btn:hover {
+            background-color: #138496;
+        }
+
+        /* --- MODAL STYLES --- */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 20px 30px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .modal-content h2 { text-align: center; margin-top: 0; margin-bottom: 20px; }
+        .close-btn { color: #aaa; position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close-btn:hover { color: black; }
+
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .input-group input, .input-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 1em; }
+        .input-group textarea { resize: vertical; min-height: 80px; }
+
+        .modal-content button[type="submit"] {
+            width: 100%; padding: 12px; margin-top: 10px; background-color: #28a745;
+            color: white; border: none; border-radius: 5px; cursor: pointer;
+            font-size: 16px; font-weight: bold;
+        }
+        .modal-content button[type="submit"]:hover { background-color: #218838; }
+
+
+        /* --- ESTILOS PARA A NOVA LISTA DE OBSERVAÇÕES --- */
+        .observation-list {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 8px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            min-height: 40px;
+            background-color: #f9f9f9;
+        }
+
+        .obs-item {
+            background-color: #e7f3ff;
+            color: #004085;
+            padding: 5px 10px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+
+        .remove-obs-btn {
+            background: none; border: none; color: #004085;
+            cursor: pointer; font-weight: bold; font-size: 1.1em;
+            padding: 0; line-height: 1;
+        }
+        /* Custom Confirm Modal */
+        /* New styles for branch selection modal */
+        #branch-selection-list .sidebar-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #007bff;
+            color: white;
+            border: 1px solid #007bff;
+            font-size: 1.2em;
+            padding: 18px;
+            border-radius: 8px;
+        }
+        #branch-selection-list .sidebar-btn:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+
+        /* New styles to lock UI during trip mode */
+        body.trip-mode-active .sidebar button,
+        body.trip-mode-active #receive-goods-btn,
+        body.trip-mode-active .add-item-btn {
+            pointer-events: none;
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        #custom-confirm-modal .modal-content {
+            max-width: 400px;
+            text-align: center;
+        }
+        #custom-confirm-modal p {
+            font-size: 1.2em;
+            margin: 10px 0 20px;
+        }
+        #custom-confirm-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        #custom-confirm-buttons button {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: white;
+            transition: opacity 0.2s;
+        }
+        #custom-confirm-buttons button:hover { opacity: 0.85; }
+
+        /* --- LOGOUT BUTTON --- */
+        .fixed-bottom-buttons {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            z-index: 10;
+        }
+
+        #finish-trip-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            display: none; /* Hidden by default */
+        }
+
+        #menuButton { /* Changed from logoutButton */
+            background-color: #dc3545; /* Red color, as original logout */
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        #menuButton:hover { /* Changed from logoutButton */
+            background-color: #c82333; /* Darker red on hover */
+        }
+
+        /* --- NOTIFICATION STYLES (TOAST) --- */
+        #notifications-container {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .toast {
+            background-color: #fff;
+            color: #333;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            min-width: 250px;
+            animation: slideInUp 0.5s ease-out forwards, fadeOut 0.5s 4.5s ease-in forwards;
+        }
+        
+        .toast.success { border-left: 5px solid #28a745; }
+        .toast.error { border-left: 5px solid #dc3545; }
+        
+        .toast-close-btn {
+            background: none; border: none; color: #999;
+            font-size: 1.2em; cursor: pointer;
+        }
+
+        @keyframes slideInUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+         /* Dashboard Styles */
+        #dashboard-view {
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        #dashboard-view h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: left;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        #dashboard-summary {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+        }
+
+        #dashboard-summary .summary-card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 3px 7px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            text-align: center;
+            width: 200px;
+            transition: transform 0.3s ease;
+        }
+
+        #dashboard-summary .summary-card:hover {
+            transform: translateY(-5px);
+        }
+
+        #dashboard-summary .summary-card h3 {
+            color: #555;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        #dashboard-summary .summary-card p {
+            font-size: 1.5em;
+            color: #333;
+            font-weight: bold;
+        }
+
+        #dashboard-charts {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+        }
+
+        #dashboard-charts canvas {
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Colors for the summary cards */
+        #total-pedidos-card {
+            background-color: #e8f5e9; /* Light Green */
+        }
+
+        #pedidos-pendentes-card {
+            background-color: #ffe0b2; /* Light Orange */
+        }
+
+        #pedidos-concluidos-card {
+            background-color: #e3f2fd; /* Light Blue */
+        }
+
+        #tempo-medio-entrega-card {
+            background-color: #f3e5f5; /* Light Purple */
+        }
+
+         /* Style for the select dropdown */
+        #dashboard-filters {
+            display: flex;
+            justify-content: flex-start; /* Align filters to the left */
+            align-items: center; /* Vertically center the items */
+            margin-bottom: 20px;
+            gap: 15px; /* Space between the elements */
+        }
+
+        #dashboard-filters label {
+            font-weight: bold;
+            color: #555;
+        }
+
+        #dashboard-filters select {
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            color: #333;
+            font-size: 1em;
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+        }
+
+        #dashboard-filters select:focus {
+            border-color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-title-wrapper">
+            <img src="IMG/imglogo.png" alt="Logo da Empresa">
+            <h1>Controle de Pedidos</h1>
+        </div>
+        
+        <hr class="header-separator">
+
+        <div class="page-layout">
+            <div class="sidebar">
+                <button id="sidebar-toggle-btn" title="Minimizar menu"><i class="fas fa-angle-left"></i></button>
+                <button id="btn-relacao" class="active sidebar-btn">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Relação</span>
+                </button>
+                <button id="btn-problemas" class="sidebar-btn">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Problemas</span>
+                </button>
+                <button id="btn-relacoes" class="sidebar-btn">
+                    <i class="fas fa-history"></i>
+                    <span>Relações</span>
+                </button>
+                <button id="btn-dashboard" class="sidebar-btn">
+                    <i class="fas fa-chart-bar"></i> <span>Dashboard</span>
+                </button>
+            </div>
+            <div class="content-area">
+                <div class="content-header">
+                    <button id="receive-goods-btn"><i class="fas fa-box-open"></i> Receber Mercadoria</button>
+                    <button id="trip-mode-btn"><i class="fas fa-truck"></i> Fazer Viagem</button>
+                </div>
+                <div id="problemas-header" style="display: none;">
+                    <label for="problema-status-filter">Status:</label>
+                    <select id="problema-status-filter">
+                        <option value="todos" selected="">Todos</option>
+                        <option value="aberto">Aberto</option>
+                        <option value="em_andamento">Em Andamento</option>
+                        <option value="resolvido">Resolvido</option>
+                    </select>
+                </div>
+                <div id="relacao-view">
+                    <div id="relacao-board">
+                        <!-- Columns will be generated by JS -->
+                    </div>
+                </div>
+                <div id="problemas-view" style="display: none;">                    <div class="problemas-list-container">
+                        <h3>Problemas Abertos</h3>
+                        <button id="add-new-problem-btn"><i class="fas fa-plus-circle"></i> Reportar Novo Problema</button>
+                        <div id="problemas-list">
+                            <!-- Lista de problemas será renderizada aqui -->
+                        </div>
+                    </div>
+                    <div class="problemas-detail-container">
+                        <div class="problemas-placeholder"><i class="fas fa-comment-dots"></i><p>Selecione um problema para ver os detalhes ou reporte um novo.</p></div>
+                    </div>
+                </div>
+                <div id="relacoes-view" style="display: none;">
+                    <!-- Completed deliveries will be rendered here -->
+                </div>
+                 <div id="dashboard-view" style="display: none;">
+                    <h1>Dashboard</h1>
+                     <section id="dashboard-filters">
+                        <label for="filial-filter">Filial:</label>
+                        <select id="filial-filter">
+                            <option value="all">Todas</option>
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+
+                        <label for="periodo-filter">Período:</label>
+                        <select id="periodo-filter">
+                            <option value="30">Últimos 30 dias</option>
+                            <option value="90">Últimos 90 dias</option>
+                            <option value="365">Último ano</option>
+                        </select>
+                    </section>
+                    <section id="dashboard-summary">
+
+                    </section>
+                    <section id="dashboard-charts">
+                        <canvas id="pedidos-status-chart" width="400" height="200"></canvas>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Prompt Modal -->
+    <div id="password-prompt-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" data-modal="password-prompt-modal">&times;</span>
+            <h2>Autorização Necessária</h2>
+            <p>Por favor, insira o apelido e a senha de um Patrão para continuar.</p>
+            <form id="patrao-auth-form">
+                <div class="input-group">
+                    <label for="patrao-apelido">Apelido do Patrão:</label>
+                    <input type="text" id="patrao-apelido" required autocomplete="username">
+                </div>
+                <div class="input-group">
+                    <label for="patrao-senha">Senha:</label>
+                    <input type="password" id="patrao-senha" required autocomplete="current-password">
+                </div>
+                <button type="submit">Autorizar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- New Branch Selection Modal for Patrão -->
+    <div id="branch-selection-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" data-modal="branch-selection-modal">&times;</span>
+            <h2>Selecionar Filial</h2>
+            <p>Selecione a filial para a qual deseja receber a mercadoria.</p>
+            <div id="branch-selection-list" style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
+                <!-- Branch buttons will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Receive Goods Modal -->
+    <div id="receive-goods-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" data-modal="receive-goods-modal">&times;</span>
+            <h2 id="receive-goods-title">Receber Mercadoria</h2>
+            <p>Confirme o recebimento dos itens abaixo:</p>
+            <div id="items-to-receive-list" style="max-height: 150px; overflow-y: auto; border: 1px solid #eee; padding: 10px; margin-bottom: 15px;"></div>
+            <form id="receive-goods-form">
+                <div class="input-group">
+                    <label for="reception-observation">Observação (se houver):</label>
+                    <textarea id="reception-observation" placeholder="Ex: Um item veio danificado."></textarea>
+                </div>
+                <div class="input-group">
+                    <label for="receiver-apelido">Seu Apelido (login):</label>
+                    <input type="text" id="receiver-apelido" required autocomplete="username">
+                </div>
+                <div class="input-group">
+                    <label for="receiver-senha">Sua Senha:</label>
+                    <input type="password" id="receiver-senha" required autocomplete="current-password">
+                </div>
+                <button type="submit">Confirmar Recebimento</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="custom-context-menu"></div>
+
+    <!-- Custom Confirm Modal -->
+    <div id="custom-confirm-modal" class="modal">
+        <div class="modal-content">
+            <p id="custom-confirm-message">Tem certeza?</p>
+            <div id="custom-confirm-buttons">
+                <!-- Buttons will be injected by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Item Modal -->
+    <div id="add-item-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" data-modal="add-item-modal">&times;</span>
+            <h2 id="modal-title">Adicionar Item</h2>
+            <form id="add-item-form">
+                <input type="hidden" id="current-branch-id">
+                <div class="input-group" style="position: relative;">
+                    <label for="item-product-search">Produto</label>
+                    <input type="text" id="item-product-search" placeholder="Buscar produto..." required>
+                </div>
+                <div class="input-group" id="observation-input-container">
+                    <label for="item-observation-input">Observação (pressione Enter para adicionar)</label>
+                    <input type="text" id="item-observation-input" placeholder="Ex: 2 castanhas retas...">
+                    <div id="item-observation-list" class="observation-list"></div>
+                </div>
+                <button type="submit">Adicionar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="notifications-container"></div>
+
+    <div class="fixed-bottom-buttons">
+        <button id="finish-trip-btn">Finalizar Viagem</button>
+        <a href="#" id="menuButton" onclick="event.preventDefault(); addExitAnimationAndRedirect('menu.html');">Menu</a>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="firebase-config.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        // --- UTILS ---
+        function addExitAnimationAndRedirect(urlDestino) {
+            document.body.classList.add('fade-zoom-out');
+            setTimeout(() => {
+                window.location.href = urlDestino;
+            }, 550);
+        }
+
+        function addExitAnimationAndRedirectToLogin() {
+            document.body.classList.add('fade-zoom-out');
+            setTimeout(() => {
+                localStorage.clear(); // Clear all session data
+                window.location.href = 'index.html';
+            }, 550);
+        }
+
+        function showConfirmModal(message, callback) {
+            const confirmModal = document.getElementById('custom-confirm-modal');
+            const messageEl = document.getElementById('custom-confirm-message');
+            const buttonsEl = document.getElementById('custom-confirm-buttons');
+
+            messageEl.textContent = message;
+            buttonsEl.innerHTML = `
+                <button id="confirm-no-btn" style="background-color: #6c757d;">Não</button>
+                <button id="confirm-yes-btn" style="background-color: #dc3545;">Sim, remover</button>
+            `;
+            
+            confirmModal.style.display = 'flex';
+            
+            // Use .onclick to avoid stacking listeners on multiple calls
+            document.getElementById('confirm-yes-btn').onclick = () => {
+                confirmModal.style.display = 'none';
+                callback(true);
+            };
+            document.getElementById('confirm-no-btn').onclick = () => {
+                confirmModal.style.display = 'none';
+                callback(false);
+            };
+        }
+
+        function showToast(message, type = 'success', duration = 5000) {
+            const container = document.getElementById('notifications-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.classList.add('toast', type);
+            toast.innerHTML = `
+                <span>${message}</span>
+                <button class="toast-close-btn">&times;</button>
+            `;
+            
+            container.appendChild(toast);
+            
+            const closeBtn = toast.querySelector('.toast-close-btn');
+            closeBtn.addEventListener('click', () => {
+                toast.remove();
+            });
+            
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, duration);
+        }
+
+        function formatTimestamp(timestamp) {
+            if (!timestamp) {
+                return 'N/A';
+            }
+            // Firestore Timestamps have a toDate() method, JS Dates do not.
+            const date = timestamp.toDate ? timestamp.toDate() : timestamp;
+
+            // Check if we have a valid Date object before formatting
+            if (!(date instanceof Date) || isNaN(date)) {
+                return 'N/A';
+            }
+
+            return date.toLocaleString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function addExitAnimationAndRedirectToLogin() {
+            document.body.classList.add('fade-zoom-out');
+            setTimeout(() => {
+                localStorage.clear(); // Clear all session data
+                window.location.href = 'index.html';
+            }, 550);
+        }
+
+        // --- FIREBASE & GLOBAL VARS ---
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        let filiais = [];
+        let catalogoProdutos = [];
+        let unsubscribeRelacao; // To detach listener later
+
+        // --- DOM ELEMENTS ---
+        const relacaoBoard = document.getElementById('relacao-board');
+        const addItemModal = document.getElementById('add-item-modal');
+        const addItemForm = document.getElementById('add-item-form');
+        const modalTitle = document.getElementById('modal-title');
+        const currentBranchIdInput = document.getElementById('current-branch-id');
+        const tripModeBtn = document.getElementById('trip-mode-btn');
+        const finishTripBtn = document.getElementById('finish-trip-btn');
+        let userRole = null; // Changed: Will be fetched from Firestore
+        let userBranchName = null; // Changed: Will be fetched from Firestore
+        let currentItems = []; // New global variable
+        let unsubscribeProblemas;
+        let currentProblemas = [];
+        let selectedProblemaId = null;
+        let completedDeliveries = []; // For the reports view
+        let secondaryAuthApp = null; // For password verification
+
+        // --- DATA FETCHING ---
+        async function fetchInitialData() {
+            try {
+                // Fetch Filiais
+                const filiaisSnapshot = await db.collection('filiais').orderBy('nome').get();
+                filiais = filiaisSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                // Fetch Products
+                const produtosSnapshot = await db.collection('produtos').orderBy('nome').get();
+                catalogoProdutos = produtosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                console.log('Filiais e produtos carregados.');
+            } catch (error) {
+                console.error("Erro ao buscar dados iniciais:", error);
+                showToast("Falha ao carregar dados essenciais.", "error");
+            }
+        }
+
+        // --- PERMISSIONS & AUTH ---
+        function fetchCurrentUserPermissions() {
+            return new Promise((resolve, reject) => {
+                const unsubscribe = auth.onAuthStateChanged(async (user) => {
+                    unsubscribe(); // Stop listening after the first check
+                    if (user) {
+                        try {
+                            const userDoc = await db.collection('funcionarios').doc(user.uid).get();
+                            if (userDoc.exists) {
+                                const userData = userDoc.data();
+                                userRole = userData.cargo || 'vendedor';
+                                userBranchName = userData.filial;
+                                console.log(`Permissões verificadas no servidor: Cargo=${userRole}, Filial=${userBranchName}`);
+                                resolve();
+                            } else {
+                                reject(new Error("Dados do funcionário não encontrados."));
+                            }
+                        } catch (error) {
+                            reject(error);
+                        }
+                    } else {
+                        // No user is signed in.
+                        reject(new Error("Usuário não autenticado."));
+                    }
+                });
+            });
+        }
+
+        // New function to initialize the secondary app for password checks
+        function getSecondaryAuth() {
+            if (!secondaryAuthApp) {
+                const appName = 'secondaryAuthApp';
+                if (!firebase.apps.some(app => app.name === appName)) {
+                    secondaryAuthApp = firebase.initializeApp(firebaseConfig, appName);
+                } else {
+                    secondaryAuthApp = firebase.app(appName);
+                }
+            }
+            return secondaryAuthApp.auth();
+        }
+
+        // --- UI RENDERING ---
+        function renderBoard() {
+            relacaoBoard.innerHTML = ''; // Clear board
+            filiais.forEach(filial => {
+                const column = document.createElement('div');
+                column.className = 'branch-column';
+                column.dataset.branchId = filial.id;
+
+                column.innerHTML = `
+                    <div class="column-header">
+                        <h2>${filial.nome}</h2>
+                        <button class="add-item-btn" title="Adicionar item para ${filial.nome}"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <div class="item-list">
+                        <!-- Items will be rendered here -->
+                    </div>
+                `;
+                relacaoBoard.appendChild(column);
+            });
+
+            // Attach listener to new buttons
+            updateAddButtonStates(); // This call is correct. The function definition below was wrong.
+        }
+
+        function renderItems(items) {
+            // First, clear all lists
+            document.querySelectorAll('.item-list').forEach(list => list.innerHTML = '');
+
+            // Sort items: 'a_caminho' status first, then by creation date
+            items.sort((a, b) => {
+                const aIsOnTheWay = a.status === 'a_caminho';
+                const bIsOnTheWay = b.status === 'a_caminho';
+
+                if (aIsOnTheWay && !bIsOnTheWay) return -1; // a comes first
+                if (!aIsOnTheWay && bIsOnTheWay) return 1;  // b comes first
+
+                // If both have the same status, sort by creation time (newest first)
+                if (b.createdAt && a.createdAt) {
+                    return b.createdAt.seconds - a.createdAt.seconds;
+                }
+                return 0;
+            });
+
+            const canInteractGlobally = userRole === 'patrao';
+
+            // Then, distribute items to the correct columns
+            items.forEach(item => {
+                const column = relacaoBoard.querySelector(`.branch-column[data-branch-id="${item.branchId}"] .item-list`);
+                if (column) {
+                    const branch = filiais.find(f => f.id === item.branchId);
+                    const itemBranchName = branch ? branch.nome : '';
+                    const canInteractWithItem = canInteractGlobally || itemBranchName === userBranchName;
+
+                    const card = document.createElement('div');
+                    card.className = 'item-card'; // Add a class for easier selection
+                    card.dataset.itemId = item.id;
+
+                    if (item.status === 'a_caminho') {
+                        card.classList.add('status-on-the-way');
+                    }
+                    
+                    let content = ``;
+
+                    // Add checkbox for trip mode
+                    if (item.status !== 'a_caminho') {
+                        content += `<input type="checkbox" class="trip-checkbox" title="Marcar para viagem">`;
+                        card.classList.add('has-trip-checkbox');
+                    }
+
+                    // Add delete button only if user has permission
+                    if (canInteractWithItem && item.status !== 'a_caminho') {
+                        content += `<button class="delete-item-btn" title="Remover item">&times;</button>`;
+                    }
+
+                    if (item.productName) {
+                        content += `<div class="product-name">${item.productName}</div>`;
+                    }
+                    if (item.observation) {
+                        content += `<div class="observation">${item.observation}</div>`;
+                    }
+
+                    if (item.status === 'a_caminho') {
+                        content += `<div class="status-badge">À CAMINHO</div>`;
+                    }
+
+                    card.innerHTML = content;
+                    column.appendChild(card);
+                }
+            });
+        }
+
+        // --- REAL-TIME LISTENER ---
+        function listenToRelacao() {
+            if (unsubscribeRelacao) {
+                unsubscribeRelacao(); // Detach old listener if it exists
+            }
+            // Query only for items that are 'pending' or 'a_caminho' for the main board
+            unsubscribeRelacao = db.collection('relacao_pedidos')
+                .where('status', 'in', ['pending', 'a_caminho'])
+                .onSnapshot(snapshot => {
+                    const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    // Sort on the client-side to avoid needing a composite index
+                    items.sort((a, b) => {
+                        if (b.createdAt && a.createdAt) {
+                            return b.createdAt.seconds - a.createdAt.seconds;
+                        }
+                        return 0;
+                    });
+                    currentItems = items; // Store items globally
+                    renderItems(items);
+                }, error => {
+                    console.error("Erro no listener em tempo real: ", error);
+                });
+        }
+
+        function listenToCompleted() {
+            const threeMonthsAgo = new Date();
+            threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+            db.collection('relacao_pedidos')
+              .where('status', '==', 'completed')
+              .onSnapshot(snapshot => {
+                  const allCompleted = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                  // Filter and sort on the client-side to avoid needing a composite index
+                  completedDeliveries = allCompleted.filter(item => {
+                      return item.receivedAt && item.receivedAt.toDate() >= threeMonthsAgo;
+                  });
+                  completedDeliveries.sort((a, b) => {
+                      if (b.receivedAt && a.receivedAt) {
+                          return b.receivedAt.seconds - a.receivedAt.seconds;
+                      }
+                      return 0;
+                  });
+                  renderReports();
+              });
+        }
+
+        function listenToProblemas() {
+            if (unsubscribeProblemas) unsubscribeProblemas();
+
+            unsubscribeProblemas = db.collection('problemas')
+                .orderBy('createdAt', 'desc')
+                .onSnapshot(snapshot => {
+                    currentProblemas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderProblemasList(currentProblemas);
+                    // If a problem was selected, refresh its details
+                    if (selectedProblemaId) {
+                        const stillExists = currentProblemas.some(p => p.id === selectedProblemaId);
+                        if (stillExists) {
+                            renderProblemaDetail(selectedProblemaId);
+                        } else {
+                            // The selected problem was deleted or resolved, clear the view
+                            selectedProblemaId = null;
+                            renderNewProblemForm(); // Or a placeholder
+                        }
+                    }
+                }, error => {
+                    console.error("Erro ao ouvir problemas: ", error);
+                    showToast("Falha ao carregar a lista de problemas.", "error");
+                });
+        }
+
+        // --- UI RENDERING ---
+        function renderProblemasList(problemas) {
+            const listEl = document.getElementById('problemas-list');
+            if (!listEl) return;
+
+            const filterValue = document.getElementById('problema-status-filter').value;
+
+            const filteredProblemas = problemas.filter(p => {
+                if (filterValue === 'todos') {
+                    return true;
+                }
+                // Handle cases where status might be undefined, defaulting to 'aberto'
+                const status = p.status || 'aberto';
+                return status === filterValue;
+            });
+
+            if (filteredProblemas.length === 0) {
+                listEl.innerHTML = '<p style="text-align: center; color: #888;">Nenhum problema reportado.</p>';
+                return;
+            }
+
+            listEl.innerHTML = filteredProblemas.map(problema => {
+                const statusText = (problema.status || 'aberto').replace('_', ' ');
+                return `
+                    <div class="problema-item ${problema.id === selectedProblemaId ? 'active' : ''}" data-problema-id="${problema.id}">
+                        <div class="problema-item-title">${problema.title}</div>
+                        <div class="problema-item-meta">
+                            <span>Por: ${problema.createdBy}</span>
+                            <span class="status-badge ${problema.status || 'aberto'}">${statusText}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderProblemaDetail(problemaId) {
+            const detailContainer = document.querySelector('.problemas-detail-container');
+            if (!detailContainer) return;
+
+            const problema = currentProblemas.find(p => p.id === problemaId);
+            if (!problema) {
+                detailContainer.innerHTML = `<div class="problemas-placeholder"><p>Problema não encontrado.</p></div>`;
+                return;
+            }
+
+            const canChangeStatus = userRole === 'patrao';
+            const statusOptions = ['aberto', 'em_andamento', 'resolvido'];
+
+            detailContainer.innerHTML = `
+                <div class="problema-detail-view">
+                    <div class="problema-detail-header">
+                        <h2>${problema.title}</h2>
+                        <div class="problema-status-selector">
+                            <label for="problema-status">Status:</label>
+                            <select id="problema-status" ${!canChangeStatus ? 'disabled' : ''}>
+                                ${statusOptions.map(opt => `
+                                    <option value="${opt}" ${problema.status === opt ? 'selected' : ''}>
+                                        ${opt.replace('_', ' ')}
+                                    </option>
+                                `).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <p><strong>Reportado por:</strong> ${problema.createdBy} em ${formatTimestamp(problema.createdAt)}</p>
+                    <div class="problema-description">
+                        ${problema.description}
+                    </div>
+                    <div class="comments-section">
+                        <h4>Comentários</h4>
+                        <div class="comments-list">
+                            ${(problema.comments && problema.comments.length > 0) ? problema.comments.map(comment => `
+                                <div class="comment-item">
+                                    <div class="comment-header">
+                                        <span class="author">${comment.author}</span> em ${formatTimestamp(comment.timestamp)}
+                                    </div>
+                                    <div class="comment-text">${comment.text}</div>
+                                </div>
+                            `).join('') : '<p style="color: #888;">Nenhum comentário ainda.</p>'}
+                        </div>
+                        <form class="add-comment-form" data-problema-id="${problema.id}">
+                            <textarea placeholder="Adicionar um comentário..." required></textarea>
+                            <button type="submit">Enviar</button>
+                        </form>
+                    </div>
+                </div>
+            `;
+
+        }
+
+        function renderNewProblemForm() {
+            selectedProblemaId = null;
+            renderProblemasList(currentProblemas); // Deselect any active item
+
+            const detailContainer = document.querySelector('.problemas-detail-container');
+            if (!detailContainer) return;
+
+            detailContainer.innerHTML = `
+                <div class="new-problem-form">
+                    <h2>Reportar Novo Problema</h2>
+                    <form id="new-problem-form-inner">
+                        <div class="input-group">
+                            <label for="problem-title">Título</label>
+                            <input type="text" id="problem-title" placeholder="Um resumo curto do problema" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="problem-description">Descrição</label>
+                            <textarea id="problem-description" placeholder="Descreva o problema em detalhes..." required></textarea>
+                        </div>
+                        <button type="submit">Salvar Problema</button>
+                    </form>
+                </div>
+            `;
+
+        }
+
+        async function handleNewProblemSubmit(event) {
+            event.preventDefault();
+            const title = document.getElementById('problem-title').value.trim();
+            const description = document.getElementById('problem-description').value.trim();
+
+            if (!title || !description) {
+                showToast("Título e descrição são obrigatórios.", "error");
+                return;
+            }
+
+            const newProblem = {
+                title,
+                description,
+                status: 'aberto',
+                createdBy: userBranchName, // Using branch name as user identifier for simplicity
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                comments: []
+            };
+
+            try {
+                const docRef = await db.collection('problemas').add(newProblem);
+                showToast("Problema reportado com sucesso!", "success");
+                selectedProblemaId = docRef.id;
+            } catch (error) {
+                console.error("Erro ao criar problema:", error);
+                showToast("Falha ao reportar o problema.", "error");
+            }
+        }
+
+        async function handleNewCommentSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const problemaId = form.dataset.problemaId;
+            const textarea = form.querySelector('textarea');
+            const text = textarea.value.trim();
+
+            if (!text) return;
+
+            const newComment = {
+                author: userBranchName,
+                text: text,
+                timestamp: new Date()
+            };
+
+            try {
+                const problemRef = db.collection('problemas').doc(problemaId);
+                await problemRef.update({
+                    comments: firebase.firestore.FieldValue.arrayUnion(newComment)
+                });
+            } catch (error) {
+                console.error("Erro ao adicionar comentário:", error);
+                showToast("Falha ao adicionar comentário.", "error");
+            }
+        }
+
+        async function handleProblemStatusChange(event) {
+            const newStatus = event.target.value;
+            if (!selectedProblemaId) return;
+
+            try {
+                const problemRef = db.collection('problemas').doc(selectedProblemaId);
+                await problemRef.update({
+                    status: newStatus
+                });
+                showToast("Status do problema atualizado.", "success");
+            } catch (error) {
+                console.error("Erro ao atualizar status:", error);
+                showToast("Falha ao atualizar o status.", "error");
+            }
+        }
+
+        // --- MODAL LOGIC ---
+        function openAddItemModal(branchId, branchName) {
+            addItemForm.reset();
+            currentBranchIdInput.value = branchId;
+            modalTitle.textContent = `Adicionar para: ${branchName}`;
+            addItemModal.style.display = 'flex';
+            document.getElementById('item-observation').focus();
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.style.display = 'none';
+        }
+
+        async function handleAddItem(event) {
+            event.preventDefault();
+            const branchId = currentBranchIdInput.value;
+            const productName = document.getElementById('item-product-search').value.trim();
+
+            if (!branchId || !productName) {
+                showToast("O produto é obrigatório.", "error");
+                return;
+            }
+
+            // Coleta todas as observações da nova lista de tags
+            const observationItems = Array.from(document.querySelectorAll('#item-observation-list .obs-item span'));
+            const observationText = observationItems.map(span => span.textContent).join('\n');
+
+
+            const newItem = {
+                branchId: branchId,
+                observation: observationText,
+                productName: productName, // Can be empty
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                status: 'pending'
+            };
+
+            try {
+                await db.collection('relacao_pedidos').add(newItem);
+                showToast("Item adicionado com sucesso.", "success");
+                closeModal('add-item-modal');
+            } catch (error) {
+                console.error("Erro ao adicionar item: ", error);
+                showToast("Falha ao adicionar o item.", "error");
+            }
+        }
+
+        async function handleDeleteItem(itemId) {
+            showConfirmModal('Tem certeza que deseja remover este item?', async (confirmed) => {
+                if (confirmed) {
+                    try {
+                        await db.collection('relacao_pedidos').doc(itemId).delete();
+                        showToast('Item removido com sucesso.', 'success');
+                    } catch (error) {
+                        console.error("Erro ao remover item:", error);
+                        showToast('Erro ao remover o item.', 'error');
+                    }
+                }
+            });
+        }
+
+        function renderReports() {
+            const container = document.getElementById('relacoes-view');
+            container.innerHTML = '';
+
+            if (completedDeliveries.length === 0) {
+                container.innerHTML = '<p>Nenhuma relação de entrega concluída nos últimos 3 meses.</p>';
+                return;
+            }
+
+            // Group deliveries by a generated deliveryGroupId
+            const grouped = completedDeliveries.reduce((acc, item) => {
+                const groupId = item.deliveryGroupId || item.id; // Fallback to item id if no group id
+                if (!acc[groupId]) {
+                    const branch = filiais.find(f => f.id === item.branchId);
+                    acc[groupId] = {
+                        items: [],
+                        receivedAt: item.receivedAt,
+                        branchName: branch ? branch.nome : 'Desconhecida'
+                    };
+                }
+                acc[groupId].items.push(item);
+                return acc;
+            }, {});
+
+            // Create a button for each group
+            Object.entries(grouped).forEach(([groupId, groupData]) => {
+                const btn = document.createElement('button');
+                btn.className = 'sidebar-btn'; // Reuse style
+                btn.style.textAlign = 'center';
+                btn.dataset.deliveryGroupId = groupId;
+                
+                const date = formatTimestamp(groupData.receivedAt);
+                const shortGroupId = groupId.substring(groupId.length - 5).toUpperCase();
+
+                btn.innerHTML = `
+                    <i class="fas fa-check-circle"></i>
+                    <span>Entrega #${shortGroupId} - ${date} - ${groupData.branchName}</span>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        // --- EVENT LISTENERS ---
+        // This function only updates the VISUAL state of the buttons based on permissions.
+        function updateAddButtonStates() {
+            const canAddGlobally = userRole === 'patrao';
+
+            document.querySelectorAll('.add-item-btn').forEach(btn => {
+                const column = btn.closest('.branch-column');
+                const branchName = column.querySelector('h2').textContent;
+
+                const canAddHere = canAddGlobally || branchName === userBranchName;
+
+                if (canAddHere) {
+                    btn.disabled = false;
+                    btn.style.backgroundColor = '#007bff'; // Active color
+                    btn.style.cursor = 'pointer';
+                    btn.title = `Adicionar item para ${branchName}`;
+                } else {
+                    btn.disabled = true;
+                    btn.style.backgroundColor = '#adb5bd'; // Disabled color
+                    btn.style.cursor = 'not-allowed';
+                    btn.title = 'Acesso restrito à sua filial';
+                }
+            });
+        }
+
+        // --- INITIALIZATION ---
+        async function initializePage() {
+            await fetchInitialData();
+            renderBoard();
+            listenToRelacao();
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await fetchCurrentUserPermissions(); // First, securely get user role
+                await fetchInitialData();
+                renderBoard();
+                listenToRelacao();
+                listenToCompleted();
+                setupPageEventListeners(); // Setup all listeners after initial render
+            } catch (error) {
+                console.error("Falha na inicialização da página:", error.message);
+                showToast("Sessão inválida ou permissão negada. Redirecionando...", "error");
+                addExitAnimationAndRedirectToLogin();
+            }
+        });
+
+        function setupPageEventListeners() {
+            // Sidebar toggle listener
+            const sidebar = document.querySelector('.sidebar');
+            const toggleBtn = document.getElementById('sidebar-toggle-btn');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
+            }
+
+            // Modal close buttons
+            document.querySelectorAll('.close-btn').forEach(btn => {
+                btn.addEventListener('click', () => closeModal(btn.dataset.modal));
+            });
+
+            // Handle Enter key in product search
+            document.getElementById('item-product-search').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // Prevent form submission
+                    document.getElementById('item-observation').focus(); // Move focus
+                }
+            });
+
+            // Centralized click listener for the entire board (Event Delegation)
+            relacaoBoard.addEventListener('click', (e) => {
+                // Handle Add Item click
+                const addBtn = e.target.closest('.add-item-btn');
+                if (addBtn && !addBtn.disabled) {
+                    const column = addBtn.closest('.branch-column');
+                    const branchId = column.dataset.branchId;
+                    const branchName = column.querySelector('h2').textContent;
+                    openAddItemModal(branchId, branchName);
+                    return; // Stop processing
+                }
+
+                // Handle Delete Item click
+                const deleteBtn = e.target.closest('.delete-item-btn');
+                if (deleteBtn) {
+                    const card = e.target.closest('.item-card');
+                    if (card && card.dataset.itemId) { handleDeleteItem(card.dataset.itemId); }
+                    return; // Stop processing to prevent toggling checkbox
+                }
+
+                // New: Handle card click to toggle checkbox in trip mode
+                const card = e.target.closest('.item-card');
+                if (card && relacaoBoard.classList.contains('trip-mode')) {
+                    const checkbox = card.querySelector('.trip-checkbox');
+                    // If the click was NOT on the checkbox itself, toggle it.
+                    // This prevents a double-toggle when clicking the checkbox directly.
+                    if (e.target.tagName !== 'INPUT') {
+                        if (checkbox) {
+                            checkbox.checked = !checkbox.checked;
+                        }
+                    }
+                }
+            });
+
+            // Listeners for "Problemas" view
+            document.getElementById('add-new-problem-btn').addEventListener('click', renderNewProblemForm);
+
+            document.getElementById('problemas-list').addEventListener('click', (e) => {
+                const item = e.target.closest('.problema-item');
+                if (item && item.dataset.problemaId) {
+                    selectedProblemaId = item.dataset.problemaId;
+                    renderProblemasList(currentProblemas); // Re-render to show active state
+                    renderProblemaDetail(selectedProblemaId);
+                }
+            });
+
+            const detailContainer = document.querySelector('.problemas-detail-container');
+            detailContainer.addEventListener('submit', (e) => {
+                if (e.target.id === 'new-problem-form-inner') {
+                    handleNewProblemSubmit(e);
+                } else if (e.target.classList.contains('add-comment-form')) {
+                    handleNewCommentSubmit(e);
+                }
+            });
+            detailContainer.addEventListener('change', (e) => {
+                if (e.target.id === 'problema-status') { handleProblemStatusChange(e); }
+            });
+            // Modal Form submission
+            addItemForm.addEventListener('submit', handleAddItem);
+
+            // Sidebar navigation
+            const btnRelacao = document.getElementById('btn-relacao');
+            const btnProblemas = document.getElementById('btn-problemas');
+            const btnRelacoes = document.getElementById('btn-relacoes');
+            const btnDashboard = document.getElementById('btn-dashboard');
+
+            const contentHeader = document.querySelector('.content-header');
+            const problemasHeader = document.getElementById('problemas-header');
+            const viewRelacao = document.getElementById('relacao-view'); // Already defined
+            const viewProblemas = document.getElementById('problemas-view'); // Already defined
+            const viewRelacoes = document.getElementById('relacoes-view'); // Already defined
+            const viewDashboard = document.getElementById('dashboard-view'); // Already defined
+
+            btnRelacao.addEventListener('click', () => {
+                btnRelacao.classList.add('active');
+                btnProblemas.classList.remove('active');
+                btnRelacoes.classList.remove('active');
+                btnDashboard.classList.remove('active');
+                if (contentHeader) contentHeader.style.display = 'flex';
+                if (problemasHeader) problemasHeader.style.display = 'none';
+                viewRelacao.style.display = 'grid'; // Changed to grid
+                viewProblemas.style.display = 'none'; viewRelacoes.style.display = 'none'; viewDashboard.style.display = 'none';
+                if (unsubscribeProblemas) unsubscribeProblemas();
+                listenToRelacao();
+            });
+
+            btnProblemas.addEventListener('click', () => {
+                btnProblemas.classList.add('active');
+                btnRelacao.classList.remove('active');
+                btnRelacoes.classList.remove('active');
+                btnDashboard.classList.remove('active');
+                if (contentHeader) contentHeader.style.display = 'none';
+                if (problemasHeader) problemasHeader.style.display = 'flex';
+                viewProblemas.style.display = 'flex';
+                viewRelacao.style.display = 'none'; viewRelacoes.style.display = 'none'; viewDashboard.style.display = 'none';
+                if (unsubscribeRelacao) unsubscribeRelacao();
+                listenToProblemas();
+            });
+
+            btnRelacoes.addEventListener('click', () => {
+                btnRelacoes.classList.add('active');
+                btnRelacao.classList.remove('active');
+                btnProblemas.classList.remove('active');
+                btnDashboard.classList.remove('active');
+                if (contentHeader) contentHeader.style.display = 'none';
+                if (problemasHeader) problemasHeader.style.display = 'none';
+                viewRelacoes.style.display = 'block';
+                viewRelacao.style.display = 'none'; viewProblemas.style.display = 'none'; viewDashboard.style.display = 'none';
+                if (unsubscribeRelacao) unsubscribeRelacao();
+                if (unsubscribeProblemas) unsubscribeProblemas();
+                // A função listenToCompleted() já está rodando, então não precisa chamar de novo.
+            });
+
+            btnDashboard.addEventListener('click', () => {
+                btnDashboard.classList.add('active');
+                btnRelacao.classList.remove('active');
+                btnProblemas.classList.remove('active');
+                btnRelacoes.classList.remove('active');
+                contentHeader.style.display = 'none';
+                viewDashboard.style.display = 'block';
+                viewRelacao.style.display = 'none'; viewProblemas.style.display = 'none'; viewRelacoes.style.display = 'none';
+                setupDashboard();
+            });
+
+
+            // --- TRIP MODE PERMISSION GATE ---
+            tripModeBtn.addEventListener('click', () => {
+                const isInTripMode = relacaoBoard.classList.contains('trip-mode');
+
+                if (isInTripMode) {
+                    // If we are already in trip mode, the button is "Finalizar".
+                    // No need to check permissions again, just execute the action.
+                    handleTripModeToggle();
+                } else {
+                    // If we are NOT in trip mode, the button is "Fazer Viagem".
+                    // Check permissions before entering.
+                    if (userRole === 'patrao') {
+                        handleTripModeToggle(); // Patrão has direct access
+                    } else {
+                        openPasswordPrompt(); // Others need to authorize
+                    }
+                }
+            });
+
+            // --- RECEIVE GOODS LOGIC ---
+            document.getElementById('receive-goods-btn').addEventListener('click', () => {
+                const onTheWayItems = currentItems.filter(item => item.status === 'a_caminho');
+
+                if (onTheWayItems.length === 0) {
+                    showToast("Nenhuma mercadoria 'à caminho' para receber.", "error");
+                    return;
+                }
+
+                if (userRole === 'patrao') {
+                    const branchesWithItems = [...new Set(onTheWayItems.map(item => {
+                        const branch = filiais.find(f => f.id === item.branchId);
+                        return branch ? branch.nome : null;
+                    }).filter(Boolean))];
+
+                    if (branchesWithItems.length === 0) {
+                        showToast("Nenhuma mercadoria 'à caminho' encontrada.", "error");
+                    } else if (branchesWithItems.length === 1) {
+                        openReceiveGoodsModal(branchesWithItems[0]);
+                    } else {
+                        const listContainer = document.getElementById('branch-selection-list');
+                        listContainer.innerHTML = '';
+                        branchesWithItems.forEach(branchName => {
+                            const btn = document.createElement('button');
+                            btn.className = 'sidebar-btn';
+                            btn.textContent = `Receber para ${branchName}`;
+                            btn.onclick = () => {
+                                closeModal('branch-selection-modal');
+                                openReceiveGoodsModal(branchName);
+                            };
+                            listContainer.appendChild(btn);
+                        });
+                        const modal = document.getElementById('branch-selection-modal');
+                        modal.style.display = 'flex';
+                    }
+                } else {
+                    const userBranchItems = onTheWayItems.filter(item => {
+                        const branch = filiais.find(f => f.id === item.branchId);
+                        return branch && branch.nome === userBranchName;
+                    });
+
+                    if (userBranchItems.length === 0) {
+                        showToast(`Nenhuma mercadoria 'à caminho' para a sua filial (${userBranchName}).`, "error");
+                        return;
+                    }
+                    openReceiveGoodsModal(userBranchName);
+                }
+            });
+
+            document.getElementById('receive-goods-form').addEventListener('submit', handleReceiveGoods);
+
+            // --- CUSTOM CONTEXT MENU LOGIC ---
+            const contextMenu = document.getElementById('custom-context-menu');
+            relacaoBoard.addEventListener('contextmenu', e => {
+                const card = e.target.closest('.item-card');
+                if (!card) return;
+
+                e.preventDefault();
+
+                const itemId = card.dataset.itemId;
+                const itemData = currentItems.find(item => item.id === itemId);
+                if (!itemData) return;
+
+                const createdAt = formatTimestamp(itemData.createdAt);
+                const deliveryStartedAt = formatTimestamp(itemData.deliveryStartedAt);
+
+                contextMenu.innerHTML = `
+                    <div class="context-menu-header">
+                        <span>Detalhes do Pedido</span>
+                        <button class="context-menu-close-btn">&times;</button>
+                    </div>
+                    <ul style="list-style: none; padding: 10px; margin: 0;">
+                        <li><strong>Pedido:</strong> ${itemData.productName}</li>
+                        <hr>
+                        <li><strong>Criado em:</strong> ${createdAt}</li>
+                        <li><strong>Saiu p/ Entrega:</strong> ${deliveryStartedAt}</li>
+                    </ul>
+                `;
+
+                // Show menu to get its dimensions, then position it
+                contextMenu.style.display = 'block';
+                const menuWidth = contextMenu.offsetWidth;
+                const menuHeight = contextMenu.offsetHeight;
+                const container = document.querySelector('.container');
+                const containerRect = container.getBoundingClientRect();
+                let left = e.clientX;
+                let top = e.clientY;
+                if (left + menuWidth > containerRect.right) { left = containerRect.right - menuWidth - 5; }
+                if (left < containerRect.left) { left = containerRect.left + 5; }
+                if (top + menuHeight > containerRect.bottom) { top = containerRect.bottom - menuHeight - 5; }
+                if (top < containerRect.top) { top = containerRect.top + 5; }
+                contextMenu.style.left = `${left}px`;
+                contextMenu.style.top = `${top}px`;
+            });
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('context-menu-close-btn') || !e.target.closest('#custom-context-menu')) {
+                    if (contextMenu.style.display === 'block') { contextMenu.style.display = 'none'; }
+                }
+            });
+
+            // --- LÓGICA DA NOVA LISTA DE OBSERVAÇÕES ---
+            const obsInput = document.getElementById('item-observation-input');
+            const obsList = document.getElementById('item-observation-list');
+
+            obsInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // Impede o envio do formulário
+                    const text = obsInput.value.trim();
+                    if (text) {
+                        const tag = document.createElement('div');
+                        tag.className = 'obs-item';
+                        tag.innerHTML = `
+                            <span>${text}</span>
+                            <button type="button" class="remove-obs-btn">&times;</button>
+                        `;
+                        obsList.appendChild(tag);
+                        obsInput.value = ''; // Limpa o campo
+                    }
+                }
+            });
+
+            obsList.addEventListener('click', (e) => {
+                if (e.target.classList.contains('remove-obs-btn')) {
+                    e.target.closest('.obs-item').remove();
+                }
+            });
+        }
+
+        function openReceiveGoodsModal(branchName) {
+            const branch = filiais.find(f => f.nome === branchName);
+            if (!branch) {
+                showToast(`Filial "${branchName}" não encontrada.`, "error");
+                return;
+            }
+
+            const itemsToReceive = currentItems.filter(item => item.status === 'a_caminho' && item.branchId === branch.id);
+
+            const modal = document.getElementById('receive-goods-modal');
+            const title = document.getElementById('receive-goods-title');
+            const listContainer = document.getElementById('items-to-receive-list');
+            const form = document.getElementById('receive-goods-form');
+
+            title.textContent = `Receber Mercadoria (${branchName})`;
+            listContainer.innerHTML = itemsToReceive.map(item => `<div>- ${item.productName}</div>`).join('');
+            form.dataset.branchId = branch.id; // Store branchId for the handler
+
+            modal.style.display = 'flex';
+        }
+
+        function openPasswordPrompt() {
+            const modal = document.getElementById('password-prompt-modal');
+            document.getElementById('patrao-auth-form').reset();
+            modal.style.display = 'flex';
+            document.getElementById('patrao-apelido').focus();
+        }
+
+        async function handlePatraoAuth(event) {
+            event.preventDefault();
+            const apelido = document.getElementById('patrao-apelido').value.trim().toLowerCase();
+            const senha = document.getElementById('patrao-senha').value;
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+
+            if (!apelido || !senha) {
+                showToast("Preencha o apelido e a senha.", "error");
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Verificando...';
+
+            try {
+                const querySnapshot = await db.collection('funcionarios')
+                    .where('apelido', '==', apelido)
+                    .where('cargo', '==', 'patrao')
+                    .limit(1).get();
+
+                if (querySnapshot.empty) {
+                    throw new Error("Patrão não encontrado ou sem permissão.");
+                }
+
+                const patraoData = querySnapshot.docs[0].data();
+                const patraoEmail = patraoData.email;
+
+                const tempAuth = getSecondaryAuth();
+                await tempAuth.signInWithEmailAndPassword(patraoEmail, senha);
+
+                showToast("Autorizado com sucesso!", "success");
+                closeModal('password-prompt-modal');
+                handleTripModeToggle(); // Grant access
+
+                await tempAuth.signOut();
+
+            } catch (error) {
+                console.error("Erro de autorização:", error);
+                if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                    showToast("Apelido ou senha do Patrão incorretos.", "error");
+                } else {
+                    showToast(error.message || "Falha na autorização.", "error");
+                }
+                const tempAuth = getSecondaryAuth();
+                if (tempAuth.currentUser) {
+                    await tempAuth.signOut();
+                }
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Autorizar';
+            }
+        }
+
+        async function handleTripModeToggle() {
+            const isInTripMode = relacaoBoard.classList.contains('trip-mode');
+
+            if (!isInTripMode) {
+                relacaoBoard.classList.add('trip-mode');
+                tripModeBtn.innerHTML = `<i class="fas fa-check"></i> Finalizar`;
+                tripModeBtn.style.backgroundColor = '#dc3545';
+                document.body.classList.add('trip-mode-active');
+            } else {
+                const checkedItems = document.querySelectorAll('.trip-mode .item-card .trip-checkbox:checked');
+                if (checkedItems.length === 0) {
+                    relacaoBoard.classList.remove('trip-mode');
+                    tripModeBtn.innerHTML = `<i class="fas fa-truck"></i> Fazer Viagem`;
+                    tripModeBtn.style.backgroundColor = '#17a2b8';
+                    document.querySelectorAll('.trip-checkbox').forEach(cb => cb.checked = false);
+                    showToast("Viagem cancelada.", "error");
+                    document.body.classList.remove('trip-mode-active');
+                } else {
+                    const batch = db.batch();
+                    checkedItems.forEach(checkbox => {
+                        const card = checkbox.closest('.item-card');
+                        const itemId = card.dataset.itemId;
+                        const itemRef = db.collection('relacao_pedidos').doc(itemId);
+                        batch.update(itemRef, {
+                            status: 'a_caminho',
+                            deliveryStartedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    });
+
+                    try {
+                        await batch.commit();
+                        showToast(`${checkedItems.length} item(ns) marcados como "à caminho".`, "success");
+                        relacaoBoard.classList.remove('trip-mode');
+                        tripModeBtn.innerHTML = `<i class="fas fa-truck"></i> Fazer Viagem`;
+                        tripModeBtn.style.backgroundColor = '#17a2b8';
+                        document.body.classList.remove('trip-mode-active');
+                    } catch (error) {
+                        console.error("Erro ao finalizar viagem:", error);
+                        showToast("Falha ao atualizar os itens.", "error");
+                    }
+                }
+            }
+        }
+
+        async function handleReceiveGoods(event) {
+            event.preventDefault();
+            const branchIdToReceive = event.target.dataset.branchId;
+            const apelido = document.getElementById('receiver-apelido').value.trim().toLowerCase();
+            const senha = document.getElementById('receiver-senha').value;
+            const observation = document.getElementById('reception-observation').value.trim();
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+
+            if (!apelido || !senha) {
+                showToast("Preencha seu apelido e senha para confirmar.", "error");
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Verificando...';
+
+            try {
+                // 1. Authenticate the receiver
+                const querySnapshot = await db.collection('funcionarios').where('apelido', '==', apelido).limit(1).get();
+                if (querySnapshot.empty) throw new Error("Usuário não encontrado.");
+
+                const receiverData = querySnapshot.docs[0].data();
+                const receiverEmail = receiverData.email;
+                const receiverName = receiverData.nome;
+
+                const tempAuth = getSecondaryAuth();
+                await tempAuth.signInWithEmailAndPassword(receiverEmail, senha);
+
+                // 2. If auth is successful, update the items
+                const itemsToReceive = currentItems.filter(item => item.status === 'a_caminho' && item.branchId === branchIdToReceive);
+                const deliveryGroupId = `entrega_${Date.now()}`;
+
+                const batch = db.batch();
+                itemsToReceive.forEach(item => {
+                    const itemRef = db.collection('relacao_pedidos').doc(item.id);
+                    batch.update(itemRef, {
+                        status: 'completed',
+                        receivedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        receivedBy: receiverName,
+                        receptionObservation: observation,
+                        deliveryGroupId: deliveryGroupId
+                    });
+                });
+
+                await batch.commit();
+                showToast(`${itemsToReceive.length} item(ns) recebidos com sucesso!`, "success");
+                closeModal('receive-goods-modal');
+
+                await tempAuth.signOut();
+
+            } catch (error) {
+                console.error("Erro ao receber mercadoria:", error);
+                if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                    showToast("Apelido ou senha incorretos.", "error");
+                } else {
+                    showToast(error.message || "Falha ao confirmar recebimento.", "error");
+                }
+                const tempAuth = getSecondaryAuth();
+                if (tempAuth.currentUser) {
+                    await tempAuth.signOut();
+                }
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Confirmar Recebimento';
+            }
+        }
+
+        function setupDashboard() {
+            updateDashboardSummary();
+            createPedidosStatusChart();
+        }
+
+        function updateDashboardSummary() {
+            const totalPedidos = currentItems.length;
+            const pedidosConcluidos = currentItems.filter(item => item.status === 'completed').length;
+            const pedidosPendentes = currentItems.filter(item => item.status === 'pending').length;
+
+            const summarySection = document.getElementById('dashboard-summary');
+            summarySection.innerHTML = '';
+
+            const createSummaryCard = (id, title, value, backgroundColor) => {
+                const card = document.createElement('div');
+                card.className = 'summary-card';
+                card.id = id;
+                card.style.backgroundColor = backgroundColor;
+
+                card.innerHTML = `
+                    <h3>${title}</h3>
+                    <p>${value}</p>
+                `;
+                return card;
+            };
+
+            const totalPedidosCard = createSummaryCard('total-pedidos-card', 'Total de Pedidos', totalPedidos, '#e8f5e9');
+            const pedidosPendentesCard = createSummaryCard('pedidos-pendentes-card', 'Pedidos Pendentes', pedidosPendentes, '#ffe0b2');
+            const pedidosConcluidosCard = createSummaryCard('pedidos-concluidos-card', 'Pedidos Concluídos', pedidosConcluidos, '#e3f2fd');
+
+            summarySection.appendChild(totalPedidosCard);
+            summarySection.appendChild(pedidosPendentesCard);
+            summarySection.appendChild(pedidosConcluidosCard);
+
+             // Mock data for average delivery time (replace with actual calculation)
+            const tempoMedioEntrega = '2 dias';
+            const tempoMedioEntregaCard = createSummaryCard('tempo-medio-entrega-card', 'Tempo Médio de Entrega', tempoMedioEntrega, '#f3e5f5');
+            summarySection.appendChild(tempoMedioEntregaCard);
+        }
+
+        function populateFilialFilter() {
+            const filialFilter = document.getElementById('filial-filter');
+            filiais.forEach(filial => {
+                const option = document.createElement('option');
+                option.value = filial.id;
+                option.textContent = filial.nome;
+                filialFilter.appendChild(option);
+            });
+        }
+
+        // Call this function after filiais data is available
+        //populateFilialFilter();
+
+
+        function createPedidosStatusChart() {
+        const canvas = document.getElementById('pedidos-status-chart');
+        if (!canvas) {
+            console.error("Canvas element 'pedidos-status-chart' not found.");
+            return;
+        }
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            console.error("Could not get 2D rendering context for the canvas.");
+            return;
+        }
+
+        const statusCounts = currentItems.reduce((acc, item) => {
+            acc[item.status] = (acc[item.status] || 0) + 1;
+            return acc;
+        }, {});
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(statusCounts),
+                datasets: [{
+                    label: 'Número de Pedidos',
+                    data: Object.values(statusCounts),
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+    </script>
+
+
+</body>
+</html>

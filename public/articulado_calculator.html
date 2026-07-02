@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Articulado e Motores</title>
+    <link rel="icon" type="image/png" href="IMG/imgfavicon.png">
+    
+    <style>
+        /* --- ESTILOS CSS --- */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: #555;
+            background-image: url(IMG/imgsalvati.png);
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            overflow: hidden;
+            position: relative;
+            opacity: 0;
+            transform: scale(1.05);
+            animation: fadeZoomIn 1.0s ease-out forwards;
+        }
+
+        @keyframes fadeZoomIn {
+            from { opacity: 0; transform: scale(1.05); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        body.fade-zoom-out {
+            animation: fadeZoomOut 0.55s ease-in forwards;
+        }
+
+        @keyframes fadeZoomOut {
+            from { opacity: 1; transform: scale(1); } 
+            to { opacity: 0; transform: scale(0.95); }
+        }
+        
+        .main-wrapper {
+            display: flex; 
+            gap: 100px;
+            justify-content: center;
+            align-items: flex-start;
+            position: relative;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            min-width: 700px;
+            max-width: 1000px;
+            text-align: center;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+        
+        .help-box {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 350px;
+            height: fit-content;
+            text-align: left;
+            display: none;
+            z-index: 1000;
+            position: absolute;
+        }
+
+        /* Estilos para o posicionamento dos help-box */
+        #help-box-articulado {
+            left: -400px;
+            top: 0;
+        }
+
+        #help-box-motor {
+            right: -400px;
+            top: 0;
+        }
+        
+        h3 {
+            margin-top: 0;
+            color: #007bff;
+        }
+
+        h1 {
+            color: #000000;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+
+        .header-title-wrapper img {
+            max-height: 100px;
+            width: auto;
+            margin-bottom: 10px;
+        }
+
+        #backToMenuButton {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            z-index: 10;
+        }
+
+        #backToMenuButton:hover {
+            background-color: #c82333;
+        }
+        
+        /* Estilos para os inputs e labels */
+        .input-labels-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+        
+        .input-group label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .input-group input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .option-buttons-articulado, .option-buttons-motor, .option-buttons-tipo-cliente {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: nowrap;
+        }
+
+        .option-buttons-articulado button:hover, .option-buttons-motor button:hover, .option-buttons-tipo-cliente button:hover {
+            background-color: #0056b3;
+        }
+        .option-buttons-articulado button, .option-buttons-motor button, .option-buttons-tipo-cliente button{
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease, box-shadow 0.2s ease;
+            flex: 1;
+            min-width: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .option-buttons-articulado button.selected, .option-buttons-motor button.selected, .option-buttons-tipo-cliente button.selected {
+            background-color: #28a745;
+            box-shadow: 0 0 0 2px #28a745, 0 0 0 4px rgba(40, 167, 69, 0.5);
+        }
+        
+        /* Estilo para o label de valor */
+        #value-label {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #155724; 
+            background-color: #c3e6cb;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px;
+            margin-top: 20px;
+        }
+        
+        /* Estilos para a lista de componentes no balão de ajuda */
+        .help-box-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+        .help-box-item input[type="checkbox"] {
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        .help-box-item label {
+            flex-grow: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-wrapper">
+        <div class="container">
+            <div class="header-title-wrapper">
+                <IMG/img src="IMG/imglogo.png" alt="Logo da Empresa"> 
+            </div>
+
+            <div class="input-labels-container">
+                <div class="input-group">
+                    <label for="largura-input">Largura:</label>
+                    <input type="text" id="largura-input" placeholder="0,00m" value="0,00" oninput="formatarMedida(this)">
+                </div>
+                <div class="input-group">
+                    <label for="caimento-input">Caimento:</label>
+                    <input type="text" id="caimento-input" placeholder="0,00m" value="0,00" oninput="formatarMedida(this)">
+                </div>
+            </div>
+
+            <div class="option-buttons-articulado">
+                <button data-arm="2.00">Braço de 2,00m</button>
+                <button data-arm="2.50">Braço de 2,50m</button>
+                <button data-arm="3.00">Braço de 3,00m</button>
+            </div>
+
+            <div class="option-buttons-motor">
+                <button data-motor="50n">50N</button>
+                <button data-motor="100n">100N</button>
+            </div>
+            
+            <div class="option-buttons-tipo-cliente">
+                <button data-cliente="atacado">Atacado</button>
+                <button data-cliente="varejo" class="selected">Varejo</button> 
+            </div>
+            
+            <p id="value-label">Valor: R$ 0,00</p>
+            
+            <a href="" id="open-modal-link" class="button-as-link">ajuda</a>
+        </div>
+
+        <div id="help-box-articulado" class="help-box">
+            <h3 id="help-box-articulado-title">O kit Articulado compõe:</h3>
+            <div id="help-box-articulado-content"></div>
+        </div>
+
+        <div id="help-box-motor" class="help-box">
+            <h3 id="help-box-motor-title">O kit Motor compõe:</h3>
+            <div id="help-box-motor-content"></div>
+        </div>
+    </div>
+
+    <a href="" id="backToMenuButton" onclick="event.preventDefault(); addExitAnimationAndRedirect('menu.html');">Menu</a>
+
+    <script>
+        // --- FUNÇÕES DE FORMATAÇÃO E OBTENÇÃO DE VALOR NUMÉRICO ---
+        function formatarMedida(inputElement) {
+            let valor = inputElement.value;
+            valor = valor.replace(/\D/g, '');
+            if (valor.length === 0) {
+                valor = '0';
+            }
+            let numValue = parseInt(valor, 10);
+            if (numValue === 0) {
+                valor = '000';
+            } else {
+                valor = numValue.toString();
+                while (valor.length < 3) {
+                    valor = '0' + valor;
+                }
+            }
+            const parteInteira = valor.slice(0, -2);
+            const parteDecimal = valor.slice(-2);
+            const valorFormatado = `${parteInteira === '' ? '0' : parteInteira},${parteDecimal}`;
+            inputElement.value = valorFormatado;
+        }
+
+        function getNumericValue(elementId) {
+            const inputElement = document.getElementById(elementId);
+            if (!inputElement) return 0;
+            let valorFormatado = inputElement.value;
+            valorFormatado = valorFormatado.replace(',', '.');
+            return parseFloat(valorFormatado) || 0;
+        }
+
+        // --- LÓGICA DE NAVEGAÇÃO E ANIMAÇÃO ---
+        function addExitAnimationAndRedirect(urlDestino) {
+            document.body.classList.add('fade-zoom-out');
+            setTimeout(() => {
+                window.location.href = urlDestino;
+            }, 550);
+        }
+        
+        // --- VARIÁVEIS E DADOS ---
+        const kitData = {
+            '2.00': {
+                basePrice: { atacado: 0.00, varejo: 0.00 },
+                components: [
+                    { id: 'braço-200-kit', name: 'Braço articulado 2,00m', code: '3571', price: { atacado: 550.00, varejo: 700.00 }, checked: true, isArm: true },
+                    { id: 'braço-200-perfil-d80', name: '(3m) Perfil D80', code: '3781', price: { atacado: 280.00, varejo: 280.00 }, unit: '3m', checked: true },
+                    { id: 'braço-200-tampac-furo', name: 'Tampa c/ furo', code: '3580', price: { atacado: 5.00, varejo: 8.00 }, checked: true },
+                    { id: 'braço-200-tampac-pino', name: 'Tampa c/ pino', code: '3581', price: { atacado: 12.00, varejo: 30.00 }, checked: true },
+                    { id: 'braço-200-maquina', name: 'Máquina', code: '3603', price: { atacado: 133.00, varejo: 160.00 }, checked: true },
+                    { id: 'braço-200-suprolo', name: 'Par de suporte do rolo', code: '3599', price: { atacado: 182.70, varejo: 200.00 }, checked: true },
+                    { id: 'braço-200-supbraco', name: 'Suporte do braço', code: '3568', price: { atacado: 110.25, varejo: 150.00 }, checked: true },
+                    { id: 'braço-200-barra-40x40', name: '(3m) Barra 40x40', code: '3608', price: { atacado: 325.00, varejo: 390.00 }, unit: '3m', checked: true },
+                    { id: 'braço-200-supparede', name: 'Suporte de parede', code: '3601', price: { atacado: 121.67, varejo: 145.60 }, checked: true },
+                    { id: 'braço-200-blocodeslizante', name: 'Bloco deslizante', code: '3569', price: { atacado: 30.00, varejo: 40.00 }, checked: true, isBlock: true },
+                    { id: 'braço-200-sarrafo', name: '(3m) sarrafo', code: '3602', price: { atacado: 341.65, varejo: 410.00 }, unit: '3m', checked: true },
+                    { id: 'braço-200-tampasarrafo', name: 'Par de tampa do sarrafo', code: '3576', price: { atacado: 23.00, varejo: 35.00 }, checked: true },
+                    { id: 'braço-200-baguete', name: '(m) Baguete', code: '3584', price: { atacado: 7.56, varejo: 10.00 }, unit: 'm', checked: true },
+                    { id: 'braço-200-autocompansador', name: 'Auto-compensador', code: '3583', price: { atacado: 341.77, varejo: 450.00 }, checked: false, isCompensator: true },
+                    { id: 'braço-200-economico', name: 'Kit econômico', code: '3610', price: { atacado: 2967.05, varejo: 3575.00 }, checked: false },
+                ]
+            },
+            '2.50': {
+                basePrice: { atacado: 0.00, varejo: 0.00 },
+                components: [
+                    { id: 'braço-250-kit', name: 'Braço articulado 2,50m', code: '3572', price: { atacado: 584.00, varejo: 700.00 }, checked: true, isArm: true },
+                    { id: 'braço-250-perfil-d80', name: '(3m) Perfil D80', code: '3781', price: { atacado: 280.00, varejo: 280.00 }, unit: '3m', checked: true },
+                    { id: 'braço-250-tampac-furo', name: 'Tampa c/ furo', code: '3580', price: { atacado: 5.00, varejo: 8.00 }, checked: true },
+                    { id: 'braço-250-tampac-pino', name: 'Tampa c/ pino', code: '3581', price: { atacado: 12.00, varejo: 30.00 }, checked: true },
+                    { id: 'braço-250-maquina', name: 'Máquina', code: '3603', price: { atacado: 133.00, varejo: 160.00 }, checked: true },
+                    { id: 'braço-250-suprolo', name: 'Par de suporte do rolo', code: '3599', price: { atacado: 182.70, varejo: 200.00 }, checked: true },
+                    { id: 'braço-250-supbraco', name: 'Suporte do braço', code: '3568', price: { atacado: 110.25, varejo: 150.00 }, checked: true },
+                    { id: 'braço-250-barra-40x40', name: '(3m) Barra 40x40', code: '3608', price: { atacado: 325.00, varejo: 390.00 }, unit: '3m', checked: true },
+                    { id: 'braço-250-supparede', name: 'Suporte de parede', code: '3601', price: { atacado: 121.67, varejo: 145.60 }, checked: true },
+                    { id: 'braço-250-blocodeslizante', name: 'Bloco deslizante', code: '3569', price: { atacado: 30.00, varejo: 40.00 }, checked: true, isBlock: true },
+                    { id: 'braço-250-sarrafo', name: '(3m) sarrafo', code: '3602', price: { atacado: 341.65, varejo: 410.00 }, unit: '3m', checked: true },
+                    { id: 'braço-250-tampasarrafo', name: 'Par de tampa do sarrafo', code: '3576', price: { atacado: 23.00, varejo: 35.00 }, checked: true },
+                    { id: 'braço-250-baguete', name: '(m) Baguete', code: '3584', price: { atacado: 7.56, varejo: 10.00 }, unit: 'm', checked: true },
+                    { id: 'braço-250-autocompansador', name: 'Auto-compensador', code: '3583', price: { atacado: 341.77, varejo: 450.00 }, checked: false, isCompensator: true },
+                    { id: 'braço-250-economico', name: 'Kit econômico', code: '3611', price: { atacado: 3035.05, varejo: 3575.00 }, checked: false },
+                ]
+            },
+            '3.00': {
+                basePrice: { atacado: 0.00, varejo: 0.00 },
+                components: [
+                    { id: 'braço-300-kit', name: 'Braço articulado 3,00m', code: '3565', price: { atacado: 845.00, varejo: 950.00 }, checked: true, isArm: true },
+                    { id: 'braço-300-perfil-d80', name: '(3m) Perfil D80', code: '3781', price: { atacado: 280.00, varejo: 280.00 }, unit: '3m', checked: true },
+                    { id: 'braço-300-tampac-furo', name: 'Tampa c/ furo', code: '3580', price: { atacado: 5.00, varejo: 8.00 }, checked: true },
+                    { id: 'braço-300-tampac-pino', name: 'Tampa c/ pino', code: '3581', price: { atacado: 12.00, varejo: 30.00 }, checked: true },
+                    { id: 'braço-300-maquina', name: 'Máquina', code: '3603', price: { atacado: 133.00, varejo: 160.00 }, checked: true },
+                    { id: 'braço-300-suprolo', name: 'Par de suporte do rolo', code: '3599', price: { atacado: 182.70, varejo: 200.00 }, checked: true },
+                    { id: 'braço-300-supbraco', name: 'Suporte do braço', code: '3568', price: { atacado: 110.25, varejo: 150.00 }, checked: true },
+                    { id: 'braço-300-barra-40x40', name: '(3m) Barra 40x40', code: '3608', price: { atacado: 325.00, varejo: 390.00 }, unit: '3m', checked: true },
+                    { id: 'braço-300-supparede', name: 'Suporte de parede', code: '3601', price: { atacado: 121.67, varejo: 145.60 }, checked: true },
+                    { id: 'braço-300-blocodeslizante', name: 'Bloco deslizante', code: '3569', price: { atacado: 30.00, varejo: 40.00 }, checked: true, isBlock: true },
+                    { id: 'braço-300-sarrafo', name: '(3m) sarrafo', code: '3602', price: { atacado: 341.65, varejo: 410.00 }, unit: '3m', checked: true },
+                    { id: 'braço-300-tampasarrafo', name: 'Par de tampa do sarrafo', code: '3576', price: { atacado: 23.00, varejo: 35.00 }, checked: true },
+                    { id: 'braço-300-baguete', name: '(m) Baguete', code: '3584', price: { atacado: 7.56, varejo: 10.00 }, unit: 'm', checked: true },
+                    { id: 'braço-300-autocompansador', name: 'Auto-compensador', code: '3583', price: { atacado: 341.77, varejo: 450.00 }, checked: false, isCompensator: true },
+                    { id: 'braço-300-economico', name: 'Kit econômico', code: '3612', price: { atacado: 3557.05, varejo: 4075.00 }, checked: false },
+                ]
+            },
+            '50n': {
+                basePrice: { atacado: 0.00, varejo: 0.00 },
+                components: [
+                    { id: 'motor-50n-bucha', name: 'bucha', code: '3598', price: { atacado: 0.00, varejo: 15.75 }, checked: true },
+                    { id: 'motor-50n-interruptor', name: '50n de interruptor', code: '3593', price: { atacado: 550.00, varejo: 650.00 }, checked: true },
+                    { id: 'motor-50n-csocorro', name: '50n com socorro', code: '3591', price: { atacado: 1077.00, varejo: 1292.00 }, checked: false },
+                    { id: 'motor-50n-ssocorro', name: '50n sem socorro', code: '3592', price: { atacado: 0.00, varejo: 850.00 }, checked: false },
+                    { id: 'motor-50n-controle1', name: 'controle de 1 canal', code: '3595', price: { atacado: 79.10, varejo: 123.40 }, checked: false },
+                    { id: 'motor-50n-controle6', name: 'controle de 6 canais', code: '3596', price: { atacado: 105.09, varejo: 163.94 }, checked: false },
+                ]
+            },
+            '100n': {
+                basePrice: { atacado: 0.00, varejo: 0.00 },
+                components: [
+                    { id: 'motor-100n-bucha', name: 'bucha', code: '3598', price: { atacado: 0.00, varejo: 31.03 }, checked: true },
+                    { id: 'motor-100n-csocorro', name: '100n com socorro', code: '3594', price: { atacado: 1543.00, varejo: 1800.00 }, checked: true },
+                    { id: 'motor-100n-controle1', name: 'controle de 1 canal', code: '3595', price: { atacado: 79.10, varejo: 123.40 }, checked: false },
+                    { id: 'motor-100n-controle6', name: 'controle de 6 canais', code: '3596', price: { atacado: 105.09, varejo: 163.94 }, checked: false },
+                ]
+            }
+        };
+
+        const articuladoButtons = document.querySelectorAll('.option-buttons-articulado button');
+        const motorButtons = document.querySelectorAll('.option-buttons-motor button');
+        const clienteButtons = document.querySelectorAll('.option-buttons-tipo-cliente button');
+        const larguraInput = document.getElementById('largura-input');
+        const caimentoInput = document.getElementById('caimento-input');
+
+        const helpBoxArticulado = document.getElementById('help-box-articulado');
+        const helpBoxMotor = document.getElementById('help-box-motor');
+        const helpBoxArticuladoContent = document.getElementById('help-box-articulado-content');
+        const helpBoxMotorContent = document.getElementById('help-box-motor-content');
+
+        const valueLabel = document.getElementById('value-label');
+
+        let selectedArticuladoKit = null;
+        let selectedMotorKit = null;
+
+        // Regras atualizadas de largura e caimento
+        const armRules = {
+            '3.00': { minLargura: 4.00, minCaimento: 3.01, maxCaimento: 3.50 },
+            '2.50': { minLargura: 3.50, minCaimento: 2.51, maxCaimento: 3.00 },
+            '2.00': { minLargura: 3.00, minCaimento: 0.00, maxCaimento: 2.50 },
+        };
+
+        function autoSelectArm() {
+            const largura = getNumericValue('largura-input');
+            const caimento = getNumericValue('caimento-input');
+
+            if (isNaN(largura) || isNaN(caimento) || largura <= 0 || caimento <= 0) {
+                deselectAllArticuladoButtons();
+                return;
+            }
+
+            let armToSelect = null;
+            if (largura >= armRules['2.00'].minLargura && caimento >= armRules['2.00'].minCaimento && caimento <= armRules['2.00'].maxCaimento) {
+                armToSelect = '2.00';
+            } else if (largura >= armRules['2.50'].minLargura && caimento >= armRules['2.50'].minCaimento && caimento <= armRules['2.50'].maxCaimento) {
+                armToSelect = '2.50';
+            } else if (largura >= armRules['3.00'].minLargura && caimento >= armRules['3.00'].minCaimento && caimento <= armRules['3.00'].maxCaimento) {
+                armToSelect = '3.00';
+            }
+
+            if (armToSelect) {
+                const button = document.querySelector(`.option-buttons-articulado button[data-arm="${armToSelect}"]`);
+                if (button && !button.classList.contains('selected')) {
+                    button.click();
+                }
+            } else {
+                deselectAllArticuladoButtons();
+            }
+        }
+
+        function deselectAllArticuladoButtons() {
+            articuladoButtons.forEach(btn => btn.classList.remove('selected'));
+            helpBoxArticulado.style.display = 'none';
+            selectedArticuladoKit = null;
+            calculateAndDisplayTotal();
+        }
+
+        function autoSelectMotor() {
+            const largura = getNumericValue('largura-input');
+
+            if (isNaN(largura) || largura <= 0) {
+                deselectAllMotorButtons();
+                return;
+            }
+
+            let motorToSelect = null;
+            if (largura >= 6.00) {
+                motorToSelect = '100n';
+            } else {
+                motorToSelect = '50n';
+            }
+
+            if (motorToSelect) {
+                const button = document.querySelector(`.option-buttons-motor button[data-motor="${motorToSelect}"]`);
+                if (button && !button.classList.contains('selected')) {
+                    button.click();
+                }
+            } else {
+                deselectAllMotorButtons();
+            }
+        }
+
+        function deselectAllMotorButtons() {
+            motorButtons.forEach(btn => btn.classList.remove('selected'));
+            helpBoxMotor.style.display = 'none';
+            selectedMotorKit = null;
+            calculateAndDisplayTotal();
+        }
+
+        function setupToggleButtons(buttons, kitType, helpBoxElement, helpBoxContentElement) {
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    if (button.classList.contains('selected')) {
+                        button.classList.remove('selected');
+                        helpBoxElement.style.display = 'none';
+                        if (kitType === 'articulado') {
+                            selectedArticuladoKit = null;
+                        } else {
+                            selectedMotorKit = null;
+                        }
+                    } else {
+                        buttons.forEach(btn => btn.classList.remove('selected'));
+                        button.classList.add('selected');
+                        const kitId = button.dataset.arm || button.dataset.motor;
+                        if (kitType === 'articulado') {
+                            selectedArticuladoKit = kitId;
+                        } else {
+                            selectedMotorKit = kitId;
+                        }
+                        updateHelpBox(kitId, helpBoxElement, helpBoxContentElement);
+                    }
+                    calculateAndDisplayTotal();
+                });
+            });
+        }
+
+        function setupClientButtons(buttons) {
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    buttons.forEach(btn => btn.classList.remove('selected'));
+                    button.classList.add('selected');
+                    if (selectedArticuladoKit) {
+                        updateHelpBox(selectedArticuladoKit, helpBoxArticulado, helpBoxArticuladoContent);
+                    }
+                    if (selectedMotorKit) {
+                        updateHelpBox(selectedMotorKit, helpBoxMotor, helpBoxMotorContent);
+                    }
+                    calculateAndDisplayTotal();
+                });
+            });
+        }
+        
+        function calculateComponentPrice(component, largura, cliente) {
+            let quantidade = 1;
+            const precoUnitario = component.price[cliente];
+            const isLargerToldo = largura >= 6.00;
+
+            if (component.unit === 'm') {
+                quantidade = Math.ceil(largura)*3;
+            } else if (component.unit === '3m') {
+                quantidade = Math.ceil(largura / 3);
+            } else if (isLargerToldo) {
+                if (component.isArm || component.isBlock) {
+                    quantidade = 3;
+                } else if (component.id.includes('supbraco') || component.id.includes('supparede')) {
+                    quantidade = 2;
+                }
+            } else {
+                if (component.id.includes('supbraco') || component.id.includes('supparede') || component.isArm || component.isBlock) {
+                    quantidade = 2;
+                }
+            }
+
+            return quantidade * precoUnitario;
+        }
+
+        function updateHelpBox(kitId, helpBoxElement, helpBoxContentElement) {
+            const kit = kitData[kitId];
+            const cliente = document.querySelector('.option-buttons-tipo-cliente button.selected').dataset.cliente;
+            const largura = getNumericValue('largura-input');
+            const isLargerToldo = largura >= 6.00;
+            
+            // Limpa o conteúdo para re-renderizar
+            helpBoxContentElement.innerHTML = '';
+
+            kit.components.forEach(component => {
+                let isChecked = component.checked;
+                
+                // Lógica para marcar o auto-compensador apenas se a largura for >= 6m
+                if (component.isCompensator) {
+                    isChecked = isLargerToldo;
+                }
+
+                // A lógica de quantidade e preço é recalculada a cada chamada
+                const totalComponentPrice = calculateComponentPrice(component, largura, cliente);
+                const priceDisplay = totalComponentPrice.toFixed(2).replace('.', ',');
+
+                const div = document.createElement('div');
+                div.classList.add('help-box-item');
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = component.id;
+                checkbox.checked = isChecked;
+                checkbox.dataset.price = totalComponentPrice;
+                checkbox.dataset.kit = kitId;
+
+                const label = document.createElement('label');
+                label.htmlFor = component.id;
+                
+                let unitInfo = '';
+                let quantidade = 1;
+                if (isLargerToldo) {
+                    if (component.isArm || component.isBlock) {
+                        quantidade = 3;
+                    } else if (component.id.includes('supbraco') || component.id.includes('supparede')) {
+                        quantidade = 2;
+                    }
+                } else {
+                    if (component.id.includes('supbraco') || component.id.includes('supparede') || component.isArm || component.isBlock) {
+                        quantidade = 2;
+                    }
+                }
+
+                if (component.unit === 'm') {
+                    unitInfo = ` (${Math.ceil(largura)*3}m)`;
+                } else if (component.unit === '3m') {
+                    const quantidadeM = Math.ceil(largura / 3) * 3;
+                    unitInfo = ` (${quantidadeM}m)`;
+                } else if (quantidade > 1) {
+                    unitInfo = ` (${quantidade}un)`;
+                }
+
+                label.innerHTML = `${component.code} - ${component.name}${unitInfo} - R$ ${priceDisplay}`;
+
+                div.appendChild(checkbox);
+                div.appendChild(label);
+                helpBoxContentElement.appendChild(div);
+            });
+
+            helpBoxElement.style.display = 'block';
+        }
+
+        function calculateAndDisplayTotal() {
+            let total = 0;
+            
+            if (selectedArticuladoKit) {
+                document.querySelectorAll('#help-box-articulado-content input[type="checkbox"]').forEach(checkbox => {
+                    if (checkbox.checked) {
+                        total += parseFloat(checkbox.dataset.price);
+                    }
+                });
+            }
+            
+            if (selectedMotorKit) {
+                document.querySelectorAll('#help-box-motor-content input[type="checkbox"]').forEach(checkbox => {
+                    if (checkbox.checked) {
+                        total += parseFloat(checkbox.dataset.price);
+                    }
+                });
+            }
+
+            valueLabel.textContent = `Valor: R$ ${total.toFixed(2).replace('.', ',')}`;
+        }
+        
+        // --- CONFIGURAÇÃO DE EVENT LISTENERS ---
+        function updateAll() {
+            autoSelectArm();
+            autoSelectMotor();
+            if (selectedArticuladoKit) updateHelpBox(selectedArticuladoKit, helpBoxArticulado, helpBoxArticuladoContent);
+            if (selectedMotorKit) updateHelpBox(selectedMotorKit, helpBoxMotor, helpBoxMotorContent);
+            calculateAndDisplayTotal();
+        }
+        
+        document.getElementById('help-box-articulado').addEventListener('change', (event) => {
+            if (event.target.type === 'checkbox') {
+                calculateAndDisplayTotal();
+            }
+        });
+        document.getElementById('help-box-motor').addEventListener('change', (event) => {
+            if (event.target.type === 'checkbox') {
+                calculateAndDisplayTotal();
+            }
+        });
+
+        larguraInput.addEventListener('input', () => {
+            formatarMedida(larguraInput);
+            updateAll();
+        });
+        caimentoInput.addEventListener('input', () => {
+            formatarMedida(caimentoInput);
+            updateAll();
+        });
+
+        setupToggleButtons(articuladoButtons, 'articulado', helpBoxArticulado, helpBoxArticuladoContent);
+        setupToggleButtons(motorButtons, 'motor', helpBoxMotor, helpBoxMotorContent);
+        setupClientButtons(clienteButtons);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            autoSelectArm();
+            autoSelectMotor();
+            calculateAndDisplayTotal();
+        });
+    </script>
+</body>
+</html>
