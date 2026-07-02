@@ -2038,9 +2038,10 @@
         <div class="client-section">
             <div class="client-info">
                 <div class="client-info-row">
-                    <label for="cliente" class="required" id="cliente-label">Cliente:</label>
+                    <label for="cliente" id="cliente-label">Cliente:</label>
                     <div class="input-with-button">
                         <input type="text" id="cliente" required readonly>
+                        <input type="hidden" id="selected-client-id" value="">
                         <button type="button" id="search-client-btn" class="button icon-button" title="Buscar Cliente"><i class="fas fa-search"></i></button>
                     </div>
                 </div>
@@ -2538,7 +2539,7 @@
             <button type="button" class="close-button" data-modal-id="client-modal">&times;</button>
             <h2 class="search-title">Gerenciar Clientes</h2>
             <div class="search-container">
-                <input type="text" id="client-search-input" class="search-input" placeholder="Buscar por nome..." autocomplete="off">
+                <input type="text" id="client-search-input" class="search-input" placeholder="Buscar por nome ou código..." autocomplete="off">
                 <i class="fas fa-search search-icon"></i>
                 <button type="button" id="toggle-client-filters-btn" class="button seller-button">Filtros</button>
             </div>
@@ -2556,7 +2557,8 @@
             <div class="client-form">
                 <button type="button" id="add-new-client-btn" class="button select-product-button">Adicionar Novo Cliente</button>
             </div>
-            <div class="load-footer">
+            <div class="load-footer" style="flex-direction: column; gap: 8px; align-items: stretch;">
+                <button type="button" id="renumber-clients-btn" class="button" style="background-color: #fd7e14; color: white;">Renumerar códigos dos clientes</button>
                 <button type="button" id="delete-all-clients-btn" class="button">Apagar Todos os Clientes</button>
             </div>
         </div>
@@ -2657,7 +2659,7 @@
                     <!-- NOVO: Grupo de botões para salvar e excluir -->
                     <div class="form-group full-width" style="display: flex; gap: 10px; margin-top: 20px;">
                         <button type="button" id="delete-client-btn" class="button" style="background-color: #dc3545; flex-grow: 1;">Excluir Cliente</button>
-                        <button type="submit" class="button save-button" style="flex-grow: 2;">Salvar Cliente</button>
+                        <button type="submit" class="button save-button" id="save-client-popup-btn" style="flex-grow: 2;">Salvar Cliente</button>
                     </div>
                 </div>
             </form>
@@ -3177,22 +3179,253 @@
             }
         }
 
+        async function recoverClientCounterBase() {
+            const snapshot = await db.collection('clientes').get();
+            let maxCode = 0;
+            snapshot.forEach(doc => {
+                const code = doc.data().code;
+                if (typeof code === 'number' && Number.isFinite(code) && code > 0) {
+                    maxCode = Math.max(maxCode, code);
+                }
+            });
+            return maxCode > 0 ? maxCode : snapshot.size;
+        }
+
+        function isValidClientCode(value) {
+            return typeof value === 'number' && Number.isFinite(value) && value > 0;
+        }
+
+        function formatClientCode(code) {
+            if (!isValidClientCode(code)) return '';
+            return `(${String(Math.floor(code)).padStart(3, '0')})`;
+        }
+
+        function formatClientDisplayName(client) {
+            const name = (client.name || client.nomeFantasia || '').trim();
+            const codePart = formatClientCode(client.code);
+            return codePart ? `${name} ${codePart}`.trim() : name;
+        }
+
+        function buildClientAddressLine(address) {
+            if (!address || typeof address !== 'object') return '';
+            return [address.logradouro, address.numero, address.bairro].filter(Boolean).join(', ');
+        }
+
+        function applyClientToOrderForm(client, clientId = null) {
+            document.getElementById('cliente').value = formatClientDisplayName(client);
+            document.getElementById('endereco').value = buildClientAddressLine(client.address);
+            document.getElementById('celular').value = client.phone || '';
+
+            const clientIdInput = document.getElementById('selected-client-id');
+            if (clientIdInput) {
+                clientIdInput.value = clientId || '';
+            }
+
+            if (clientId) {
+                editingClientId = clientId;
+            }
+
+            updateRequiredFieldStyles();
+            updateSaveButtonState();
+        }
+
+        async function isClientRenumberingActive() {
+            const snap = await db.collection('contadores').doc('clientes').get();
+            return snap.exists && snap.data().renumberingInProgress === true;
+        }
+
+        function startButtonCooldown(button, seconds = 5, originalText = null) {
+            if (!button) return;
+            if (button._cooldownTimer) {
+                clearInterval(button._cooldownTimer);
+                button._cooldownTimer = null;
+            }
+            const baseText = originalText || button.dataset.originalText || button.textContent;
+            button.dataset.originalText = baseText;
+            button.disabled = true;
+            let remaining = seconds;
+            button.textContent = `Aguarde ${remaining}s...`;
+            button._cooldownTimer = setInterval(() => {
+                remaining -= 1;
+                if (remaining <= 0) {
+                    clearInterval(button._cooldownTimer);
+                    button._cooldownTimer = null;
+                    button.disabled = false;
+                    button.textContent = baseText;
+                } else {
+                    button.textContent = `Aguarde ${remaining}s...`;
+                }
+            }, 1000);
+        }
+
+        function startClientSaveCooldown(seconds = 5) {
+            const btn = document.getElementById('save-client-popup-btn');
+            startButtonCooldown(btn, seconds);
+            showNotification('Numeração de clientes em andamento. Os dados do formulário foram mantidos — aguarde e clique em Salvar novamente.', 'error');
+        }
+
+        async function acquireClientRenumberingLock() {
+            const counterRef = db.collection('contadores').doc('clientes');
+            const userBranch = localStorage.getItem('userBranch') || '';
+            await db.runTransaction(async (transaction) => {
+                const doc = await transaction.get(counterRef);
+                const data = doc.exists ? doc.data() : {};
+                if (data.renumberingInProgress === true) {
+                    throw new Error('RENUMBERING_IN_PROGRESS');
+                }
+                transaction.set(counterRef, {
+                    renumberingInProgress: true,
+                    renumberingStartedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    renumberingBy: userBranch
+                }, { merge: true });
+            });
+        }
+
+        async function releaseClientRenumberingLock(finalLastCode = null) {
+            const counterRef = db.collection('contadores').doc('clientes');
+            const payload = {
+                renumberingInProgress: firebase.firestore.FieldValue.delete(),
+                renumberingStartedAt: firebase.firestore.FieldValue.delete(),
+                renumberingBy: firebase.firestore.FieldValue.delete()
+            };
+            if (finalLastCode !== null && isValidClientCode(finalLastCode)) {
+                payload.lastCode = finalLastCode;
+            }
+            await counterRef.set(payload, { merge: true });
+        }
+
+        function clientMatchesCodeSearch(client, searchTerm) {
+            const raw = (searchTerm || '').trim();
+            if (!raw) return false;
+            const digitsOnly = raw.replace(/\D/g, '');
+            if (!digitsOnly) return false;
+            if (!isValidClientCode(client.code)) return false;
+            const codeNum = String(Math.floor(client.code));
+            const codePadded = codeNum.padStart(3, '0');
+            return codeNum.includes(digitsOnly) || codePadded.includes(digitsOnly);
+        }
+
+        async function renumberAllClients() {
+            const btn = document.getElementById('renumber-clients-btn');
+            const confirmed = window.confirm(
+                'Isso vai renumerar TODOS os clientes por ordem de criação (001, 002, 003...).\n\n' +
+                'Durante o processo, cadastros novos ficarão pausados por alguns segundos se houver conflito.\n\n' +
+                'Recomendado: avise as filiais antes de continuar.\n\nDeseja continuar?'
+            );
+            if (!confirmed) return;
+
+            const originalText = btn.dataset.originalText || btn.textContent;
+            btn.dataset.originalText = originalText;
+
+            try {
+                await acquireClientRenumberingLock();
+            } catch (error) {
+                if (error.message === 'RENUMBERING_IN_PROGRESS') {
+                    showNotification('Outra renumeração já está em andamento. Aguarde e tente novamente.', 'error');
+                    startButtonCooldown(btn, 5, originalText);
+                } else {
+                    showNotification('Não foi possível iniciar a renumeração.', 'error');
+                }
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Renumerando...';
+
+            try {
+                const snapshot = await db.collection('clientes').get();
+                const initialCount = snapshot.size;
+                const sortedDocs = snapshot.docs.slice().sort((a, b) => {
+                    const ta = a.createTime ? a.createTime.toMillis() : 0;
+                    const tb = b.createTime ? b.createTime.toMillis() : 0;
+                    if (ta !== tb) return ta - tb;
+                    return a.id.localeCompare(b.id);
+                });
+
+                const BATCH_SIZE = 400;
+                let assignedCode = 0;
+
+                for (let i = 0; i < sortedDocs.length; i += BATCH_SIZE) {
+                    const batch = db.batch();
+                    const chunk = sortedDocs.slice(i, i + BATCH_SIZE);
+                    chunk.forEach(docSnap => {
+                        assignedCode += 1;
+                        batch.update(docSnap.ref, { code: assignedCode });
+                    });
+                    await batch.commit();
+                    btn.textContent = `Renumerando... ${Math.min(i + chunk.length, sortedDocs.length)}/${sortedDocs.length}`;
+                }
+
+                const afterSnap = await db.collection('clientes').get();
+                if (afterSnap.size !== initialCount) {
+                    throw new Error('RENUMBERING_COUNT_CHANGED');
+                }
+
+                await releaseClientRenumberingLock(assignedCode);
+                showNotification(`${assignedCode} cliente(s) renumerado(s) com sucesso.`, 'success');
+                renderClientList(document.getElementById('client-search-input').value);
+                btn.disabled = false;
+                btn.textContent = originalText;
+            } catch (error) {
+                console.error('Erro ao renumerar clientes:', error);
+                try {
+                    await releaseClientRenumberingLock();
+                } catch (releaseError) {
+                    console.error('Erro ao liberar lock de renumeração:', releaseError);
+                }
+                if (error.message === 'RENUMBERING_COUNT_CHANGED') {
+                    showNotification('A lista de clientes mudou durante a renumeração (cadastro simultâneo). Tente novamente em alguns segundos.', 'error');
+                } else {
+                    const detail = error?.code ? `${error.code}: ${error.message}` : (error?.message || 'Erro desconhecido');
+                    showNotification(`Falha ao renumerar clientes. ${detail}`, 'error');
+                }
+                startButtonCooldown(btn, 5, originalText);
+            }
+        }
+
         async function getNextClientCode() {
             const counterRef = db.collection('contadores').doc('clientes');
-            
+
             try {
-                // Usando uma transação para garantir que o número seja único e incrementado atomicamente
+                if (await isClientRenumberingActive()) {
+                    throw new Error('RENUMBERING_IN_PROGRESS');
+                }
+
+                const counterSnap = await counterRef.get();
+                let baseCode = counterSnap.exists ? counterSnap.data().lastCode : 0;
+
+                if (!isValidClientCode(baseCode)) {
+                    console.warn('Contador de clientes inválido (', baseCode, '). Recalculando...');
+                    baseCode = await recoverClientCounterBase();
+                    await counterRef.set({ lastCode: baseCode }, { merge: true });
+                }
+
                 const newCode = await db.runTransaction(async (transaction) => {
                     const counterDoc = await transaction.get(counterRef);
-                    const currentCode = counterDoc.exists ? counterDoc.data().lastCode : 0;
+                    const data = counterDoc.exists ? counterDoc.data() : {};
+                    if (data.renumberingInProgress === true) {
+                        throw new Error('RENUMBERING_IN_PROGRESS');
+                    }
+                    let currentCode = counterDoc.exists ? counterDoc.data().lastCode : baseCode;
+                    if (!isValidClientCode(currentCode)) {
+                        currentCode = baseCode;
+                    }
                     const nextCode = currentCode + 1;
-                    transaction.set(counterRef, { lastCode: nextCode });
+                    transaction.set(counterRef, { lastCode: nextCode }, { merge: true });
                     return nextCode;
                 });
+
+                if (!isValidClientCode(newCode)) {
+                    throw new Error(`Código gerado inválido: ${newCode}`);
+                }
                 return newCode;
             } catch (error) {
+                if (error.message === 'RENUMBERING_IN_PROGRESS') {
+                    return 'RENUMBERING_IN_PROGRESS';
+                }
                 console.error("Erro ao gerar código do cliente:", error);
-                showNotification("Falha ao gerar código único para o cliente.", "error");
+                const detail = error?.code ? `${error.code}: ${error.message}` : (error?.message || 'Erro desconhecido');
+                showNotification(`Falha ao gerar código único para o cliente. ${detail}`, 'error');
                 return null;
             }
         }
@@ -4930,6 +5163,9 @@
             document.getElementById('cliente').value = '';
             document.getElementById('endereco').value = '';
             document.getElementById('celular').value = '';
+            const selectedClientIdInput = document.getElementById('selected-client-id');
+            if (selectedClientIdInput) selectedClientIdInput.value = '';
+            editingClientId = null;
             document.getElementById('tipo-documento').value = 'orcamento';
 
             // Clear purchase details
@@ -5925,8 +6161,8 @@
                     const codeGroup = document.getElementById('group-client-code-popup');
                     const codeInput = document.getElementById('popup-client-code-display');
                     const clientCode = docSnap.data().code;
-                    if (clientCode) {
-                        codeInput.value = String(clientCode).padStart(3, '0');
+                    if (isValidClientCode(clientCode)) {
+                        codeInput.value = String(Math.floor(clientCode)).padStart(3, '0');
                         codeGroup.style.display = 'block';
                     }
 
@@ -5977,7 +6213,15 @@
             // Se for um novo cliente, gera um código para ele
             let clientCode = null;
             if (!editingClientId) {
+                if (await isClientRenumberingActive()) {
+                    startClientSaveCooldown(5);
+                    return;
+                }
                 clientCode = await getNextClientCode();
+                if (clientCode === 'RENUMBERING_IN_PROGRESS') {
+                    startClientSaveCooldown(5);
+                    return;
+                }
                 if (clientCode === null) {
                     return; // A notificação de erro já foi mostrada em getNextClientCode
                 }
@@ -6029,47 +6273,31 @@
             try {
                 let clientNameToDisplay;
                 if (editingClientId) {
-                    // Não atualiza o código ao editar
                     await db.collection('clientes').doc(editingClientId).set(clientData, { merge: true });
-                    document.getElementById('cliente').value = `${clientData.name || clientData.nomeFantasia || ''} (${String(clientCode).padStart(3, '0')})`.trim();
-
-                    let fullAddress = '';
-                    if (clientData.address) {
-                        const addressParts = [clientData.address.logradouro, clientData.address.numero, clientData.address.bairro];
-                        fullAddress = addressParts.filter(Boolean).join(', ');
-                    }
-                    document.getElementById('endereco').value = fullAddress;
-                    document.getElementById('celular').value = clientData.phone || '';
-
-                    updateRequiredFieldStyles();
-                    updateSaveButtonState();
+                    applyClientToOrderForm({ ...clientData, code: clientCode }, editingClientId);
                     showNotification('Cliente atualizado com sucesso!', 'success');
                 } else {
-                    clientData.code = clientCode; // Adiciona o código gerado
-                    const docRef = await db.collection('clientes').add(clientData);
-                    editingClientId = docRef.id; // Define o ID para a seleção automática
-                    
-                    // Seleciona o cliente recém-criado no formulário principal, formatando o código para exibição
-                    document.getElementById('cliente').value = `${clientData.name || clientData.nomeFantasia || ''} (${String(clientData.code).padStart(3, '0')})`.trim();
-
-                    let fullAddress = '';
-                    if (clientData.address) {
-                        const addressParts = [clientData.address.logradouro, clientData.address.numero, clientData.address.bairro];
-                        fullAddress = addressParts.filter(Boolean).join(', ');
+                    if (await isClientRenumberingActive()) {
+                        startClientSaveCooldown(5);
+                        return;
                     }
-                    document.getElementById('endereco').value = fullAddress;
-                    document.getElementById('celular').value = clientData.phone || '';
-                    updateRequiredFieldStyles();
-                    updateSaveButtonState();
+                    if (!isValidClientCode(clientCode)) {
+                        showNotification('Não foi possível gerar um código válido para o cliente.', 'error');
+                        return;
+                    }
+                    clientData.code = clientCode;
+                    const docRef = await db.collection('clientes').add(clientData);
+                    applyClientToOrderForm(clientData, docRef.id);
                     showNotification('Cliente salvo com sucesso!', 'success');
-                    closeModal('client-modal'); // Fecha o modal de busca de clientes
+                    closeModal('client-modal');
                 }
-                renderClientList(document.getElementById('client-search-input').value); // Refresh the list
+                renderClientList(document.getElementById('client-search-input').value);
                 closeModal('client-edit-modal');
 
             } catch (error) {
                 console.error("Erro ao salvar cliente: ", error);
-                showNotification('Erro ao salvar cliente. Tente novamente.', 'error');
+                const detail = error?.code ? `${error.code}: ${error.message}` : (error?.message || 'Erro desconhecido');
+                showNotification(`Erro ao salvar cliente. ${detail}`, 'error');
             }
         }
 
@@ -6119,7 +6347,8 @@
                     const nameMatch = searchTerm.trim() === '' ? true : (
                         normalizeString(name).includes(normalizedSearchTerm) || 
                         normalizeString(nomeFantasia).includes(normalizedSearchTerm) ||
-                        normalizeString(apelido).includes(normalizedSearchTerm)
+                        normalizeString(apelido).includes(normalizedSearchTerm) ||
+                        clientMatchesCodeSearch(client, searchTerm)
                     );
                     const docMatch = docFilter === '' ? true : normalizeString(doc).includes(normalizedDocFilter);
                     const phoneMatch = phoneFilter === '' ? true : normalizeString(phone).includes(normalizedPhoneFilter);
@@ -6144,7 +6373,7 @@
                     const mainName = client.name || client.nomeFantasia || '';
                     let subName = '';
 
-                    const clientCode = client.code ? `(${String(client.code).padStart(3, '0')})` : '';
+                    const clientCode = formatClientCode(client.code);
                     if (searchTerm.trim() !== '') {
                         const normalizedNomeFantasia = normalizeString(client.nomeFantasia || '');
                         const normalizedApelido = normalizeString(client.apelido || '');
@@ -6693,6 +6922,7 @@
                 document.getElementById('client-password-modal').style.display = 'flex';
                 document.getElementById('client-password-input').focus();
             });
+            document.getElementById('renumber-clients-btn').addEventListener('click', renumberAllClients);
             document.getElementById('confirm-client-delete-btn').addEventListener('click', checkClientDeletePassword);
 
             // Listeners para o novo modal de cliente
@@ -6778,24 +7008,7 @@
 
                         if (docSnap.exists) {
                             const client = docSnap.data();
-
-                            // Carrega o nome, usando o nome fantasia como fallback para PJ
-                            const clientCode = client.code ? `(${String(client.code).padStart(3, '0')})` : '';
-                            document.getElementById('cliente').value = `${client.name || client.nomeFantasia || ''} ${clientCode}`.trim();
-
-                            // Carrega o endereço de forma segura, verificando se o objeto 'address' existe
-                            let fullAddress = '';
-                            if (client.address && typeof client.address === 'object') {
-                                const addressParts = [client.address.logradouro, client.address.numero, client.address.bairro];
-                                fullAddress = addressParts.filter(Boolean).join(', ');
-                            }
-                            document.getElementById('endereco').value = fullAddress;
-
-                            // Carrega o telefone
-                            document.getElementById('celular').value = client.phone || '';
-
-                            updateRequiredFieldStyles();
-                            updateSaveButtonState();
+                            applyClientToOrderForm(client, clientId);
                             closeModal('client-modal');
                             showNotification("Cliente selecionado com sucesso!", "success");
                         } else {
