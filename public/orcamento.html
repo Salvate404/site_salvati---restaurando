@@ -2002,6 +2002,7 @@
             <button type="button" class="button" id="loadButton">Carregar</button>
             <button type="button" class="button" id="pedidosButton" style="background-color: #ffc107; color: #212529;">Pedidos</button>
             <button type="button" class="button" id="obsButton" style="background-color: #6c757d; color: white;">Observações</button>
+            <button type="button" class="button" id="linkagem-toggle-btn" style="background-color: #28a745; color: white;" title="Linkagem ligada — imagem vincula ao produto">Linkagem</button>
             <button type="button" class="button" id="reload-products-btn" title="Recarregar produtos do servidor"><i class="fas fa-sync-alt"></i></button>
         </div>
         <div class="right">
@@ -2086,6 +2087,7 @@
                         <button data-image-type="cortina">Cortina</button>
                         <button data-image-type="capota">Capota</button>
                         <button data-image-type="bando">Bando</button>
+                        <button data-image-type="pano">Pano</button>
                     </div>
                 </div>
             </div>
@@ -3172,9 +3174,11 @@
                         addUpdate(bundleItem.productId, `estoque.${userBranchId}`, -componentQtyToDeduct);
                     });
                 } else if (product.type === 'sob-medida') {
-                    const scope = item.scope || {};
+                    const baseScope = item.scope || {};
+                    const sectionSelections = item.sections || null;
                     const selectedVariants = item.variants || {};
                     (product.composition || []).forEach(component => {
+                        const scope = getScopeForFormula(baseScope, sectionSelections, component.formula);
                         const componentQtyToDeduct = evaluateFormula(component.formula, scope) * quantitySold;
                         if (isNaN(componentQtyToDeduct) || componentQtyToDeduct <= 0) return;
 
@@ -3542,9 +3546,11 @@
                         addUpdate(bundleItem.productId, `estoque.${userBranchId}`, -componentQtyToDeduct);
                     });
                 } else if (product.type === 'sob-medida') {
-                    const scope = item.scope || {};
+                    const baseScope = item.scope || {};
+                    const sectionSelections = item.sections || null;
                     const selectedVariants = item.variants || {};
                     (product.composition || []).forEach(component => {
+                        const scope = getScopeForFormula(baseScope, sectionSelections, component.formula);
                         const componentQtyToDeduct = evaluateFormula(component.formula, scope) * quantitySold;
                         if (isNaN(componentQtyToDeduct) || componentQtyToDeduct <= 0) return;
 
@@ -3669,7 +3675,8 @@
         const IMAGE_LINK_TYPES = [
             { id: 'cortina', label: 'Cortina' },
             { id: 'capota', label: 'Capota' },
-            { id: 'bando', label: 'Bando' }
+            { id: 'bando', label: 'Bando' },
+            { id: 'pano', label: 'Pano' }
         ];
 
         const PRODUCT_SECTIONS = [
@@ -3681,6 +3688,45 @@
             { id: 'observacoes', label: 'Observações', multi: true }
         ];
         let activeLinkedImageWrapper = null;
+
+        const LINKAGEM_STORAGE_KEY = 'orcamentoLinkagemEnabled';
+
+        function isLinkagemEnabled() {
+            const stored = localStorage.getItem(LINKAGEM_STORAGE_KEY);
+            if (stored === null) return true;
+            return stored === 'true';
+        }
+
+        function setLinkagemEnabled(enabled) {
+            localStorage.setItem(LINKAGEM_STORAGE_KEY, enabled ? 'true' : 'false');
+            updateLinkagemButtonUI();
+        }
+
+        function updateLinkagemButtonUI() {
+            const btn = document.getElementById('linkagem-toggle-btn');
+            if (!btn) return;
+            const enabled = isLinkagemEnabled();
+            btn.style.backgroundColor = enabled ? '#28a745' : '#dc3545';
+            btn.style.color = 'white';
+            btn.title = enabled
+                ? 'Linkagem ligada — imagem vincula ao produto'
+                : 'Linkagem desligada — sem vínculo imagem/produto';
+        }
+
+        /** Com linkagem desligada, seções sob medida exibem só opções vinculadas a produto (cálculo). */
+        function filterSectionOptionsForLinkagem(options) {
+            if (isLinkagemEnabled()) return options;
+            return options.filter(opt => {
+                const normalized = normalizeSectionOption(opt);
+                return normalized.type === 'product' && normalized.productId;
+            });
+        }
+
+        function assignPairIdToRowIfLinkagem(row) {
+            if (!isLinkagemEnabled() || !row) return;
+            const pairId = activeLinkedImageWrapper?.dataset.pairId || '';
+            if (pairId) row.dataset.pairId = pairId;
+        }
 
         function generatePairId() {
             return (typeof crypto !== 'undefined' && crypto.randomUUID)
@@ -3715,6 +3761,65 @@
                 }
             }
             return null;
+        }
+
+        function findScopeEntryByPatterns(scope, patterns) {
+            if (!scope) return null;
+            for (const [key, val] of Object.entries(scope)) {
+                const normalizedKey = normalizeTextKey(key);
+                if (patterns.some(p => normalizedKey.includes(p)) && val !== '' && val != null) {
+                    const num = typeof val === 'number' ? val : parseCurrencyToNumber(val);
+                    return { key, value: isNaN(num) ? 0 : num };
+                }
+            }
+            return null;
+        }
+
+        function getScopeNumericValue(scope, patterns) {
+            const entry = findScopeEntryByPatterns(scope, patterns);
+            return entry ? entry.value : 0;
+        }
+
+        function isCosturaDeitadaSelected(sectionSelections) {
+            if (!sectionSelections) return false;
+            const matchesDeitada = (label) => {
+                const n = normalizeTextKey(getSectionDisplayLabel(label));
+                return n.includes('costura deitada') || n === 'deitada';
+            };
+            const costura = sectionSelections.costura;
+            if (costura && matchesDeitada(costura)) return true;
+            const obs = sectionSelections.observacoes;
+            if (Array.isArray(obs)) return obs.some(matchesDeitada);
+            if (obs) return matchesDeitada(obs);
+            return false;
+        }
+
+        /** Inverte largura ↔ (caída + bandô) e zera bandô (já absorvido na nova largura). */
+        function applyDeitadaDimensionSwap(scope) {
+            const larguraEntry = findScopeEntryByPatterns(scope, ['largura', 'larg', 'profundidade', 'comprimento']);
+            const caidaEntry = findScopeEntryByPatterns(scope, ['caida', 'queda', 'avanco', 'altura']);
+            if (!larguraEntry || !caidaEntry) return scope;
+
+            const bandoEntry = findScopeEntryByPatterns(scope, ['bando']);
+            const bandoVal = bandoEntry ? bandoEntry.value : 0;
+            const newScope = { ...scope };
+            newScope[larguraEntry.key] = caidaEntry.value + bandoVal;
+            newScope[caidaEntry.key] = larguraEntry.value;
+            if (bandoEntry) newScope[bandoEntry.key] = 0;
+            return newScope;
+        }
+
+        /** Costura deitada inverte medidas só na lona (fórmula com ROUNDUP / divisão por rolo). Costura permanece igual. */
+        function shouldInvertDimensionsForDeitadaFormula(formula) {
+            if (!formula) return false;
+            const normalized = formula.toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/\s/g, '');
+            return normalized.includes('ROUNDUP') || normalized.includes('/1,40') || normalized.includes('/1.40');
+        }
+
+        function getScopeForFormula(scope, sectionSelections, formula) {
+            if (!scope || !isCosturaDeitadaSelected(sectionSelections)) return scope;
+            if (!shouldInvertDimensionsForDeitadaFormula(formula)) return scope;
+            return applyDeitadaDimensionSwap(scope);
         }
 
         function getActiveMtmComponents() {
@@ -3776,7 +3881,9 @@
             const descSections = product?.descriptionSections || {};
             for (const section of PRODUCT_SECTIONS) {
                 const sectionData = normalizeSectionData(descSections[section.id]);
-                if (!sectionData.required || sectionData.options.length === 0) continue;
+                const visibleOptions = filterSectionOptionsForLinkagem(sectionData.options);
+                if (visibleOptions.length === 0) continue;
+                if (!sectionData.required) continue;
 
                 const sel = sectionSelections[section.id];
                 if (section.multi) {
@@ -3817,8 +3924,11 @@
 
             const largura = getScopeDisplayValue(scope, ['largura', 'larg', 'profundidade', 'comprimento']);
             const caida = getScopeDisplayValue(scope, ['caida', 'queda', 'avanco', 'altura']);
+            const bando = getScopeDisplayValue(scope, ['bando']);
             if (largura || caida) {
-                lines.push(`${largura || '?'} x ${caida || '?'}`);
+                let measureLine = `${largura || '?'} x ${caida || '?'}`;
+                if (bando) measureLine += ` + ${bando}`;
+                lines.push(measureLine);
             }
 
             const lonaParts = [
@@ -3830,9 +3940,6 @@
 
             const viesLabel = getSectionDisplayLabel(sections.corVies);
             if (viesLabel) lines.push(`Viés ${viesLabel}`);
-
-            const costuraLabel = getSectionDisplayLabel(sections.costura);
-            if (costuraLabel) lines.push(`Costura ${costuraLabel}`);
 
             const obsRaw = sections.observacoes;
             const obs = Array.isArray(obsRaw)
@@ -3851,7 +3958,7 @@
 
             PRODUCT_SECTIONS.forEach(section => {
                 const sectionData = normalizeSectionData(sections[section.id]);
-                const options = sectionData.options;
+                const options = filterSectionOptionsForLinkagem(sectionData.options);
                 if (options.length === 0) return;
                 hasAny = true;
 
@@ -3985,10 +4092,11 @@
             return result;
         }
 
-        function calcComponentPrice(productId, formula, scope) {
+        function calcComponentPrice(productId, formula, scope, sectionSelections = null) {
             const componentProduct = catalogoProdutos.find(p => p.id === productId);
             if (!componentProduct) return 0;
-            const quantity = evaluateFormula(formula || '1', scope);
+            const effectiveScope = getScopeForFormula(scope, sectionSelections, formula);
+            const quantity = evaluateFormula(formula || '1', effectiveScope);
             if (isNaN(quantity) || quantity <= 0) return 0;
             const price = priceMode === 'atacado' ? componentProduct.precoAtacado : componentProduct.precoVarejo;
             const minPrice = componentProduct.precoMinimo || 0;
@@ -4030,6 +4138,37 @@
             return wrapper;
         }
 
+        function cloneImageWrapper(sourceWrapper, newPairId = null) {
+            const clone = sourceWrapper.cloneNode(true);
+            clone.id = '';
+            if (newPairId) {
+                clone.dataset.pairId = newPairId;
+            } else {
+                delete clone.dataset.pairId;
+            }
+
+            const originalCanvas = sourceWrapper.querySelector('.drawing-canvas');
+            const clonedCanvas = clone.querySelector('.drawing-canvas');
+            const clonedImg = clone.querySelector('img');
+            if (clonedImg) clonedImg.draggable = true;
+            if (originalCanvas && clonedCanvas) {
+                const ctx = clonedCanvas.getContext('2d');
+                ctx.clearRect(0, 0, clonedCanvas.width, clonedCanvas.height);
+                ctx.drawImage(originalCanvas, 0, 0);
+            }
+
+            sourceWrapper.after(clone);
+            return clone;
+        }
+
+        function duplicatePairedImageForRow(sourcePairId, newPairId) {
+            if (!sourcePairId || !newPairId) return;
+            const sourceImage = findPairedImage(sourcePairId);
+            if (sourceImage) {
+                cloneImageWrapper(sourceImage, newPairId);
+            }
+        }
+
         function syncLinkedImageDescription(pairId, description, linkedProductId) {
             const imageWrapper = findPairedImage(pairId);
             if (!imageWrapper) return;
@@ -4039,7 +4178,10 @@
         }
 
         function finalizeLinkedProductPair(orderRow, descriptionConfig) {
-            if (!orderRow) return;
+            if (!orderRow || !isLinkagemEnabled()) {
+                activeLinkedImageWrapper = null;
+                return;
+            }
             const pairId = orderRow.dataset.pairId;
             if (!pairId) return;
 
@@ -4095,6 +4237,8 @@
         }
 
         function startLinkedProductFlow(imageType) {
+            if (!isLinkagemEnabled()) return false;
+
             const linkedProduct = getProductByLinkedImageType(imageType);
             if (!linkedProduct) return false;
 
@@ -4333,8 +4477,11 @@
         }
 
         async function openProductSelection() {
-            // Sempre busca a versão mais recente do catálogo ao abrir o modal.
             await getProducts(true);
+
+            selectedRowToEdit = null;
+            currentEditingProduct = null;
+            selectedVariant = null;
 
             document.body.classList.add('modal-open');
             renderProductModalList([], 1, true); // Renderiza a lista vazia com a mensagem inicial
@@ -4350,12 +4497,17 @@
                 document.getElementById('product-search-input').value = '';
             }
             if (modalId === 'made-to-measure-modal' || modalId === 'toldo-completo-config-modal') {
-                // Se a imagem linkada foi criada mas o usuário cancelou (não finalizou o par),
-                // remove a imagem órfã. Ao finalizar com sucesso, activeLinkedImageWrapper já é null.
                 if (activeLinkedImageWrapper) {
                     activeLinkedImageWrapper.remove();
                 }
                 activeLinkedImageWrapper = null;
+                selectedRowToEdit = null;
+                currentEditingProduct = null;
+            }
+            if (modalId === 'quantity-modal' || modalId === 'variant-modal') {
+                selectedRowToEdit = null;
+                currentEditingProduct = null;
+                selectedVariant = null;
             }
         }
 
@@ -4439,7 +4591,7 @@
 
             // Se o produto é linkado a uma imagem e o fluxo NÃO veio de uma imagem já criada
             // (ex.: selecionado direto em "Selecionar Produto") e não é edição, gera a imagem pareada.
-            if (selectedProduct.linkedImageType && !activeLinkedImageWrapper && !selectedRowToEdit) {
+            if (selectedProduct.linkedImageType && isLinkagemEnabled() && !activeLinkedImageWrapper && !selectedRowToEdit) {
                 const pairId = generatePairId();
                 const wrapper = createImageWrapper(selectedProduct.linkedImageType, pairId);
                 wrapper.dataset.linkedProductId = selectedProduct.id;
@@ -4732,19 +4884,23 @@
                 return { totalPrice: 0, scope: {}, componentsForStock: [] };
             }
 
+            const selectedSections = readSectionSelections(document.getElementById('toldo-completo-sections-container'));
+
             let totalPrice = 0;
             const componentsForStock = [];
 
             try {
                 // LÓGICA: Verifica se existe uma fórmula de preço principal
                 if (product.mainPriceFormula) {
-                    totalPrice = evaluateFormula(product.mainPriceFormula, scope);
+                    const mainScope = getScopeForFormula(scope, selectedSections, product.mainPriceFormula);
+                    totalPrice = evaluateFormula(product.mainPriceFormula, mainScope);
                 } else { // LÓGICA ANTIGA: Soma os componentes
                     (product.composition || []).forEach(component => {
                         const componentProduct = catalogoProdutos.find(p => p.id === component.productId);
                         if (!componentProduct) return;
 
-                        const quantity = evaluateFormula(component.formula || '1', scope);
+                        const componentScope = getScopeForFormula(scope, selectedSections, component.formula || '1');
+                        const quantity = evaluateFormula(component.formula || '1', componentScope);
                         if (isNaN(quantity) || quantity <= 0) return;
 
                         let price = 0;
@@ -4831,8 +4987,7 @@
             };
 
             if (!newRow.dataset.pairId) {
-                const pairId = activeLinkedImageWrapper?.dataset.pairId || '';
-                if (pairId) newRow.dataset.pairId = pairId;
+                assignPairIdToRowIfLinkagem(newRow);
             }
 
             newRow.innerHTML = `
@@ -4869,6 +5024,14 @@
             }
 
             if (selectedRowToEdit) {
+                const editProduct = catalogoProdutos.find(p => p.id === selectedRowToEdit.dataset.productId);
+                if (editProduct && (editProduct.type === 'sob-medida' || editProduct.type === 'toldo-completo')) {
+                    selectedRowToEdit = null;
+                    currentEditingProduct = null;
+                    showNotification('Produtos sob medida devem ser editados pelo menu Editar do item.', 'error');
+                    return;
+                }
+
                 selectedRowToEdit.dataset.quantidade = quantidade;
                 const preco = parseFloat(selectedRowToEdit.dataset.preco);
                 const total = preco * quantidade;
@@ -4886,6 +5049,8 @@
                 newRow.dataset.productId = product.id;
                 newRow.dataset.quantidade = quantidade;
                 newRow.dataset.preco = preco;
+
+                assignPairIdToRowIfLinkagem(newRow);
 
                 // Adiciona a variante selecionada na observação
                 let obsValue = '';
@@ -4906,10 +5071,23 @@
                     <td><button class="more-options-btn"><i class="fas fa-bars"></i></button></td>
                 `;
                 orderBody.appendChild(newRow);
+
+                if (isLinkagemEnabled() && newRow.dataset.pairId && product.linkedImageType) {
+                    const descDiv = findPairedImage(newRow.dataset.pairId)?.querySelector('.image-description');
+                    if (descDiv && !descDiv.innerText.trim()) {
+                        descDiv.innerText = product.nome;
+                    }
+                    const imageWrapper = findPairedImage(newRow.dataset.pairId);
+                    if (imageWrapper) imageWrapper.dataset.linkedProductId = product.id;
+                }
             }
 
             closeModal('quantity-modal');
             closeModal('product-modal');
+            activeLinkedImageWrapper = null;
+            selectedRowToEdit = null;
+            currentEditingProduct = null;
+            selectedVariant = null;
             reindexOrderItems();
             updateTotals();
         }
@@ -4999,7 +5177,7 @@
                 (product.composition || []).forEach(component => {
                     if (idsInSections.has(component.productId)) return;
                     if (selectedComponentIds.has(component.productId)) {
-                        totalPrice += calcComponentPrice(component.productId, component.formula, scope);
+                        totalPrice += calcComponentPrice(component.productId, component.formula, scope, sectionSelections);
                     }
                 });
 
@@ -5011,7 +5189,7 @@
                             : (sel ? [sel] : []);
                         selections.forEach(item => {
                             if (item && typeof item === 'object' && item.type === 'product' && item.productId) {
-                                totalPrice += calcComponentPrice(item.productId, item.formula || '1', scope);
+                                totalPrice += calcComponentPrice(item.productId, item.formula || '1', scope, sectionSelections);
                             }
                         });
                     });
@@ -6714,6 +6892,16 @@
             generateSaleNumberAndDate();
             loadSellers();
             loadBranchInfo();
+            updateLinkagemButtonUI();
+
+            document.getElementById('linkagem-toggle-btn').addEventListener('click', () => {
+                const next = !isLinkagemEnabled();
+                setLinkagemEnabled(next);
+                showNotification(
+                    next ? 'Linkagem ligada — imagens voltam a vincular aos produtos.' : 'Linkagem desligada — imagens e produtos ficam independentes.',
+                    'success'
+                );
+            });
             
             // Evento para negrito (Ctrl+B)
             document.querySelector('.purchase-details-content').addEventListener('keydown', (e) => {
@@ -6857,8 +7045,7 @@
                 newRow.dataset.variants = JSON.stringify(finalSelectedVariants); // CORREÇÃO: Salva as variantes coletadas
                 newRow.dataset.selectedComponents = JSON.stringify(Array.from(selectedComponentIds)); // Salva os componentes selecionados
 
-                const pairId = activeLinkedImageWrapper?.dataset.pairId || '';
-                if (pairId) newRow.dataset.pairId = pairId;
+                assignPairIdToRowIfLinkagem(newRow);
                 newRow.dataset.sections = JSON.stringify(selectedSections);
 
                 // CORREÇÃO: Salva a composição completa do produto na linha do pedido.
@@ -7271,22 +7458,24 @@
                         showNotification("Modo Pincel Ativado. Clique e arraste para desenhar. Clique fora da imagem para sair.", "success", 6000);
                         break;
 
-                    case 'duplicate-image':
-                        const clone = currentImageWrapper.cloneNode(true);
-                        // Limpa o ID se houver para evitar duplicatas
-                        clone.id = '';
-                        // Re-anexa os listeners de eventos ao clone
-                        const originalCanvas = currentImageWrapper.querySelector('.drawing-canvas');
-                        const clonedCanvas = clone.querySelector('.drawing-canvas');
-                        const clonedImg = clone.querySelector('img');
-                        clonedImg.draggable = true;
+                    case 'duplicate-image': {
+                        const sourcePairId = currentImageWrapper.dataset.pairId;
+                        const newPairId = sourcePairId ? generatePairId() : null;
+                        cloneImageWrapper(currentImageWrapper, newPairId);
 
-                        // Copia o desenho do canvas original para o clonado
-                        const ctx = clonedCanvas.getContext('2d');
-                        ctx.drawImage(originalCanvas, 0, 0);
-
-                        currentImageWrapper.after(clone);
+                        if (sourcePairId && newPairId) {
+                            const orderRow = findPairedOrderRow(sourcePairId);
+                            if (orderRow) {
+                                const clonedRow = orderRow.cloneNode(true);
+                                clonedRow.dataset.pairId = newPairId;
+                                clonedRow.querySelector('.options-menu')?.remove();
+                                orderRow.after(clonedRow);
+                                reindexOrderItems();
+                                updateTotals();
+                            }
+                        }
                         break;
+                    }
 
                     case 'delete-image':
                         if (currentImageWrapper.dataset.pairId) {
@@ -7734,13 +7923,18 @@
             const row = button.closest('.order-item');
             if (!row) return;
 
-            const clonedRow = row.cloneNode(true); // Cria uma cópia profunda da linha
-            row.after(clonedRow); // Insere a linha clonada logo após a original
+            const clonedRow = row.cloneNode(true);
+            const sourcePairId = row.dataset.pairId;
 
-            // Remove o menu de opções da linha original após a ação
+            if (sourcePairId) {
+                const newPairId = generatePairId();
+                clonedRow.dataset.pairId = newPairId;
+                duplicatePairedImageForRow(sourcePairId, newPairId);
+            }
+
+            row.after(clonedRow);
+
             button.closest('.options-menu')?.remove();
-
-            // Limpa o menu de opções da linha clonada, se houver
             clonedRow.querySelector('.options-menu')?.remove();
 
             reindexOrderItems();
