@@ -551,6 +551,7 @@
             </div>
             <button id="manage-branches-btn" style="flex-grow: 1;"><i class="fas fa-store"></i> Filiais</button>
             <button id="manage-fiscal-btn" style="flex-grow: 1;"><i class="fas fa-file-invoice-dollar"></i> Fiscal</button>
+            <button id="maintenance-btn" style="flex-grow: 1;"><i class="fas fa-tools"></i> Manutenção</button>
         </div>
     </div>
 
@@ -777,6 +778,25 @@
                 </div>
                 <button type="submit">Salvar Configuração Fiscal</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal de Manutenção -->
+    <div id="maintenance-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" data-modal="maintenance-modal">&times;</span>
+            <h2><i class="fas fa-tools"></i> Manutenção</h2>
+            <p style="text-align: center; color: #6c757d; margin-top: -15px; margin-bottom: 25px;">
+                Ferramentas de manutenção global. Use com cuidado — estas ações afetam todos os dados e todas as filiais.
+            </p>
+            <div class="modal-button-group" style="flex-direction: column; gap: 12px;">
+                <button id="admin-renumber-clients-btn" style="background-color: #fd7e14;">
+                    <i class="fas fa-sort-numeric-down"></i> Renumerar códigos dos clientes
+                </button>
+                <button id="admin-clear-links-btn" style="background-color: #fd7e14;">
+                    <i class="fas fa-unlink"></i> Limpar links de imagens dos produtos
+                </button>
+            </div>
         </div>
     </div>
 
@@ -1650,6 +1670,239 @@
                 showUsageStats();
             };
 
+            // --- Manutenção ---
+            document.getElementById('maintenance-btn').onclick = () => {
+                document.getElementById('maintenance-modal').style.display = 'flex';
+            };
+            document.getElementById('admin-renumber-clients-btn').addEventListener('click', renumberAllClients);
+            document.getElementById('admin-clear-links-btn').addEventListener('click', clearAllImageLinks);
+
+            // ============================================================
+            // FERRAMENTAS DE MANUTENÇÃO (movidas de orcamento.html)
+            // ============================================================
+            function isValidClientCode(value) {
+                return typeof value === 'number' && Number.isFinite(value) && value > 0;
+            }
+
+            function startButtonCooldown(button, seconds = 5, originalText = null) {
+                if (!button) return;
+                if (button._cooldownTimer) {
+                    clearInterval(button._cooldownTimer);
+                    button._cooldownTimer = null;
+                }
+                const baseText = originalText || button.dataset.originalText || button.textContent;
+                button.dataset.originalText = baseText;
+                let remaining = seconds;
+                button.disabled = true;
+                button.textContent = `Aguarde ${remaining}s...`;
+                button._cooldownTimer = setInterval(() => {
+                    remaining -= 1;
+                    if (remaining <= 0) {
+                        clearInterval(button._cooldownTimer);
+                        button._cooldownTimer = null;
+                        button.disabled = false;
+                        button.textContent = baseText;
+                    } else {
+                        button.textContent = `Aguarde ${remaining}s...`;
+                    }
+                }, 1000);
+            }
+
+            async function acquireClientRenumberingLock() {
+                const counterRef = db.collection('contadores').doc('clientes');
+                const executedBy = auth.currentUser ? auth.currentUser.uid : 'admin';
+                await db.runTransaction(async (transaction) => {
+                    const doc = await transaction.get(counterRef);
+                    const data = doc.exists ? doc.data() : {};
+                    if (data.renumberingInProgress === true) {
+                        throw new Error('RENUMBERING_IN_PROGRESS');
+                    }
+                    transaction.set(counterRef, {
+                        renumberingInProgress: true,
+                        renumberingStartedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        renumberingBy: executedBy
+                    }, { merge: true });
+                });
+            }
+
+            async function releaseClientRenumberingLock(finalLastCode = null) {
+                const counterRef = db.collection('contadores').doc('clientes');
+                const payload = {
+                    renumberingInProgress: firebase.firestore.FieldValue.delete(),
+                    renumberingStartedAt: firebase.firestore.FieldValue.delete(),
+                    renumberingBy: firebase.firestore.FieldValue.delete()
+                };
+                if (finalLastCode !== null && isValidClientCode(finalLastCode)) {
+                    payload.lastCode = finalLastCode;
+                }
+                await counterRef.set(payload, { merge: true });
+            }
+
+            async function renumberAllClients() {
+                const btn = document.getElementById('admin-renumber-clients-btn');
+                const confirmed = window.confirm(
+                    'Isso vai renumerar TODOS os clientes por ordem de criação (001, 002, 003...).\n\n' +
+                    'Durante o processo, cadastros novos ficarão pausados por alguns segundos se houver conflito.\n\n' +
+                    'Recomendado: avise as filiais antes de continuar.\n\nDeseja continuar?'
+                );
+                if (!confirmed) return;
+
+                const originalText = btn.dataset.originalText || btn.textContent;
+                btn.dataset.originalText = originalText;
+
+                // --- PRÉVIA / SIMULAÇÃO (não altera nada) ---
+                btn.disabled = true;
+                btn.textContent = 'Simulando...';
+                let previewDocs;
+                try {
+                    const previewSnap = await db.collection('clientes').get();
+                    previewDocs = previewSnap.docs.slice().sort((a, b) => {
+                        const ta = a.createTime ? a.createTime.toMillis() : 0;
+                        const tb = b.createTime ? b.createTime.toMillis() : 0;
+                        if (ta !== tb) return ta - tb;
+                        return a.id.localeCompare(b.id);
+                    });
+                } catch (previewError) {
+                    console.error('Erro na simulação de renumeração:', previewError);
+                    showNotification('Não foi possível simular a renumeração.', 'error');
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                    return;
+                }
+
+                const total = previewDocs.length;
+                const nomeDe = (d) => (d.data().name || d.data().nomeFantasia || 'sem nome');
+                const primeiro = total > 0 ? nomeDe(previewDocs[0]) : '-';
+                const ultimo = total > 0 ? nomeDe(previewDocs[total - 1]) : '-';
+
+                console.groupCollapsed(`[Renumeração] Simulação — ${total} cliente(s)`);
+                console.log('Primeiro (001):', primeiro);
+                console.log(`Último (${String(total).padStart(3, '0')}):`, ultimo);
+                console.table(previewDocs.slice(0, 20).map((d, i) => ({
+                    novoCodigo: i + 1,
+                    codigoAtual: d.data().code ?? '(vazio)',
+                    nome: nomeDe(d)
+                })));
+                console.groupEnd();
+
+                btn.disabled = false;
+                btn.textContent = originalText;
+
+                const confirmRun = window.confirm(
+                    `SIMULAÇÃO CONCLUÍDA\n\n` +
+                    `Serão renumerados ${total} cliente(s), por ordem de criação:\n` +
+                    `• 001 → ${primeiro}\n` +
+                    `• ${String(total).padStart(3, '0')} → ${ultimo}\n\n` +
+                    `(Detalhes das 20 primeiras linhas no console/F12.)\n\n` +
+                    `Confirma a renumeração definitiva?`
+                );
+                if (!confirmRun) {
+                    showNotification('Renumeração cancelada (apenas simulação foi feita).', 'success');
+                    return;
+                }
+
+                const renumberStartedAt = Date.now();
+
+                try {
+                    await acquireClientRenumberingLock();
+                } catch (error) {
+                    if (error.message === 'RENUMBERING_IN_PROGRESS') {
+                        showNotification('Outra renumeração já está em andamento. Aguarde e tente novamente.', 'error');
+                        startButtonCooldown(btn, 5, originalText);
+                    } else {
+                        showNotification('Não foi possível iniciar a renumeração.', 'error');
+                    }
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.textContent = 'Renumerando...';
+
+                try {
+                    const snapshot = await db.collection('clientes').get();
+                    const initialCount = snapshot.size;
+                    const sortedDocs = snapshot.docs.slice().sort((a, b) => {
+                        const ta = a.createTime ? a.createTime.toMillis() : 0;
+                        const tb = b.createTime ? b.createTime.toMillis() : 0;
+                        if (ta !== tb) return ta - tb;
+                        return a.id.localeCompare(b.id);
+                    });
+
+                    const BATCH_SIZE = 400;
+                    let assignedCode = 0;
+
+                    for (let i = 0; i < sortedDocs.length; i += BATCH_SIZE) {
+                        const batch = db.batch();
+                        const chunk = sortedDocs.slice(i, i + BATCH_SIZE);
+                        chunk.forEach(docSnap => {
+                            assignedCode += 1;
+                            batch.update(docSnap.ref, { code: assignedCode });
+                        });
+                        await batch.commit();
+                        btn.textContent = `Renumerando... ${Math.min(i + chunk.length, sortedDocs.length)}/${sortedDocs.length}`;
+                    }
+
+                    const afterSnap = await db.collection('clientes').get();
+                    if (afterSnap.size !== initialCount) {
+                        throw new Error('RENUMBERING_COUNT_CHANGED');
+                    }
+
+                    await releaseClientRenumberingLock(assignedCode);
+                    const elapsedSec = ((Date.now() - renumberStartedAt) / 1000).toFixed(1);
+                    console.log(`[Renumeração] Concluída: ${assignedCode} cliente(s) em ${elapsedSec}s. Novo lastCode = ${assignedCode}.`);
+                    showNotification(`${assignedCode} cliente(s) renumerado(s) com sucesso (${elapsedSec}s).`, 'success');
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                } catch (error) {
+                    console.error('Erro ao renumerar clientes:', error);
+                    try {
+                        await releaseClientRenumberingLock();
+                    } catch (releaseError) {
+                        console.error('Erro ao liberar lock de renumeração:', releaseError);
+                    }
+                    if (error.message === 'RENUMBERING_COUNT_CHANGED') {
+                        showNotification('A lista de clientes mudou durante a renumeração (cadastro simultâneo). Tente novamente em alguns segundos.', 'error');
+                    } else {
+                        const detail = error?.code ? `${error.code}: ${error.message}` : (error?.message || 'Erro desconhecido');
+                        showNotification(`Falha ao renumerar clientes. ${detail}`, 'error');
+                    }
+                    startButtonCooldown(btn, 5, originalText);
+                }
+            }
+
+            async function clearAllImageLinks() {
+                const confirmed = window.confirm('Isso vai remover o link de imagem de TODOS os produtos cadastrados. Deseja continuar?');
+                if (!confirmed) return;
+
+                const clearBtn = document.getElementById('admin-clear-links-btn');
+                const originalText = clearBtn.innerHTML;
+                clearBtn.disabled = true;
+                clearBtn.textContent = 'Limpando...';
+
+                try {
+                    const snapshot = await db.collection('produtos').where('linkedImageType', '!=', null).get();
+                    if (snapshot.empty) {
+                        showNotification('Nenhum produto com link para limpar.', 'success');
+                        return;
+                    }
+
+                    const batch = db.batch();
+                    snapshot.docs.forEach(docSnap => {
+                        batch.update(docSnap.ref, { linkedImageType: firebase.firestore.FieldValue.delete() });
+                    });
+                    await batch.commit();
+
+                    showNotification(`Links removidos de ${snapshot.size} produto(s).`, 'success');
+                } catch (error) {
+                    console.error('Erro ao limpar os links de imagem:', error);
+                    const detail = error?.code ? `${error.code}: ${error.message}` : (error?.message || 'Erro desconhecido');
+                    showNotification(`Falha ao limpar os links. ${detail}`, 'error');
+                } finally {
+                    clearBtn.disabled = false;
+                    clearBtn.innerHTML = originalText;
+                }
+            }
+
             document.querySelectorAll('.close-btn').forEach(btn => {
                 btn.onclick = () => {
                     document.getElementById(btn.dataset.modal).style.display = 'none';
@@ -1675,6 +1928,7 @@
                 if (event.target == fiscalConfigModal) fiscalConfigModal.style.display = 'none';
                 if (event.target == advancedFilterModal) advancedFilterModal.style.display = 'none';
                 if (event.target == document.getElementById('sales-report-modal')) document.getElementById('sales-report-modal').style.display = 'none';
+                if (event.target == document.getElementById('maintenance-modal')) document.getElementById('maintenance-modal').style.display = 'none';
             };
 
             employeeForm.addEventListener('submit', handleRegisterSubmit);

@@ -305,6 +305,40 @@
             position: relative;
         }
 
+        /* Indicador de imagem sem vínculo (linkagem desligada) */
+        .image-with-desc.image-unlinked .image-canvas-wrapper::after {
+            content: 'sem link';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            background-color: #dc3545;
+            color: #fff;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 10px;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        #image-preview-container.linkagem-desligada::before {
+            content: 'Linkagem desligada — imagens não vinculam a produtos';
+            display: block;
+            width: 100%;
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 0.85em;
+            margin-bottom: 8px;
+        }
+        /* No PDF, esconde os avisos/badges de linkagem */
+        .pdf-generation-mode .image-with-desc.image-unlinked .image-canvas-wrapper::after,
+        .pdf-generation-mode #image-preview-container.linkagem-desligada::before {
+            display: none !important;
+        }
+
         .image-with-desc img {
             max-width: 150px; /* Define uma largura máxima para a imagem */
             height: 120px;    /* Define uma altura fixa para o contêiner da imagem */
@@ -548,6 +582,23 @@
             background-color: #ffebe9 !important;
             color: #8c2f33;
             text-decoration: line-through;
+        }
+
+        /* Imagem de um par cujo item foi excluído: some da tela (reversível ao restaurar o item) */
+        .image-with-desc.pair-hidden {
+            display: none !important;
+        }
+
+        /* Destaque de navegação por teclado (setas) nas listas de produto e cliente */
+        #product-list-body tr.kb-active {
+            background-color: #e7f1ff !important;
+            outline: 2px solid #007bff;
+            outline-offset: -2px;
+        }
+        #client-list .load-list-item.kb-active {
+            background-color: #e7f1ff;
+            outline: 2px solid #007bff;
+            outline-offset: -2px;
         }
         
         .more-options-btn {
@@ -1076,6 +1127,7 @@
         .pagination {
             display: flex;
             justify-content: center;
+            flex-wrap: wrap;
             margin-top: 10px;
             gap: 5px;
         }
@@ -2005,14 +2057,14 @@
             <button type="button" class="button" id="linkagem-toggle-btn" style="background-color: #28a745; color: white;" title="Linkagem ligada — imagem vincula ao produto">Linkagem</button>
             <button type="button" class="button" id="reload-products-btn" title="Recarregar produtos do servidor"><i class="fas fa-sync-alt"></i></button>
         </div>
-        <div class="right">
+        <div class="right" style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
             <button type="button" class="button" id="downloadButton">Baixar PDF</button>
+            <button type="button" class="button" id="downloadImageButton" style="background-color: #17a2b8; color: #fff;"><i class="fas fa-image"></i> Salvar Imagem</button>
         </div>
     </div>
 
     <div class="fixed-buttons">
         <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-start;">
-            <button type="button" class="button" id="clearLinksButton" style="background-color: #fd7e14; color: white;">Limpar Links</button>
             <button type="button" class="button" id="saveButton">Salvar</button>
         </div>
         <button type="button" class="button" id="backToMenuButton">Menu</button>
@@ -2196,12 +2248,12 @@
             <button type="button" class="close-button" data-modal-id="product-modal">&times;</button>
             <h2 class="search-title">Produtos</h2>
             <div class="search-container">
-                <input type="text" id="product-search-input" class="search-input" placeholder="Exemplo: castanha reta" autocomplete="off">
+                <input type="text" id="product-search-input" class="search-input" placeholder="Nome ou código (ex: castanha reta ou 0012)" autocomplete="off">
                 <i class="fas fa-search search-icon"></i>
             </div>
             <div class="modal-table-container">
                 <table class="modal-product-table">
-                    <thead><tr><th>Nome</th><th>Unidade</th><th>Preço Atacado</th><th>Preço Varejo</th></tr></thead>
+                    <thead><tr><th>Código</th><th>Nome</th><th>Unidade</th><th>Preço Atacado</th><th>Preço Varejo</th></tr></thead>
                     <tbody id="product-list-body"></tbody>
                 </table>
             </div>
@@ -2452,6 +2504,20 @@
         </div>
     </div>
 
+    <!-- NOVO: Modal de envio ao cliente após salvar a nota -->
+    <div id="send-client-modal" class="modal">
+        <div class="modal-content" style="max-width: 440px; text-align: center;">
+            <button type="button" class="close-button" data-modal-id="send-client-modal">&times;</button>
+            <h2 style="margin-bottom: 6px;">Orçamento salvo!</h2>
+            <p id="send-client-modal-text" style="margin-bottom: 20px; color: #555;">Deseja enviar a nota para o cliente?</p>
+            <div class="modal-buttons" style="flex-direction: column; gap: 10px;">
+                <button type="button" class="button select-product-button" id="send-whatsapp-btn" style="background-color: #25D366; color: #fff;"><i class="fab fa-whatsapp"></i> Enviar pelo WhatsApp</button>
+                <button type="button" class="button" id="send-note-image-btn" style="background-color: #17a2b8; color: #fff;"><i class="fas fa-image"></i> Salvar nota como imagem</button>
+                <button type="button" class="button seller-button" data-modal-id="send-client-modal">Agora não</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 2. NOVO MODAL: SELEÇÃO DE VARIANTES PARA COMPONENTES DO SOB MEDIDA -->
     <div id="mtm-variant-selection-modal" class="modal">
         <div class="modal-content quantity">
@@ -2484,9 +2550,8 @@
             <div id="load-list" class="modal-table-container">
                 </div>
             <div class="pagination" id="load-pagination"></div><div class="load-footer">
-                <div id="default-load-buttons" style="display: flex; gap: 10px; width: 100%; justify-content: space-between;">
+                <div id="default-load-buttons" style="display: flex; gap: 10px; width: 100%;">
                     <button type="button" class="button" id="selection-mode-btn">Modo Seleção</button>
-                    <button type="button" class="button" id="open-password-modal-btn">Apagar Todos</button>
                 </div>
                 <div id="selection-buttons" style="display: none; gap: 10px; width: 100%; justify-content: space-between;">
                     <button type="button" class="button" id="cancel-selection-btn" style="background-color: #6c757d;">Cancelar</button>
@@ -2497,13 +2562,7 @@
     </div>
     
     <div id="password-modal" class="modal">
-            <div class="load-footer">
-                <button type="button" class="button" id="open-password-modal-btn">Apagar Todos</button>
-            </div>
-        </div>
-    </div>
-    
-    <div id="password-modal" class="modal">
+        <div class="modal-content password">
             <button type="button" class="close-button" data-modal-id="password-modal">&times;</button>
             <h2>Confirmação de Senha</h2>
             <p>Para apagar todas as notas, insira o apelido e a senha de um Patrão:</p>
@@ -2520,22 +2579,6 @@
             </form>
         </div>
     </div>
-
-    <!-- 2. NOVO MODAL: SELEÇÃO DE VARIANTES PARA COMPONENTES DO SOB MEDIDA -->
-    <div id="mtm-variant-selection-modal" class="modal">
-        <div class="modal-content quantity">
-            <button type="button" class="close-button" data-modal-id="mtm-variant-selection-modal">&times;</button>
-            <h2 id="mtm-variant-selection-title">Selecione a Variante</h2>
-            <div id="mtm-variant-list-container" style="text-align: left; max-height: 40vh; overflow-y: auto; padding: 10px;">
-                <!-- Opções de variantes (radio buttons) serão inseridas aqui -->
-            </div>
-            <div class="modal-buttons">
-                <button type="button" class="button select-product-button" id="confirm-mtm-variant-selection-btn">Confirmar</button>
-                <button type="button" class="button seller-button" data-modal-id="mtm-variant-selection-modal">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
 
     <div id="client-modal" class="modal">
         <div class="modal-content load-screen">
@@ -2559,10 +2602,6 @@
             <div id="client-list" class="modal-table-container"></div>
             <div class="client-form">
                 <button type="button" id="add-new-client-btn" class="button select-product-button">Adicionar Novo Cliente</button>
-            </div>
-            <div class="load-footer" style="flex-direction: column; gap: 8px; align-items: stretch;">
-                <button type="button" id="renumber-clients-btn" class="button" style="background-color: #fd7e14; color: white;">Renumerar códigos dos clientes</button>
-                <button type="button" id="delete-all-clients-btn" class="button">Apagar Todos os Clientes</button>
             </div>
         </div>
     </div>
@@ -2725,21 +2764,6 @@
             </form>
         </div>
     </div>
-    <div id="client-password-modal" class="modal">
-        <div class="modal-content password">
-            <button type="button" class="close-button" data-modal-id="client-password-modal">&times;</button>
-            <h2>Confirmação de Senha</h2>
-            <p>Para apagar TODOS os clientes, digite a senha:</p>
-            <form id="client-password-form">
-                <input type="password" id="client-password-input" placeholder="Digite a senha aqui" autocomplete="new-password">
-                <div class="modal-buttons">
-                    <button type="submit" class="button select-product-button" id="confirm-client-delete-btn">Confirmar</button>
-                    <button type="button" class="button seller-button" data-modal-id="client-password-modal">Cancelar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <div id="fiscal-config-modal" class="modal">
         <div class="modal-content" style="width: 95%; max-width: 1200px;">
             <button type="button" class="close-button" data-modal-id="fiscal-config-modal">&times;</button>
@@ -2761,22 +2785,6 @@
         </div>
     </div>
 
-    <!-- NOVO MODAL: SELEÇÃO DE VARIANTES PARA PRODUTOS SOB MEDIDA -->
-    <div id="mtm-variant-selection-modal" class="modal">
-        <div class="modal-content quantity">
-            <button type="button" class="close-button" data-modal-id="mtm-variant-selection-modal">&times;</button>
-            <h2>Selecione as Variantes</h2>
-            <p>Escolha uma opção para cada componente com variantes.</p>
-            <div id="mtm-variant-list-container" style="text-align: left; max-height: 40vh; overflow-y: auto; padding: 10px;">
-                <!-- Selects de variantes serão inseridos aqui -->
-            </div>
-            <div class="modal-buttons">
-                <button type="button" class="button select-product-button" id="confirm-mtm-variant-selection-btn">Confirmar e Adicionar</button>
-                <button type="button" class="button seller-button" id="cancel-mtm-variant-selection-btn">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Firebase SDK (Software Development Kit) -->
     <script src="firebase-config.js"></script> <!-- Carrega a configuração do Firebase de um arquivo externo -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -2784,6 +2792,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script>
         // --- FISCAL MODAL LOGIC ---
         let fiscalConfig = {
@@ -3274,6 +3283,7 @@
 
             updateRequiredFieldStyles();
             updateSaveButtonState();
+            markOrderDirty();
         }
 
         async function isClientRenumberingActive() {
@@ -3311,36 +3321,6 @@
             showNotification('Numeração de clientes em andamento. Os dados do formulário foram mantidos — aguarde e clique em Salvar novamente.', 'error');
         }
 
-        async function acquireClientRenumberingLock() {
-            const counterRef = db.collection('contadores').doc('clientes');
-            const userBranch = localStorage.getItem('userBranch') || '';
-            await db.runTransaction(async (transaction) => {
-                const doc = await transaction.get(counterRef);
-                const data = doc.exists ? doc.data() : {};
-                if (data.renumberingInProgress === true) {
-                    throw new Error('RENUMBERING_IN_PROGRESS');
-                }
-                transaction.set(counterRef, {
-                    renumberingInProgress: true,
-                    renumberingStartedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    renumberingBy: userBranch
-                }, { merge: true });
-            });
-        }
-
-        async function releaseClientRenumberingLock(finalLastCode = null) {
-            const counterRef = db.collection('contadores').doc('clientes');
-            const payload = {
-                renumberingInProgress: firebase.firestore.FieldValue.delete(),
-                renumberingStartedAt: firebase.firestore.FieldValue.delete(),
-                renumberingBy: firebase.firestore.FieldValue.delete()
-            };
-            if (finalLastCode !== null && isValidClientCode(finalLastCode)) {
-                payload.lastCode = finalLastCode;
-            }
-            await counterRef.set(payload, { merge: true });
-        }
-
         function clientMatchesCodeSearch(client, searchTerm) {
             const raw = (searchTerm || '').trim();
             if (!raw) return false;
@@ -3350,84 +3330,6 @@
             const codeNum = String(Math.floor(client.code));
             const codePadded = codeNum.padStart(3, '0');
             return codeNum.includes(digitsOnly) || codePadded.includes(digitsOnly);
-        }
-
-        async function renumberAllClients() {
-            const btn = document.getElementById('renumber-clients-btn');
-            const confirmed = window.confirm(
-                'Isso vai renumerar TODOS os clientes por ordem de criação (001, 002, 003...).\n\n' +
-                'Durante o processo, cadastros novos ficarão pausados por alguns segundos se houver conflito.\n\n' +
-                'Recomendado: avise as filiais antes de continuar.\n\nDeseja continuar?'
-            );
-            if (!confirmed) return;
-
-            const originalText = btn.dataset.originalText || btn.textContent;
-            btn.dataset.originalText = originalText;
-
-            try {
-                await acquireClientRenumberingLock();
-            } catch (error) {
-                if (error.message === 'RENUMBERING_IN_PROGRESS') {
-                    showNotification('Outra renumeração já está em andamento. Aguarde e tente novamente.', 'error');
-                    startButtonCooldown(btn, 5, originalText);
-                } else {
-                    showNotification('Não foi possível iniciar a renumeração.', 'error');
-                }
-                return;
-            }
-
-            btn.disabled = true;
-            btn.textContent = 'Renumerando...';
-
-            try {
-                const snapshot = await db.collection('clientes').get();
-                const initialCount = snapshot.size;
-                const sortedDocs = snapshot.docs.slice().sort((a, b) => {
-                    const ta = a.createTime ? a.createTime.toMillis() : 0;
-                    const tb = b.createTime ? b.createTime.toMillis() : 0;
-                    if (ta !== tb) return ta - tb;
-                    return a.id.localeCompare(b.id);
-                });
-
-                const BATCH_SIZE = 400;
-                let assignedCode = 0;
-
-                for (let i = 0; i < sortedDocs.length; i += BATCH_SIZE) {
-                    const batch = db.batch();
-                    const chunk = sortedDocs.slice(i, i + BATCH_SIZE);
-                    chunk.forEach(docSnap => {
-                        assignedCode += 1;
-                        batch.update(docSnap.ref, { code: assignedCode });
-                    });
-                    await batch.commit();
-                    btn.textContent = `Renumerando... ${Math.min(i + chunk.length, sortedDocs.length)}/${sortedDocs.length}`;
-                }
-
-                const afterSnap = await db.collection('clientes').get();
-                if (afterSnap.size !== initialCount) {
-                    throw new Error('RENUMBERING_COUNT_CHANGED');
-                }
-
-                await releaseClientRenumberingLock(assignedCode);
-                showNotification(`${assignedCode} cliente(s) renumerado(s) com sucesso.`, 'success');
-                renderClientList(document.getElementById('client-search-input').value);
-                btn.disabled = false;
-                btn.textContent = originalText;
-            } catch (error) {
-                console.error('Erro ao renumerar clientes:', error);
-                try {
-                    await releaseClientRenumberingLock();
-                } catch (releaseError) {
-                    console.error('Erro ao liberar lock de renumeração:', releaseError);
-                }
-                if (error.message === 'RENUMBERING_COUNT_CHANGED') {
-                    showNotification('A lista de clientes mudou durante a renumeração (cadastro simultâneo). Tente novamente em alguns segundos.', 'error');
-                } else {
-                    const detail = error?.code ? `${error.code}: ${error.message}` : (error?.message || 'Erro desconhecido');
-                    showNotification(`Falha ao renumerar clientes. ${detail}`, 'error');
-                }
-                startButtonCooldown(btn, 5, originalText);
-            }
         }
 
         async function getNextClientCode() {
@@ -3603,12 +3505,112 @@
 
         // --- PDF DOWNLOAD LOCK LOGIC ---
         let formChangeListenersAttached = false;
+        let orderDirty = false;
+        let orderBaselineSnapshot = null;
         const formContainer = document.querySelector('.container');
+
+        function captureOrderSnapshot() {
+            return JSON.stringify({
+                cliente: document.getElementById('cliente')?.value || '',
+                endereco: document.getElementById('endereco')?.value || '',
+                celular: document.getElementById('celular')?.value || '',
+                vendedor: document.getElementById('vendedor')?.value || '',
+                tipoDocumento: document.getElementById('tipo-documento')?.value || '',
+                priceMode,
+                items: Array.from(document.querySelectorAll('#order-items-body .order-item')).map(row => ({
+                    productId: row.dataset.productId,
+                    quantidade: row.dataset.quantidade,
+                    preco: row.dataset.preco,
+                    removed: row.classList.contains('removed'),
+                    obs: row.querySelector('.obs-input-div')?.innerHTML || ''
+                })),
+                images: Array.from(document.querySelectorAll('#image-preview-container .image-with-desc')).map(wrapper => ({
+                    pairId: wrapper.dataset.pairId || '',
+                    imageType: wrapper.dataset.imageType || '',
+                    description: wrapper.querySelector('.image-description')?.innerHTML || ''
+                })),
+                extraObs: document.getElementById('extra-observations')?.innerHTML || '',
+                generalObs: document.getElementById('observation-display')?.innerHTML || '',
+                descontoValor: document.getElementById('valor-desconto-acrescimo')?.value || '',
+                descontoTipo: document.getElementById('desconto-tipo-btn')?.innerText || '',
+                descontoOp: document.getElementById('desconto-acrescimo-toggle-btn')?.innerText || '',
+                payments: Array.from(document.querySelectorAll('#payments-container .payment-input-group')).map(group => ({
+                    value: group.querySelector('.value-input')?.value || '',
+                    type: group.querySelector('.payment-type-select')?.value || '',
+                    card: group.querySelector('.card-type-select')?.value || ''
+                }))
+            });
+        }
+
+        function markOrderDirty() { orderDirty = true; }
+
+        function markOrderClean() {
+            orderDirty = false;
+            orderBaselineSnapshot = captureOrderSnapshot();
+        }
+
+        function hasUnsavedOrderChanges() {
+            if (orderDirty) return true;
+            if (orderBaselineSnapshot === null) return false;
+            return captureOrderSnapshot() !== orderBaselineSnapshot;
+        }
+
+        function confirmDiscardUnsavedOrderChanges() {
+            if (!hasUnsavedOrderChanges()) return true;
+            showNotification('Há alterações não salvas neste pedido.', 'error', 6000);
+            return window.confirm('Há alterações não salvas neste pedido. Deseja sair mesmo assim?');
+        }
+
+        function setupNavigationGuard() {
+            document.getElementById('backToMenuButton').addEventListener('click', () => {
+                if (!confirmDiscardUnsavedOrderChanges()) return;
+                markOrderClean();
+                addExitAnimationAndRedirect('menu.html');
+            });
+
+            window.addEventListener('beforeunload', (e) => {
+                if (hasUnsavedOrderChanges()) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
+        }
+
+        const ORDER_DIRTY_IGNORE_CLICK_IDS = new Set([
+            'open-product-modal-btn', 'search-client-btn', 'loadButton', 'obsButton',
+            'pedidosButton', 'reload-products-btn', 'downloadButton', 'linkagem-toggle-btn',
+            'saveButton', 'open-fiscal-modal-btn'
+        ]);
+
+        function shouldIgnoreOrderDirtyEvent(event) {
+            if (!event.target || !formContainer.contains(event.target)) return true;
+            if (event.target.closest('.modal')) return true;
+            const btn = event.target.closest('button');
+            if (btn && ORDER_DIRTY_IGNORE_CLICK_IDS.has(btn.id)) return true;
+            if (btn && btn.classList.contains('more-options-btn')) return true;
+            return false;
+        }
+
+        function setupOrderDirtyTracking() {
+            ['input', 'change'].forEach((type) => {
+                formContainer.addEventListener(type, (e) => {
+                    if (shouldIgnoreOrderDirtyEvent(e)) return;
+                    markOrderDirty();
+                });
+            });
+            formContainer.addEventListener('click', (e) => {
+                if (shouldIgnoreOrderDirtyEvent(e)) return;
+                if (e.target.closest('button, [contenteditable="true"]')) {
+                    markOrderDirty();
+                }
+            });
+        }
 
         const handleFormChange = (event) => {
             // Ignora eventos de input em campos de filtro de modais
             if (event.target.closest('.modal')) return;
 
+            markOrderDirty();
             console.log("Modificação detectada no formulário. Desativando PDF.");
             document.getElementById('downloadButton').disabled = true;
             removeFormChangeListeners(); // Para de ouvir após a primeira mudança
@@ -3689,17 +3691,29 @@
         ];
         let activeLinkedImageWrapper = null;
 
-        const LINKAGEM_STORAGE_KEY = 'orcamentoLinkagemEnabled';
+        // Cache do catálogo de produtos (evita recarregar tudo a cada abertura do modal)
+        let lastProductsLoadTime = 0;
+        const PRODUCTS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
+
+        const LINKAGEM_STORAGE_BASE = 'orcamentoLinkagemEnabled';
+
+        function getLinkagemStorageKey() {
+            const branch = localStorage.getItem('userBranch');
+            return branch ? `${LINKAGEM_STORAGE_BASE}_${branch}` : LINKAGEM_STORAGE_BASE;
+        }
 
         function isLinkagemEnabled() {
-            const stored = localStorage.getItem(LINKAGEM_STORAGE_KEY);
+            // Prioriza a preferência por filial; se não existir, cai na chave global antiga.
+            let stored = localStorage.getItem(getLinkagemStorageKey());
+            if (stored === null) stored = localStorage.getItem(LINKAGEM_STORAGE_BASE);
             if (stored === null) return true;
             return stored === 'true';
         }
 
         function setLinkagemEnabled(enabled) {
-            localStorage.setItem(LINKAGEM_STORAGE_KEY, enabled ? 'true' : 'false');
+            localStorage.setItem(getLinkagemStorageKey(), enabled ? 'true' : 'false');
             updateLinkagemButtonUI();
+            updateUnlinkedImagesIndicator();
         }
 
         function updateLinkagemButtonUI() {
@@ -3711,6 +3725,12 @@
             btn.title = enabled
                 ? 'Linkagem ligada — imagem vincula ao produto'
                 : 'Linkagem desligada — sem vínculo imagem/produto';
+        }
+
+        function updateUnlinkedImagesIndicator() {
+            const container = document.getElementById('image-preview-container');
+            if (!container) return;
+            container.classList.toggle('linkagem-desligada', !isLinkagemEnabled());
         }
 
         /** Com linkagem desligada, seções sob medida exibem só opções vinculadas a produto (cálculo). */
@@ -3746,6 +3766,60 @@
         function findPairedOrderRow(pairId) {
             if (!pairId) return null;
             return document.querySelector(`#order-items-body .order-item[data-pair-id="${pairId}"]`);
+        }
+
+        // Oculta/mostra a imagem vinculada a um item (usado ao excluir/restaurar o item)
+        function setPairedImageHidden(pairId, hidden) {
+            const imageWrapper = findPairedImage(pairId);
+            if (imageWrapper) imageWrapper.classList.toggle('pair-hidden', hidden);
+        }
+
+        // Navegação por teclado (↑/↓/Enter) em listas de resultados a partir do input de busca.
+        function setListActiveItem(items, index) {
+            items.forEach(el => el.classList.remove('kb-active'));
+            const el = items[index];
+            if (el) {
+                el.classList.add('kb-active');
+                el.scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        function setupListKeyboardNav(input, getItems, onActivate) {
+            input.addEventListener('keydown', (e) => {
+                if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(e.key)) return;
+                const items = getItems();
+                if (items.length === 0) return;
+                const currentIndex = items.findIndex(el => el.classList.contains('kb-active'));
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    setListActiveItem(items, currentIndex < items.length - 1 ? currentIndex + 1 : 0);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setListActiveItem(items, currentIndex > 0 ? currentIndex - 1 : items.length - 1);
+                } else if (e.key === 'Enter' && currentIndex >= 0) {
+                    e.preventDefault();
+                    onActivate(items[currentIndex]);
+                }
+            });
+        }
+
+        // Enter em um input de variável: pula para a próxima variável; na última, apenas
+        // tira o foco (blur) sem submeter/adicionar nada.
+        function handleVariableEnterNavigation(e) {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            const current = e.target;
+            const scope = current.closest('#mtm-variables-container, #toldo-completo-variables-container');
+            if (!scope) { current.blur(); return; }
+            const inputs = Array.from(scope.querySelectorAll('input'));
+            const next = inputs[inputs.indexOf(current) + 1];
+            if (next) {
+                next.focus();
+                if (typeof next.select === 'function') next.select();
+            } else {
+                current.blur();
+            }
         }
 
         function normalizeTextKey(value) {
@@ -3923,12 +3997,22 @@
             if (product?.nome) lines.push(product.nome);
 
             const largura = getScopeDisplayValue(scope, ['largura', 'larg', 'profundidade', 'comprimento']);
-            const caida = getScopeDisplayValue(scope, ['caida', 'queda', 'avanco', 'altura']);
-            const bando = getScopeDisplayValue(scope, ['bando']);
-            if (largura || caida) {
-                let measureLine = `${largura || '?'} x ${caida || '?'}`;
-                if (bando) measureLine += ` + ${bando}`;
-                lines.push(measureLine);
+            const isCapota = (product?.linkedImageType || '').toLowerCase() === 'capota';
+            if (isCapota) {
+                // Capota: medida é "largura x perna" (sem caída nem bandô)
+                const perna = getScopeDisplayValue(scope, ['perna', 'pernas', 'lateral', 'caida', 'queda', 'avanco', 'altura']);
+                if (largura || perna) {
+                    lines.push(`${largura || '?'} x ${perna || '?'}`);
+                }
+            } else {
+                // Toldo cortina (e demais): "largura x caída + bandô"
+                const caida = getScopeDisplayValue(scope, ['caida', 'queda', 'avanco', 'altura']);
+                const bando = getScopeDisplayValue(scope, ['bando']);
+                if (largura || caida) {
+                    let measureLine = `${largura || '?'} x ${caida || '?'}`;
+                    if (bando) measureLine += ` + ${bando}`;
+                    lines.push(measureLine);
+                }
             }
 
             const lonaParts = [
@@ -4111,6 +4195,10 @@
             wrapper.className = 'image-with-desc';
             if (pairId) wrapper.dataset.pairId = pairId;
             if (imageType) wrapper.dataset.imageType = imageType;
+            // Sem pairId e com linkagem desligada => imagem sem vínculo (marca visualmente).
+            if (!pairId && !isLinkagemEnabled()) {
+                wrapper.classList.add('image-unlinked');
+            }
 
             const imageCanvasWrapper = document.createElement('div');
             imageCanvasWrapper.className = 'image-canvas-wrapper';
@@ -4202,40 +4290,6 @@
             updateTotals();
         }
 
-        async function clearAllImageLinks() {
-            const confirmed = window.confirm('Isso vai remover o link de imagem de TODOS os produtos cadastrados. Deseja continuar?');
-            if (!confirmed) return;
-
-            const clearBtn = document.getElementById('clearLinksButton');
-            const originalText = clearBtn.innerText;
-            clearBtn.disabled = true;
-            clearBtn.innerText = 'Limpando...';
-
-            try {
-                const snapshot = await db.collection('produtos').where('linkedImageType', '!=', null).get();
-                if (snapshot.empty) {
-                    showNotification('Nenhum produto com link para limpar.', 'success');
-                    return;
-                }
-
-                const batch = db.batch();
-                snapshot.docs.forEach(docSnap => {
-                    batch.update(docSnap.ref, { linkedImageType: firebase.firestore.FieldValue.delete() });
-                });
-                await batch.commit();
-
-                showNotification(`Links removidos de ${snapshot.size} produto(s).`, 'success');
-                await loadProductsFromFirebase(); // Atualiza o catálogo local
-            } catch (error) {
-                console.error('Erro ao limpar os links de imagem:', error);
-                const detail = error?.code ? `${error.code}: ${error.message}` : (error?.message || 'Erro desconhecido');
-                showNotification(`Falha ao limpar os links. ${detail}`, 'error');
-            } finally {
-                clearBtn.disabled = false;
-                clearBtn.innerText = originalText;
-            }
-        }
-
         function startLinkedProductFlow(imageType) {
             if (!isLinkagemEnabled()) return false;
 
@@ -4264,9 +4318,11 @@
                         type: data.type || 'unidade' // Garante que o tipo sempre exista, fazendo o fallback para 'unidade'
                     };
                 });
+                lastProductsLoadTime = Date.now();
                 console.log('Catálogo de produtos carregado:', catalogoProdutos.length, 'itens.');
                 // Salva no localStorage para uso futuro
                 localStorage.setItem('productCatalog', JSON.stringify(catalogoProdutos));
+                localStorage.setItem('productCatalogTime', String(lastProductsLoadTime));
             } catch (error) {
                 console.error("Erro ao carregar catálogo de produtos:", error);
                 showNotification("Falha ao carregar o catálogo de produtos.", "error");
@@ -4470,14 +4526,19 @@
         }
 
         async function getProducts(forceRefresh = false) {
-            if (!forceRefresh && catalogoProdutos.length > 0) {
+            if (forceRefresh) {
+                await loadProductsFromFirebase();
                 return;
             }
+            const isFresh = catalogoProdutos.length > 0 &&
+                (Date.now() - lastProductsLoadTime) < PRODUCTS_CACHE_TTL_MS;
+            if (isFresh) return;
             await loadProductsFromFirebase();
         }
 
         async function openProductSelection() {
-            await getProducts(true);
+            // Usa cache (TTL) em vez de recarregar tudo a cada abertura.
+            await getProducts();
 
             selectedRowToEdit = null;
             currentEditingProduct = null;
@@ -4493,6 +4554,11 @@
             document.body.classList.remove('modal-open');
             const modal = document.getElementById(modalId);
             if (modal) modal.style.display = 'none';
+            if (modalId === 'send-client-modal' && pendingOrderReset) {
+                // Só limpa o formulário após o usuário decidir sobre o envio ao cliente
+                pendingOrderReset = false;
+                resetOrderForm();
+            }
             if (modalId === 'product-modal') {
                 document.getElementById('product-search-input').value = '';
             }
@@ -4524,7 +4590,7 @@
             paginationContainer.innerHTML = '';
 
             if (isInitial) {
-                listBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Pesquise por um produto para começar.</td></tr>';
+                listBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Pesquise por um produto para começar.</td></tr>';
                 return;
             }
             
@@ -4534,7 +4600,7 @@
             const paginatedProducts = products.slice(start, end);
 
             if (!paginatedProducts || paginatedProducts.length === 0) {
-                listBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Nenhum produto encontrado.</td></tr>';
+                listBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Nenhum produto encontrado.</td></tr>';
                 return;
             }
             
@@ -4543,6 +4609,7 @@
                 const row = document.createElement('tr');
                 row.dataset.productId = product.id;
                 row.innerHTML = `
+                    <td>${product.codigo || '—'}</td>
                     <td>${product.nome}</td>
                     <td>${product.unidade}</td>
                     <td>${formatarValorMonetario(product.precoAtacado)}</td>
@@ -4728,6 +4795,7 @@
                     mtmInput.value = formatNumberToCurrencyString(existingScope ? existingScope[variable] || '' : '');
                     mtmInput.addEventListener('input', liveFormatCurrency);
                     mtmInput.addEventListener('blur', liveFormatCurrency);
+                    mtmInput.addEventListener('keydown', handleVariableEnterNavigation);
                 });
                 measuresBlock.appendChild(measuresGrid);
                 variablesContainer.appendChild(measuresBlock);
@@ -4812,6 +4880,7 @@
                 // Adiciona o listener para recalcular o preço
                 // CORREÇÃO: Passa o 'product' correto para a função de cálculo
                 varGroup.querySelector('input').addEventListener('input', () => calculateToldoCompletoPrice(product));
+                input.addEventListener('keydown', handleVariableEnterNavigation);
             });
 
             // Limpa e popula o select de lonas
@@ -5014,6 +5083,7 @@
             activeLinkedImageWrapper = null;
             reindexOrderItems();
             updateTotals();
+            markOrderDirty();
         }
 
         function addSelectedItemToOrder() {
@@ -5090,6 +5160,7 @@
             selectedVariant = null;
             reindexOrderItems();
             updateTotals();
+            markOrderDirty();
         }
 
         function reindexOrderItems() {
@@ -5202,7 +5273,7 @@
             }
         }
 
-        function setPriceMode(mode) {
+        function setPriceMode(mode, fromUserAction = false) {
             priceMode = mode;
             document.getElementById('atacado-btn').classList.toggle('active', mode === 'atacado');
             document.getElementById('varejo-btn').classList.toggle('active', mode === 'varejo');
@@ -5240,6 +5311,7 @@
                 row.querySelector('.total-cell').innerText = formatarValorMonetario(total);
             });
             updateTotals();
+            if (fromUserAction) markOrderDirty();
         }
 
         function addPaymentRow() {
@@ -5266,6 +5338,7 @@
                 <button type="button" class="button remove-payment-btn">Remover</button>
             `;
             paymentsContainer.appendChild(newPaymentGroup);
+            markOrderDirty();
 
             newPaymentGroup.querySelector('.value-input').addEventListener('input', updateTotals);
             newPaymentGroup.querySelector('.payment-type-select').addEventListener('change', (event) => {
@@ -5409,10 +5482,16 @@
             updateRequiredFieldStyles();
             updateDocumentTypeBasedOnPayments();
             updateSaveButtonState(); // Adiciona chamada para atualizar o estado do botão
+            markOrderClean(); // Formulário limpo após reset
             document.querySelector('.container').scrollTop = 0;
         }
 
+        let isSavingOrder = false; // Trava contra duplo-clique no botão Salvar
+        let pendingOrderReset = false; // Reset do formulário adiado até fechar o modal de envio
+        let lastSavedOrderContext = null; // Dados da última nota salva (para WhatsApp)
+
         async function saveOrder() {
+            if (isSavingOrder) return; // Ignora cliques repetidos enquanto salva
             if (!canSaveOrder(true)) { return; } // Passa 'true' para indicar que é uma tentativa de salvamento
 
             const tipoDocumento = document.getElementById('tipo-documento').value;
@@ -5426,6 +5505,12 @@
                 showNotification("Filial do usuário não encontrada. Não é possível salvar.", "error");
                 return;
             }
+
+            isSavingOrder = true;
+            const saveBtn = document.getElementById('saveButton');
+            const saveBtnOriginalText = saveBtn.innerText;
+            saveBtn.disabled = true;
+            saveBtn.innerText = 'Salvando...';
 
             const orderData = {
                 saleNumber: document.getElementById('sale-number').innerText,
@@ -5541,39 +5626,104 @@
                 orderData.payments.push(paymentObject);
             });
 
-            let stockAlreadyDeducted = false;
-            if (currentLoadedOrderId) {
-                const docSnap = await db.collection('orcamentos').doc(currentLoadedOrderId).get();
-                if (docSnap.exists && docSnap.data().stockDeducted) {
-                    stockAlreadyDeducted = true;
-                }
-            }
-
-            const shouldDeductStock = isSale && !stockAlreadyDeducted;
-            if (shouldDeductStock) {
-                orderData.stockDeducted = true;
-            }
-
             try {
+                let stockAlreadyDeducted = false;
+                if (currentLoadedOrderId) {
+                    const docSnap = await db.collection('orcamentos').doc(currentLoadedOrderId).get();
+                    if (docSnap.exists && docSnap.data().stockDeducted) {
+                        stockAlreadyDeducted = true;
+                    }
+                }
+
+                const shouldDeductStock = isSale && !stockAlreadyDeducted;
+                if (shouldDeductStock) {
+                    orderData.stockDeducted = true;
+                }
+
                 if (currentLoadedOrderId) {
                     await db.collection('orcamentos').doc(currentLoadedOrderId).set(orderData, { merge: true });
                     showNotification("Orçamento atualizado com sucesso!", "success");
                 } else {
                     const docRef = await db.collection('orcamentos').add(orderData);
-                currentLoadedOrderId = docRef.id; // Mantém o ID para poder baixar o PDF logo em seguida
+                    currentLoadedOrderId = docRef.id; // Mantém o ID para poder baixar o PDF logo em seguida
                     document.getElementById('downloadButton').disabled = false; // Re-enable on new save
                     showNotification("Orçamento salvo com sucesso!", "success");
                 }
 
                 if (shouldDeductStock) { await deductStockForOrder(orderData); }
 
-                setTimeout(() => { resetOrderForm(); }, 1500);
+                markOrderClean(); // Alterações salvas com sucesso
+
+                // Guarda os dados da nota e oferece o envio ao cliente.
+                // O formulário só é limpo depois que o modal de envio for fechado
+                // (para permitir gerar a imagem/WhatsApp a partir da nota atual).
+                lastSavedOrderContext = {
+                    phone: orderData.celular,
+                    clientName: orderData.cliente,
+                    saleNumber: orderData.saleNumber,
+                    total: orderData.grandTotal
+                };
+                pendingOrderReset = true;
+                openSendClientModal(lastSavedOrderContext);
             } catch (error) {
                 console.error("Erro ao salvar orçamento: ", error);
-                const action = currentLoadedOrderId ? "atualizar" : "salvar"
-                ;
+                const action = currentLoadedOrderId ? "atualizar" : "salvar";
                 showNotification(`Ocorreu um erro ao ${action} o orçamento.`, "error");
+            } finally {
+                isSavingOrder = false;
+                saveBtn.disabled = false;
+                saveBtn.innerText = saveBtnOriginalText;
             }
+        }
+
+        // --- Envio da nota ao cliente (WhatsApp / imagem) ---
+        function sanitizeWhatsappNumber(rawPhone) {
+            let digits = (rawPhone || '').replace(/\D/g, '');
+            if (!digits) return null;
+            // Se não tiver código do país, assume Brasil (55). DDD + número tem 10 ou 11 dígitos.
+            if (digits.length <= 11) digits = '55' + digits;
+            return digits;
+        }
+
+        function openSendClientModal(context) {
+            const modal = document.getElementById('send-client-modal');
+            const textEl = document.getElementById('send-client-modal-text');
+            const whatsappBtn = document.getElementById('send-whatsapp-btn');
+            const number = sanitizeWhatsappNumber(context?.phone);
+
+            if (number) {
+                textEl.textContent = 'Deseja enviar a nota para o cliente?';
+                whatsappBtn.disabled = false;
+                whatsappBtn.style.opacity = '1';
+                whatsappBtn.style.cursor = 'pointer';
+            } else {
+                textEl.textContent = 'Cliente sem telefone cadastrado — você ainda pode salvar a nota como imagem.';
+                whatsappBtn.disabled = true;
+                whatsappBtn.style.opacity = '0.5';
+                whatsappBtn.style.cursor = 'not-allowed';
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function sendOrderViaWhatsapp() {
+            const context = lastSavedOrderContext;
+            const number = sanitizeWhatsappNumber(context?.phone);
+            if (!number) {
+                showNotification('Cliente sem telefone cadastrado.', 'error');
+                return;
+            }
+            const totalStr = typeof context.total === 'number'
+                ? formatarValorMonetario(context.total)
+                : (context.total || '');
+            const partes = [
+                `Olá! Segue o seu orçamento da Salvati.`,
+                context.saleNumber ? `Venda: ${context.saleNumber}` : '',
+                totalStr ? `Total: ${totalStr}` : ''
+            ].filter(Boolean);
+            const mensagem = encodeURIComponent(partes.join('\n'));
+            const url = `https://wa.me/${number}?text=${mensagem}`;
+            window.open(url, '_blank');
         }
         
         function renderPagedLoadList(budgets, page) {
@@ -5627,15 +5777,54 @@
                 loadList.appendChild(item);
             });
 
-            for (let i = 1; i <= totalPages; i++) {
-                const pageButton = document.createElement('button');
-                pageButton.innerText = i;
-                if (i === page) {
-                    pageButton.classList.add('active');
+            renderPaginationControls(paginationContainer, page, totalPages, runLoadFilter);
+        }
+
+        // Paginação com janela deslizante + reticências (não enche a tela com todos os números)
+        function renderPaginationControls(container, currentPage, totalPages, onNavigate) {
+            container.innerHTML = '';
+            if (totalPages <= 1) return;
+
+            const addButton = (label, targetPage, { active = false, disabled = false } = {}) => {
+                const btn = document.createElement('button');
+                btn.innerText = label;
+                if (active) btn.classList.add('active');
+                if (disabled) {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.style.cursor = 'default';
+                } else {
+                    btn.addEventListener('click', () => onNavigate(targetPage));
                 }
-                pageButton.addEventListener('click', () => runLoadFilter(i));
-                paginationContainer.appendChild(pageButton);
+                container.appendChild(btn);
+            };
+
+            const addEllipsis = () => {
+                const span = document.createElement('span');
+                span.innerText = '…';
+                span.style.cssText = 'padding: 0 6px; align-self: center; color: #888;';
+                container.appendChild(span);
+            };
+
+            const delta = 1; // páginas vizinhas de cada lado da atual
+            const start = Math.max(1, currentPage - delta);
+            const end = Math.min(totalPages, currentPage + delta);
+
+            addButton('‹', currentPage - 1, { disabled: currentPage === 1 });
+
+            if (start > 1) {
+                addButton(1, 1, { active: currentPage === 1 });
+                if (start > 2) addEllipsis();
             }
+            for (let i = start; i <= end; i++) {
+                addButton(i, i, { active: i === currentPage });
+            }
+            if (end < totalPages) {
+                if (end < totalPages - 1) addEllipsis();
+                addButton(totalPages, totalPages, { active: currentPage === totalPages });
+            }
+
+            addButton('›', currentPage + 1, { disabled: currentPage === totalPages });
         }
 
         function runLoadFilter(page = 1) {
@@ -5735,18 +5924,45 @@
                 return;
             }
 
+            // Abre o modal imediatamente com um indicador, sem esperar a busca terminar.
+            const loadListEl = document.getElementById('load-list');
+            document.getElementById('load-pagination').innerHTML = '';
+            loadListEl.innerHTML = '<p style="text-align: center; padding: 20px; color: #666;"><i class="fas fa-spinner fa-spin"></i> Carregando orçamentos...</p>';
+            document.getElementById('load-filter-name').value = '';
+            document.getElementById('load-filter-sale').value = '';
+            document.getElementById('load-filter-date').value = '';
+            const pendingBtnEarly = document.getElementById('pending-filter-btn');
+            pendingBtnEarly.classList.remove('active');
+            const typeBtnEarly = document.getElementById('type-filter-btn');
+            typeBtnEarly.dataset.filterMode = 'todos';
+            typeBtnEarly.innerText = 'Todos';
+            loadModal.style.display = 'flex';
+
             try {
+                // Primeira página rápida: busca poucos, ordenados do mais recente.
+                // (Se faltar índice composto, cai no fallback sem ordenação abaixo.)
+                try {
+                    const quickSnap = await db.collection('orcamentos')
+                        .where('filial', '==', userBranch)
+                        .orderBy('saveTimestamp', 'desc')
+                        .limit(LOAD_ITEMS_PER_PAGE)
+                        .get();
+                    const quickList = quickSnap.docs.map(mapBudgetLight);
+                    if (quickList.length > 0) {
+                        loadModal.dataset.allBudgets = JSON.stringify(quickList);
+                        renderInitialLoadView();
+                    }
+                } catch (idxErr) {
+                    // Provável falta de índice composto (filial + saveTimestamp). Segue para busca completa.
+                    console.warn('Busca rápida indisponível (usando busca completa):', idxErr?.message || idxErr);
+                }
+
                 const querySnapshot = await db.collection('orcamentos')
                     .where('filial', '==', userBranch).get();
-                let savedOrçamentos = querySnapshot.docs.map(doc => {
-                    const data = doc.data();
-                    return {
-                        id: doc.id,
-                        ...data,
-                        // Converte o timestamp do Firebase para uma data legível para exibição e filtro
-                        data: data.saveTimestamp ? new Date(data.saveTimestamp.seconds * 1000).toLocaleDateString('pt-BR') : data.data
-                    };
-                });
+                // IMPORTANTE: guardamos apenas os campos leves usados na lista/filtros.
+                // Os documentos completos (com imagens em base64) são recarregados sob
+                // demanda em loadSelectedOrder(id). Isso evita travar a abertura do modal.
+                let savedOrçamentos = querySnapshot.docs.map(mapBudgetLight);
 
                 // Ordena os resultados no lado do cliente para evitar a necessidade de um índice composto
                 savedOrçamentos.sort((a, b) => {
@@ -5756,27 +5972,30 @@
                 });
 
                 loadModal.dataset.allBudgets = JSON.stringify(savedOrçamentos);
-                
-                document.getElementById('load-filter-name').value = '';
-                document.getElementById('load-filter-sale').value = '';
-                document.getElementById('load-filter-date').value = '';
-                
-                const pendingBtn = document.getElementById('pending-filter-btn');
-                pendingBtn.classList.remove('active');
 
-                const typeBtn = document.getElementById('type-filter-btn');
-                typeBtn.dataset.filterMode = 'todos';
-                typeBtn.innerText = 'Todos';
-
-                renderInitialLoadView();
-                loadModal.style.display = 'flex';
+                // Reaplica os filtros atuais (renderiza a lista completa e ordenada)
+                runLoadFilter(1);
 
             } catch (error) {
                 console.error("Erro ao carregar orçamentos: ", error);
                 showNotification("Ocorreu um erro ao carregar os orçamentos.", "error");
                 loadModal.querySelector('#load-list').innerHTML = '<p style="text-align: center; color: red;">Falha ao carregar orçamentos.</p>';
-                loadModal.style.display = 'flex';
             }
+        }
+
+        // Mapeia um documento de orçamento para os campos leves usados na listagem/filtros.
+        function mapBudgetLight(doc) {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                cliente: data.cliente || '',
+                saleNumber: data.saleNumber || '',
+                grandTotal: data.grandTotal || 0,
+                tipoDocumento: data.tipoDocumento || 'orcamento',
+                payments: (data.payments || []).map(p => ({ tipo: p.tipo })),
+                saveTimestamp: data.saveTimestamp ? { seconds: data.saveTimestamp.seconds } : null,
+                data: data.saveTimestamp ? new Date(data.saveTimestamp.seconds * 1000).toLocaleDateString('pt-BR') : data.data
+            };
         }
 
         async function loadSelectedOrder(orderId) {
@@ -5923,6 +6142,11 @@
                     orderBody.appendChild(newRow);
                 });
 
+                // Mantém a imagem oculta para itens que foram carregados como excluídos
+                document.querySelectorAll('#order-items-body .order-item.removed').forEach(row => {
+                    if (row.dataset.pairId) setPairedImageHidden(row.dataset.pairId, true);
+                });
+
                 const paymentsContainer = document.getElementById('payments-container');
                 paymentsContainer.innerHTML = '';
                 (data.payments || []).forEach(payment => {
@@ -5968,50 +6192,13 @@
                 }
                 updateSaveButtonState(); // Adiciona chamada para atualizar o estado do botão
                 updateTotals();
+                markOrderClean(); // Pedido recém-carregado não tem alterações pendentes
                 showNotification("Orçamento carregado com sucesso!", "success");
             } catch (error) {
                 console.error("Erro ao carregar orçamento: ", error);
                 showNotification("Ocorreu um erro ao carregar o orçamento.", "error");
                 resetOrderForm(); // Limpa o formulário em caso de erro no carregamento
                 return Promise.reject("Erro ao carregar orçamento.");
-            }
-        }
-        
-        // ATENÇÃO: Esta verificação de senha é INSEGURA pois acontece no client-side.
-        // Veja a nota de segurança na declaração da variável 'password'.
-        function checkPassword() {
-            const inputPassword = document.getElementById('password-input').value;
-            if (inputPassword === password) {
-                deleteAllNotes();
-                closeModal('password-modal');
-            } else { 
-                showToast("Senha incorreta.", "error");
-                document.getElementById('password-input').value = '';
-                document.getElementById('password-input').focus();
-            }
-        }
-        
-        async function deleteAllNotes() {
-            try {
-                const querySnapshot = await db.collection('orcamentos').get();
-                if (querySnapshot.empty) {
-                    showToast('Nenhum orçamento para apagar.', 'success');
-                    closeModal('password-modal');
-                    return;
-                }
-
-                const batch = db.batch();
-                querySnapshot.docs.forEach(doc => {
-                    batch.delete(doc.ref);
-                });
-
-                await batch.commit();
-                showToast(`Foram apagados ${querySnapshot.size} orçamentos da sua filial.`, "success");
-                closeModal('password-modal');
-                closeModal('load-modal');
-            } catch (error) {
-                console.error("Erro ao apagar todos os orçamentos: ", error);
-                showNotification('Ocorreu um erro ao apagar os orçamentos.', 'error');
             }
         }
         
@@ -6205,31 +6392,178 @@
             }, 150);
         }
 
-        // --- Client Management ---
+        // Monta apenas a via do cliente (equivalente à copy1 do PDF) para exportar como imagem.
+        function buildClientCopyForExport() {
+            const originalElement = document.querySelector('.container');
+            const tipoDocumentoCorreto = document.getElementById('tipo-documento').value;
+            const vendedorCorreto = document.getElementById('vendedor').value;
 
-        async function deleteAllClients() {
-            try {
-                const querySnapshot = await db.collection('clientes').get();
-                if (querySnapshot.empty) {
-                    showNotification('Nenhum cliente para apagar.', 'success');
-                    closeModal('client-password-modal');
-                    return;
+            const copy1 = originalElement.cloneNode(true);
+
+            const tipoSelectCopy1 = copy1.querySelector('#tipo-documento');
+            if (tipoSelectCopy1) tipoSelectCopy1.value = tipoDocumentoCorreto;
+
+            const vendedorSelectCopy1 = copy1.querySelector('#vendedor');
+            if (vendedorSelectCopy1) vendedorSelectCopy1.value = vendedorCorreto;
+
+            // Mantém as formas de pagamento selecionadas na cópia
+            const originalPaymentGroups = originalElement.querySelectorAll('.payment-input-group');
+            const copy1PaymentGroups = copy1.querySelectorAll('.payment-input-group');
+            originalPaymentGroups.forEach((originalGroup, index) => {
+                const originalSelect = originalGroup.querySelector('.payment-type-select');
+                if (originalSelect && copy1PaymentGroups[index]) {
+                    copy1PaymentGroups[index].querySelector('.payment-type-select').value = originalSelect.value;
                 }
+            });
 
-                const batch = db.batch();
-                querySnapshot.docs.forEach(doc => {
-                    batch.delete(doc.ref);
+            copy1.classList.add('pdf-copy');
+            if (tipoDocumentoCorreto === 'orcamento') {
+                copy1.classList.add('watermarked');
+            }
+            return copy1;
+        }
+
+        // Resolve a função html2canvas (script dedicado ou empacotada no html2pdf).
+        function resolveHtml2Canvas() {
+            if (typeof html2canvas !== 'undefined') return html2canvas;
+            if (typeof window !== 'undefined' && window.html2canvas) return window.html2canvas;
+            if (typeof html2pdf !== 'undefined' && html2pdf.Worker && html2pdf.Worker.prototype && html2pdf.Worker.prototype.constructor) {
+                // html2pdf empacota html2canvas; tenta acessar via módulo global
+                if (window.html2pdf && window.html2pdf.html2canvas) return window.html2pdf.html2canvas;
+            }
+            return null;
+        }
+
+        // Gera e baixa a via do cliente como imagem JPEG.
+        async function generateClientNoteImage() {
+            const html2canvasFn = resolveHtml2Canvas();
+            if (!html2canvasFn) {
+                showNotification('Biblioteca de imagem não carregada. Verifique sua conexão e tente novamente.', 'error');
+                return;
+            }
+
+            const btns = [document.getElementById('downloadImageButton'), document.getElementById('send-note-image-btn')];
+            btns.forEach(b => { if (b) b.disabled = true; });
+
+            // Largura do conteúdo (combina com a max-width real do .container) + margem
+            // branca ao redor. Um overlay branco cobre a tela durante a captura para o
+            // usuário não ver o layout se deslocando ("piscar").
+            const CONTENT_WIDTH = 900;
+            const OUTER_MARGIN = 28;
+
+            const overlay = document.createElement('div');
+            overlay.id = 'note-image-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                inset: 0;
+                background: #ffffff;
+                z-index: 100000;
+                display: flex;
+                align-items: flex-start;
+                justify-content: center;
+                overflow: auto;
+            `;
+            const loadingText = document.createElement('div');
+            loadingText.textContent = 'Gerando imagem...';
+            loadingText.style.cssText = 'position: fixed; top: 14px; left: 50%; transform: translateX(-50%); font-family: sans-serif; color: #666; font-size: 14px;';
+            overlay.appendChild(loadingText);
+
+            const pdfWrapper = document.createElement('div');
+            pdfWrapper.id = 'pdf-wrapper';
+            pdfWrapper.classList.add('pdf-generation-mode');
+            pdfWrapper.style.cssText = `
+                width: ${CONTENT_WIDTH + OUTER_MARGIN * 2}px;
+                padding: ${OUTER_MARGIN}px;
+                background: #ffffff;
+                margin: 0 auto;
+                box-sizing: border-box;
+                overflow: visible;
+            `;
+            // Fonte um pouco maior apenas na imagem (o !important do modo PDF exige setProperty com prioridade)
+            pdfWrapper.style.setProperty('font-size', '10pt', 'important');
+
+            const copy1 = buildClientCopyForExport();
+            // O recorte de transbordo fica na cópia (largura do conteúdo), não no wrapper.
+            // Assim, qualquer transbordo é contido dentro dos ${CONTENT_WIDTH}px e o padding
+            // do wrapper permanece como margem branca uniforme em todos os lados.
+            copy1.style.boxSizing = 'border-box';
+            copy1.style.maxWidth = '100%';
+            copy1.style.overflow = 'hidden';
+            pdfWrapper.appendChild(copy1);
+            overlay.appendChild(pdfWrapper);
+            document.body.appendChild(overlay);
+
+            // Combina o canvas de desenho com a imagem (igual ao fluxo do PDF)
+            pdfWrapper.querySelectorAll('.image-canvas-wrapper').forEach(wrapper => {
+                const img = wrapper.querySelector('img');
+                const drawingCanvas = wrapper.querySelector('.drawing-canvas');
+                if (img && drawingCanvas && drawingCanvas.width > 0 && drawingCanvas.height > 0) {
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = drawingCanvas.width;
+                    tempCanvas.height = drawingCanvas.height;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCtx.drawImage(img, 0, 0, tempCanvas.width, tempCanvas.height);
+                    tempCtx.drawImage(drawingCanvas, 0, 0);
+                    img.src = tempCanvas.toDataURL('image/png');
+                }
+            });
+
+            // Converte quebras de linha das observações e oculta itens vazios
+            pdfWrapper.querySelectorAll('.obs-input-div').forEach(div => {
+                div.innerHTML = div.innerText.replace(/\n/g, '<br>');
+                if (div.textContent.trim() === '') div.classList.add('hide-in-pdf');
+            });
+            pdfWrapper.querySelectorAll('.pdf-copy').forEach(copy => {
+                const purchaseDetails = copy.querySelector('.purchase-details');
+                const imageContainer = copy.querySelector('#image-preview-container');
+                const extraObs = copy.querySelector('#extra-observations');
+                const hasImages = imageContainer && imageContainer.childElementCount > 0;
+                const hasObs = extraObs && extraObs.textContent.trim() !== '';
+                if (extraObs && !hasObs) extraObs.classList.add('hide-in-pdf');
+                copy.querySelectorAll('.image-description').forEach(desc => {
+                    if (desc.textContent.trim() === '') desc.classList.add('hide-in-pdf');
                 });
+                if (purchaseDetails && !hasImages && !hasObs) purchaseDetails.classList.add('hide-in-pdf');
+            });
 
-                await batch.commit();
-                showNotification(`Foram apagados ${querySnapshot.size} clientes.`, 'success');
-                closeModal('client-password-modal');
-                renderClientList(); // Refresh the (now empty) list
+            // Aguarda o layout/imagens estabilizarem antes de capturar
+            await new Promise(resolve => setTimeout(resolve, 250));
+
+            try {
+                // Captura exatamente a caixa do wrapper (com overflow:hidden a marca
+                // d'água e qualquer transbordo ficam contidos, mantendo margem uniforme)
+                const fullWidth = pdfWrapper.offsetWidth;
+                const fullHeight = pdfWrapper.offsetHeight;
+
+                const canvas = await html2canvasFn(pdfWrapper, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff',
+                    width: fullWidth,
+                    height: fullHeight,
+                    x: 0,
+                    y: 0,
+                    scrollX: 0,
+                    scrollY: 0
+                });
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+                const saleNumber = (document.getElementById('sale-number').innerText || 'cliente').replace(/[^\w-]/g, '_');
+                const link = document.createElement('a');
+                link.download = `nota-${saleNumber}.jpg`;
+                link.href = dataUrl;
+                link.click();
+                showNotification('Imagem da nota gerada com sucesso!', 'success');
             } catch (error) {
-                console.error("Erro ao apagar todos os clientes: ", error);
-                showNotification('Ocorreu um erro ao apagar os clientes.', 'error');
+                console.error('Erro ao gerar imagem da nota:', error);
+                showNotification('Falha ao gerar a imagem da nota.', 'error');
+            } finally {
+                if (overlay.parentNode) document.body.removeChild(overlay);
+                btns.forEach(b => { if (b) b.disabled = false; });
             }
         }
+
+        // --- Client Management ---
 
         // NOVO: Função para apagar um único orçamento
         async function deleteSingleOrder(event) {
@@ -6289,19 +6623,6 @@
                 submitBtn.textContent = 'Confirmar Exclusão';
             }
         }
-        // ATENÇÃO: Esta verificação de senha é INSEGURA pois acontece no client-side.
-        // Veja a nota de segurança na declaração da variável 'password'.
-        function checkClientDeletePassword() {
-            const inputPassword = document.getElementById('client-password-input').value;
-            if (inputPassword === password) {
-                deleteAllClients();
-            } else {
-                showNotification("Senha incorreta.", "error");
-                document.getElementById('client-password-input').value = '';
-                document.getElementById('client-password-input').focus();
-            }
-        }
-
         async function openClientEditModal(clientId = null) {
             const modal = document.getElementById('client-edit-modal');
             const form = document.getElementById('client-form-popup');
@@ -6423,9 +6744,15 @@
             }
         }
 
+        let isSavingClient = false; // Trava contra duplo-clique no salvar cliente
+
         async function handleSaveClientPopup(event) {
             event.preventDefault();
+            if (isSavingClient) return; // Ignora envios repetidos enquanto salva
+            isSavingClient = true;
+            const saveClientBtn = document.getElementById('save-client-popup-btn');
 
+            try {
             const userBranch = localStorage.getItem('userBranch');
             if (!userBranch) {
                 showNotification('Erro: Filial do usuário não encontrada. Faça o login novamente.', 'error');
@@ -6493,6 +6820,10 @@
             }
 
             try {
+                if (saveClientBtn) {
+                    saveClientBtn.disabled = true;
+                    saveClientBtn.textContent = 'Salvando...';
+                }
                 let clientNameToDisplay;
                 if (editingClientId) {
                     await db.collection('clientes').doc(editingClientId).set(clientData, { merge: true });
@@ -6520,6 +6851,14 @@
                 console.error("Erro ao salvar cliente: ", error);
                 const detail = error?.code ? `${error.code}: ${error.message}` : (error?.message || 'Erro desconhecido');
                 showNotification(`Erro ao salvar cliente. ${detail}`, 'error');
+            }
+            } finally {
+                isSavingClient = false;
+                // Restaura o botão, exceto quando um cooldown (renumeração) assumiu o controle
+                if (saveClientBtn && !saveClientBtn._cooldownTimer) {
+                    saveClientBtn.disabled = false;
+                    saveClientBtn.textContent = 'Salvar Cliente';
+                }
             }
         }
 
@@ -6867,6 +7206,9 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
+            setupNavigationGuard();
+            setupOrderDirtyTracking();
+
             // CORREÇÃO: Movi a função para dentro do escopo do DOMContentLoaded
             async function forceReloadProducts() {
                 const reloadBtn = document.getElementById('reload-products-btn');
@@ -6890,9 +7232,10 @@
             await fetchFiliais();
             await loadProductsFromFirebase();
             generateSaleNumberAndDate();
-            loadSellers();
-            loadBranchInfo();
+            await loadSellers();
+            await loadBranchInfo();
             updateLinkagemButtonUI();
+            updateUnlinkedImagesIndicator();
 
             document.getElementById('linkagem-toggle-btn').addEventListener('click', () => {
                 const next = !isLinkagemEnabled();
@@ -6946,7 +7289,16 @@
             });
 
             // --- Event Listeners for Modals & Main Buttons ---
-            document.getElementById('product-search-input').addEventListener('keyup', searchProductsInModal);
+            document.getElementById('product-search-input').addEventListener('keyup', (e) => {
+                // Não refiltra ao usar as setas/Enter (senão a lista re-renderiza e perde o destaque)
+                if (['ArrowDown', 'ArrowUp', 'Enter'].includes(e.key)) return;
+                searchProductsInModal();
+            });
+            setupListKeyboardNav(
+                document.getElementById('product-search-input'),
+                () => Array.from(document.querySelectorAll('#product-list-body tr[data-product-id]')),
+                (row) => openQuantityModal(row.dataset.productId)
+            );
             document.getElementById('product-list-body').addEventListener('click', (event) => {
                 const row = event.target.closest('tr');
                 if (row && row.dataset.productId) {
@@ -6954,7 +7306,6 @@
                 }
             });
 
-            document.getElementById('clearLinksButton').addEventListener('click', clearAllImageLinks);
             document.getElementById('open-product-modal-btn').addEventListener('click', openProductSelection);
             document.getElementById('add-item-to-order-btn').addEventListener('click', addSelectedItemToOrder);
             document.getElementById('add-mtm-item-to-order-btn').addEventListener('click', () => {
@@ -7075,21 +7426,31 @@
                 closeModal('product-modal');
                 activeLinkedImageWrapper = null;
                 updateTotals();
+                markOrderDirty();
             });
 
             document.querySelectorAll('.close-button, .seller-button[data-modal-id]').forEach(btn => {
                 btn.addEventListener('click', () => closeModal(btn.dataset.modalId));
             });
 
-            document.getElementById('varejo-btn').addEventListener('click', () => setPriceMode('varejo'));
-            document.getElementById('atacado-btn').addEventListener('click', () => setPriceMode('atacado'));
+            document.getElementById('varejo-btn').addEventListener('click', () => setPriceMode('varejo', true));
+            document.getElementById('atacado-btn').addEventListener('click', () => setPriceMode('atacado', true));
 
             // --- Client Management Listeners ---
             document.getElementById('search-client-btn').addEventListener('click', openClientModal);
             document.getElementById('add-new-client-btn').addEventListener('click', () => openClientEditModal());
-            document.getElementById('client-search-input').addEventListener('keyup', (e) => renderClientList(e.target.value));
+            document.getElementById('client-search-input').addEventListener('keyup', (e) => {
+                // Não refaz a busca ao usar as setas/Enter (evita re-renderizar e perder o destaque)
+                if (['ArrowDown', 'ArrowUp', 'Enter'].includes(e.key)) return;
+                renderClientList(e.target.value);
+            });
+            setupListKeyboardNav(
+                document.getElementById('client-search-input'),
+                () => Array.from(document.querySelectorAll('#client-list .load-list-item')),
+                (item) => item.querySelector('[data-action="select-client"]')?.click()
+            );
             
-            // Listeners para filtros e apagar todos os clientes
+            // Listeners para filtros de clientes
             document.getElementById('toggle-client-filters-btn').addEventListener('click', () => {
                 const filters = document.getElementById('client-filters');
                 filters.style.display = filters.style.display === 'none' ? 'flex' : 'none';
@@ -7106,14 +7467,6 @@
                 document.getElementById('client-filter-email').value = '';
                 renderClientList();
             });
-
-            document.getElementById('delete-all-clients-btn').addEventListener('click', () => {
-                closeModal('client-modal');
-                document.getElementById('client-password-modal').style.display = 'flex';
-                document.getElementById('client-password-input').focus();
-            });
-            document.getElementById('renumber-clients-btn').addEventListener('click', renumberAllClients);
-            document.getElementById('confirm-client-delete-btn').addEventListener('click', checkClientDeletePassword);
 
             // Listeners para o novo modal de cliente
             document.querySelector('#client-edit-modal #btn-pf').addEventListener('click', () => toggleClientTypePopup('pf'));
@@ -7199,6 +7552,7 @@
                         if (docSnap.exists) {
                             const client = docSnap.data();
                             applyClientToOrderForm(client, clientId);
+                            markOrderDirty();
                             closeModal('client-modal');
                             showNotification("Cliente selecionado com sucesso!", "success");
                         } else {
@@ -7313,13 +7667,19 @@
                     const imageType = e.target.dataset.imageType;
                     document.getElementById('image-options-menu').style.display = 'none';
 
-                    await getProducts(true);
-
-                    if (startLinkedProductFlow(imageType)) {
-                        return;
+                    // Só precisamos do catálogo quando a linkagem está ativa (para achar o
+                    // produto vinculado). Usa o cache (TTL) em vez de recarregar do Firebase
+                    // a cada clique — assim a imagem aparece instantaneamente.
+                    if (isLinkagemEnabled()) {
+                        await getProducts();
+                        if (startLinkedProductFlow(imageType)) {
+                            markOrderDirty();
+                            return;
+                        }
                     }
 
                     createImageWrapper(imageType);
+                    markOrderDirty();
                 }
             });
 
@@ -7474,15 +7834,28 @@
                                 updateTotals();
                             }
                         }
+                        markOrderDirty();
                         break;
                     }
 
-                    case 'delete-image':
-                        if (currentImageWrapper.dataset.pairId) {
-                            removePairedOrderRow(currentImageWrapper.dataset.pairId);
+                    case 'delete-image': {
+                        const pairId = currentImageWrapper.dataset.pairId;
+                        if (pairId) {
+                            // Imagem vinculada: some, e o item pareado fica vermelho/riscado
+                            const orderRow = findPairedOrderRow(pairId);
+                            if (orderRow) {
+                                orderRow.classList.add('removed');
+                                reindexOrderItems();
+                                updateTotals();
+                            }
+                            currentImageWrapper.classList.add('pair-hidden');
+                        } else {
+                            // Imagem sem vínculo: remove de fato
+                            currentImageWrapper.remove();
                         }
-                        currentImageWrapper.remove();
+                        markOrderDirty();
                         break;
+                    }
                 }
                 hideContextMenu();
             });
@@ -7610,6 +7983,7 @@
                 const previewCtx = previewCanvas.getContext('2d');
                 previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
                 previewCtx.drawImage(editorCanvas, 0, 0, previewCanvas.width, previewCanvas.height);
+                markOrderDirty();
                 closeModal('image-editor-modal');
             });
 
@@ -7632,6 +8006,7 @@
                     label.innerText = 'Desconto:';
                 }
                 updateTotals();
+                markOrderDirty();
             });
 
             document.getElementById('desconto-tipo-btn').addEventListener('click', () => {
@@ -7644,6 +8019,7 @@
                     input.value = '0,00'; // Reseta para o formato de moeda
                 }
                 updateTotals(); // Recalcula com o novo tipo e valor
+                markOrderDirty();
             });
             
             document.getElementById('add-payment-btn').addEventListener('click', addPaymentRow);
@@ -7653,6 +8029,7 @@
                     updateTotals();
                     updateRequiredFieldStyles();
                     updateDocumentTypeBasedOnPayments();
+                    markOrderDirty();
                 }
             });
             document.getElementById('payments-container').addEventListener('input', (e) => {
@@ -7668,6 +8045,9 @@
             document.getElementById('saveButton').addEventListener('click', saveOrder);
             document.getElementById('loadButton').addEventListener('click', openLoadModal);
             document.getElementById('downloadButton').addEventListener('click', generatePDF);
+            document.getElementById('downloadImageButton').addEventListener('click', generateClientNoteImage);
+            document.getElementById('send-whatsapp-btn').addEventListener('click', sendOrderViaWhatsapp);
+            document.getElementById('send-note-image-btn').addEventListener('click', generateClientNoteImage);
             // NOVO: Listener para o botão de recarregar produtos
             document.getElementById('pedidosButton').addEventListener('click', openPedidosModal);
             document.getElementById('save-pedidos-status-btn').addEventListener('click', savePedidosStatus);
@@ -7675,7 +8055,28 @@
             // NOVO: Listener para o botão de recarregar produtos
             document.getElementById('reload-products-btn').addEventListener('click', forceReloadProducts);
 
-            document.getElementById('backToMenuButton').addEventListener('click', () => addExitAnimationAndRedirect('menu.html'));
+            // Atalhos de teclado: Ctrl+S salva, Esc fecha o modal aberto
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+                    e.preventDefault();
+                    const saveBtn = document.getElementById('saveButton');
+                    if (saveBtn && !saveBtn.disabled) {
+                        saveBtn.click();
+                    } else {
+                        showNotification('Não é possível salvar agora (verifique os campos obrigatórios/pagamento).', 'error');
+                    }
+                    return;
+                }
+
+                if (e.key === 'Escape') {
+                    const openModals = Array.from(document.querySelectorAll('.modal'))
+                        .filter(m => m.style.display && m.style.display !== 'none');
+                    if (openModals.length > 0) {
+                        const topModal = openModals[openModals.length - 1];
+                        closeModal(topModal.id);
+                    }
+                }
+            });
 
             // Listeners para o novo modal de observação
             document.getElementById('obsButton').addEventListener('click', () => {
@@ -7694,18 +8095,11 @@
                     obsItem.textContent = `- ${newObs}`;
                     display.appendChild(obsItem);
                     input.value = ''; // Limpa o campo de input
+                    markOrderDirty();
                     showNotification("Observação adicionada. Clique em Salvar para registrar no orçamento.", "success");
                 }
             });
 
-            document.getElementById('open-password-modal-btn').addEventListener('click', () => {
-                document.getElementById('password-modal').style.display = 'flex';
-                document.getElementById('password-input').focus();
-            });
-            document.getElementById('password-form').addEventListener('submit', (e) => {
-                e.preventDefault();
-                checkPassword();
-            });
             document.getElementById('load-list').addEventListener('click', async (e) => {
                 const button = e.target;
                 const action = button.dataset.action; // load, fiscal, ou delete
@@ -7825,7 +8219,8 @@
             document.getElementById('confirm-mtm-variant-selection-btn').addEventListener('click', confirmMtmVariantSelection);
 
             updateRequiredFieldStyles();
-            setPriceMode('varejo');
+            setPriceMode('varejo', false);
+            markOrderClean();
         });
 
         async function saveVariantStockChanges() {
@@ -7939,17 +8334,20 @@
 
             reindexOrderItems();
             updateTotals();
+            markOrderDirty();
         }
 
         function removeItem(button) {
             const row = button.closest('.order-item');
-            if (row.classList.contains('removed')) {
-                row.classList.remove('removed');
-            } else {
-                row.classList.add('removed');
+            const isNowRemoved = !row.classList.contains('removed');
+            row.classList.toggle('removed', isNowRemoved);
+            // Item excluído => a imagem vinculada some; ao restaurar o item, ela volta.
+            if (row.dataset.pairId) {
+                setPairedImageHidden(row.dataset.pairId, isNowRemoved);
             }
             reindexOrderItems();
             updateTotals();
+            markOrderDirty();
             button.closest('.options-menu').remove();
         }
     </script>
