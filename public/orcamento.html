@@ -354,13 +354,14 @@
             height: 100%;
         }
 
-        /* NOVO: Estilo para o canvas de desenho */
+        /* NOVO: Estilo para o canvas de desenho (posição/tamanho alinhados à imagem via JS) */
         .drawing-canvas {
             position: absolute;
             top: 0;
             left: 0;
             cursor: crosshair;
-            touch-action: none; /* Previne scroll em touch devices ao desenhar */
+            touch-action: none;
+            pointer-events: none; /* Desenho só no modal do pincel */
         }
 
         .image-description {
@@ -640,6 +641,238 @@
         
         .options-menu button:hover {
             background-color: #f0f0f0;
+        }
+
+        /* Menus de contexto (imagem e lista de orçamentos): tamanho fixo, sem esticar na tela */
+        #image-context-menu,
+        #load-order-context-menu {
+            display: none;
+            position: fixed;
+            z-index: 10050;
+            width: 150px;
+            min-width: 150px;
+            max-width: 150px;
+            box-sizing: border-box;
+            right: auto;
+            top: auto;
+        }
+
+        #image-context-menu button,
+        #load-order-context-menu button {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 0;
+            background: none;
+            color: #333;
+            font-size: 0.95em;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        #image-context-menu button:hover,
+        #load-order-context-menu button:hover {
+            background-color: #f0f0f0;
+        }
+
+        #image-context-menu button[data-action="delete-image"],
+        #load-order-context-menu button[data-action="delete-order"] {
+            color: #dc3545;
+        }
+
+        #image-context-menu button[data-action="delete-image"]:hover,
+        #load-order-context-menu button[data-action="delete-order"]:hover {
+            background-color: #fde8e8;
+        }
+
+        #image-editor-modal .modal-content {
+            max-width: min(980px, 96vw);
+            text-align: center;
+        }
+
+        .image-editor-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin: 12px 0 4px;
+        }
+
+        .image-editor-toolbar button {
+            border: 1px solid #ccc;
+            background: #fff;
+            color: #333;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.9em;
+            min-width: 42px;
+        }
+
+        .image-editor-toolbar button:hover {
+            background: #f0f0f0;
+        }
+
+        .image-editor-toolbar button.active {
+            background: #007bff;
+            border-color: #007bff;
+            color: #fff;
+        }
+
+        .image-editor-stage {
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+            min-height: 280px;
+        }
+
+        .image-editor-size-rail {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 8px;
+            width: 56px;
+            flex-shrink: 0;
+            padding: 10px 4px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f8f9fa;
+            box-sizing: border-box;
+        }
+
+        .image-editor-size-rail.visible {
+            display: flex;
+        }
+
+        .image-editor-size-rail > span.label-top {
+            font-size: 0.7em;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .image-editor-size-rail .slider-wrap {
+            height: 170px;
+            width: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-editor-size-rail input[type="range"] {
+            width: 170px;
+            height: 28px;
+            margin: 0;
+            transform: rotate(-90deg);
+            transform-origin: center center;
+            cursor: pointer;
+            accent-color: #007bff;
+        }
+
+        #editor-size-value {
+            font-size: 0.85em;
+            font-weight: bold;
+            color: #333;
+            min-width: 1.5em;
+        }
+
+        #image-editor-viewport {
+            flex: 1;
+            min-width: 0;
+            max-height: 68vh;
+            overflow: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background: #ececec;
+            padding: 12px;
+        }
+
+        #image-editor-canvas-wrapper {
+            position: relative;
+            display: inline-block;
+            line-height: 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: visible;
+            background: #f8f9fa;
+            transform-origin: center center;
+            transition: transform 0.05s linear;
+        }
+
+        #image-editor-background {
+            display: block;
+            max-width: min(760px, 78vw);
+            max-height: 60vh;
+            width: auto;
+            height: auto;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        #image-editor-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        #editor-text-input {
+            display: none;
+            position: absolute;
+            z-index: 5;
+            min-width: 120px;
+            max-width: 80%;
+            padding: 4px 8px;
+            border: 2px solid #007bff;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #000;
+            background: rgba(255, 255, 255, 0.92);
+            outline: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .editor-text-obj {
+            position: absolute;
+            z-index: 4;
+            margin: 0;
+            padding: 2px 4px;
+            color: #000;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            line-height: 1.15;
+            white-space: nowrap;
+            cursor: move;
+            user-select: none;
+            border: 1px dashed transparent;
+            border-radius: 3px;
+            background: transparent;
+            transform: translate(0, 0);
+        }
+
+        .editor-text-obj:hover,
+        .editor-text-obj.selected {
+            border-color: #007bff;
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        #image-editor-canvas.cursor-pan {
+            cursor: grab;
+        }
+        #image-editor-canvas.cursor-pan:active {
+            cursor: grabbing;
         }
 
         /* Novo: Estilo para o campo de observação editável */
@@ -1420,9 +1653,9 @@
             border: 1px solid #dee2e6;
             border-radius: 8px;
         }
-        #fiscal-item-table {
+            #fiscal-item-table {
             width: 100%;
-            min-width: 1200px; /* Força a largura mínima para a tabela */
+            min-width: 1700px;
             border-collapse: collapse;
         }
         #fiscal-item-table th, #fiscal-item-table td {
@@ -1436,7 +1669,33 @@
         #fiscal-item-table td:nth-child(1) { min-width: 200px; } /* Coluna Produto */
         #fiscal-item-table td:nth-child(2) { min-width: 150px; } /* Coluna NCM */
         #fiscal-item-table td:nth-child(3) { min-width: 150px; } /* Coluna CFOP */
+        #fiscal-item-table .fiscal-readonly {
+            background-color: #f1f3f5;
+            cursor: default;
         }
+        #fiscal-item-table .fiscal-product-name {
+            font-weight: 600;
+            font-size: 0.9em;
+            line-height: 1.3;
+        }
+        #fiscal-item-table .fiscal-product-meta {
+            font-size: 0.78em;
+            color: #666;
+            margin-top: 4px;
+        }
+        .fiscal-order-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+            padding: 12px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            text-align: left;
+        }
+        .fiscal-order-summary div { font-size: 0.9em; }
+        .fiscal-order-summary strong { display: block; color: #555; font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.03em; }
         /* --- ESTILOS PARA O NOVO MODAL FISCAL --- */
         .fiscal-config-container {
             display: flex;
@@ -2219,22 +2478,52 @@
         </div>
     </div>
 
-    <!-- NOVO: Menu de contexto para as imagens -->
-    <div id="image-context-menu" class="options-menu">
-        <button data-action="edit-image" class="button seller-button" style="width: 100%;">Editar</button>
-        <button data-action="brush-image" class="button seller-button" style="width: 100%;">Pincel</button>
-        <button data-action="duplicate-image" class="button seller-button" style="width: 100%;">Duplicar</button>
-        <button data-action="delete-image" class="button" style="background-color: #dc3545; color: white; width: 100%;">Excluir</button>
+    <!-- Menu de contexto (botão direito) na lista de orçamentos -->
+    <div id="load-order-context-menu" class="options-menu">
+        <button type="button" data-action="print-order">Imprimir</button>
+        <button type="button" data-action="delete-order">Apagar</button>
     </div>
 
-    <!-- NOVO: Modal para o Editor de Imagem -->
+    <!-- NOVO: Menu de contexto para as imagens -->
+    <div id="image-context-menu" class="options-menu">
+        <button type="button" data-action="edit-image">Editar</button>
+        <button type="button" data-action="brush-image">Pincel</button>
+        <button type="button" data-action="duplicate-image">Duplicar</button>
+        <button type="button" data-action="delete-image">Excluir</button>
+    </div>
+
+    <!-- Modal do Pincel / desenho sobre a imagem -->
     <div id="image-editor-modal" class="modal">
         <div class="modal-content">
             <button type="button" class="close-button" data-modal-id="image-editor-modal">&times;</button>
-            <h2>Editor de Imagem</h2>
-            <div id="image-editor-canvas-wrapper">
-                <img id="image-editor-background" src="" alt="Imagem de fundo para edição">
-                <canvas id="image-editor-canvas"></canvas>
+            <h2>Pincel na Imagem</h2>
+            <div class="image-editor-toolbar">
+                <button type="button" data-tool="brush" class="active" title="Pincel livre"><i class="fas fa-paint-brush"></i></button>
+                <button type="button" data-tool="eraser" title="Borracha"><i class="fas fa-eraser"></i></button>
+                <button type="button" data-tool="pan" title="Mover / navegar na imagem"><i class="fas fa-arrows-alt"></i></button>
+                <button type="button" data-tool="line" title="Linha"><i class="fas fa-minus"></i></button>
+                <button type="button" data-tool="quad" title="Quadrilátero livre (4 cliques)"><i class="far fa-square"></i></button>
+                <button type="button" data-tool="circle" title="Círculo"><i class="far fa-circle"></i></button>
+                <button type="button" data-tool="text" title="Escrever"><i class="fas fa-font"></i></button>
+                <button type="button" id="editor-undo-btn" title="Desfazer"><i class="fas fa-undo"></i></button>
+                <button type="button" id="editor-redo-btn" title="Refazer"><i class="fas fa-redo"></i></button>
+            </div>
+            <p id="image-editor-hint" style="margin: 4px 0 0; font-size: 0.85em; color: #666; min-height: 1.2em;"></p>
+            <div class="image-editor-stage">
+                <div id="image-editor-size-rail" class="image-editor-size-rail" aria-hidden="true">
+                    <span class="label-top">Tamanho</span>
+                    <div class="slider-wrap">
+                        <input type="range" id="editor-size-slider" min="2" max="80" value="4" step="1" title="Tamanho do lápis/borracha">
+                    </div>
+                    <span id="editor-size-value">4</span>
+                </div>
+                <div id="image-editor-viewport">
+                    <div id="image-editor-canvas-wrapper">
+                        <img id="image-editor-background" src="" alt="Imagem de fundo para edição">
+                        <canvas id="image-editor-canvas"></canvas>
+                        <input type="text" id="editor-text-input" placeholder="Digite e Enter" autocomplete="off" maxlength="120">
+                    </div>
+                </div>
             </div>
             <div class="modal-buttons" style="margin-top: 15px; justify-content: flex-end;">
                 <button type="button" class="button seller-button" data-modal-id="image-editor-modal">Cancelar</button>
@@ -2781,7 +3070,7 @@
             </div>
 
             <div class="modal-buttons" style="margin-top: 20px; justify-content: flex-end;">
-                <button type="button" class="button select-product-button" id="generate-fiscal-doc-btn" disabled title="Função temporariamente desativada">Gerar Documento Fiscal</button>
+                <button type="button" class="button select-product-button" id="generate-fiscal-doc-btn">Salvar Lançamento Fiscal</button>
             </div>
         </div>
     </div>
@@ -2850,24 +3139,176 @@
             document.addEventListener('click', (e) => { if (suggestionsContainer && !input.contains(e.target) && !suggestionsContainer.contains(e.target)) { suggestionsContainer.remove(); } });
         }
 
-        function renderFiscalView() {
-            const container = document.getElementById('fiscal-fields-container');
-            container.innerHTML = ''; // Limpa o container
+        function extractFiscalCode(value) {
+            if (!value) return '';
+            const str = String(value).trim();
+            const dash = str.indexOf(' - ');
+            return dash >= 0 ? str.substring(0, dash).trim() : str;
+        }
 
+        function formatFiscalListLabel(code, sourceKey) {
+            if (!code) return '';
+            const normalized = extractFiscalCode(code);
+            const item = fiscalDataSources[sourceKey]?.find(entry => entry.code === normalized);
+            return item ? `${item.code} - ${item.desc}` : normalized;
+        }
+
+        function getTodayISO() {
+            const d = new Date();
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+
+        function buildPaymentsFiscalSummary() {
+            const paymentLabels = {
+                pix: 'PIX', credito: 'Cartão de Crédito', debito: 'Cartão de Débito',
+                crediario: 'Crediário', dinheiro: 'Dinheiro'
+            };
+            const cardLabels = { visa: 'Visa', mastercard: 'Mastercard', elo: 'Elo', outros: 'Outros' };
+            const lines = [];
+            const detalhes = [];
+            document.querySelectorAll('#payments-container .payment-input-group').forEach(group => {
+                const tipo = group.querySelector('.payment-type-select')?.value;
+                const valor = parseCurrencyToNumber(group.querySelector('.value-input')?.value);
+                if (!tipo || valor <= 0) return;
+                let label = paymentLabels[tipo] || tipo;
+                const cartao = group.querySelector('.card-type-select')?.value;
+                if ((tipo === 'credito' || tipo === 'debito') && cartao) {
+                    label += ` (${cardLabels[cartao] || cartao})`;
+                }
+                lines.push(`${label}: ${formatarValorMonetario(valor)}`);
+                detalhes.push({ tipo, valor, cartao: cartao || null });
+            });
+            const { total, remaining } = calculateOrderTotals();
+            lines.push(`Total da nota: ${formatarValorMonetario(total)}`);
+            if (Math.abs(remaining) > 0.01) {
+                lines.push(`Saldo pendente: ${formatarValorMonetario(remaining)}`);
+            }
+            return { resumo: lines.join('\n'), detalhes, total, remaining };
+        }
+
+        function resolveIcmsRuleForClient(product, client) {
+            if (!product) return {};
+            const rules = product.icmsRegras?.length ? product.icmsRegras : [];
+            if (!rules.length && (product.csosn || product.cstIcms)) {
+                return { csosn: product.csosn, cst: product.cstIcms, aliqIcms: product.aliqIcms || 0 };
+            }
+            const clientUf = client?.address?.uf || '';
+            return rules.find(r => r.destinoUf && clientUf && r.destinoUf === clientUf) || rules[0] || {};
+        }
+
+        function getDefaultOperationCfop() {
+            const cfopDefault = fiscalDataSources.cfop?.find(item => item.code === '5102');
+            return cfopDefault ? `${cfopDefault.code} - ${cfopDefault.desc}` : '5102';
+        }
+
+        function getProductFiscalDefaults(product, client = null) {
+            if (!product) return {};
+            const icmsRule = resolveIcmsRuleForClient(product, client);
+            const pisUsarPadrao = product.pisCofinsSaidaUsarPadrao !== false;
+            return {
+                ncm: product.ncm || '',
+                cest: product.cest || '',
+                cean: product.cean || '',
+                tipoProduto: product.tipoProduto || '00',
+                pesoKg: product.pesoKg || 0,
+                origem: product.origem != null ? String(product.origem) : '0',
+                beneficioFiscal: product.beneficioFiscal || '',
+                csosn: formatFiscalListLabel(icmsRule.csosn || product.csosn, 'csosn'),
+                cstIcms: formatFiscalListLabel(icmsRule.cst || product.cstIcms, 'cst_icms'),
+                cstIpi: formatFiscalListLabel(product.ipiCst || product.cstIpi || '99', 'cst_ipi'),
+                ipiEnquadramento: product.ipiEnquadramento || '999',
+                cstPis: formatFiscalListLabel(product.pisCofinsSaidaCst || product.cstPis || '99', 'cst_pis_cofins'),
+                cstCofins: formatFiscalListLabel(product.pisCofinsSaidaCst || product.cstCofins || '99', 'cst_pis_cofins'),
+                aliqIcms: icmsRule.aliqIcms ?? product.aliqIcms ?? 0,
+                aliqIpi: product.aliqIpi || 0,
+                aliqPis: pisUsarPadrao ? 0 : (product.aliqPis || 0),
+                aliqCofins: pisUsarPadrao ? 0 : (product.aliqCofins || 0),
+                unidade: product.unidade || 'UN'
+            };
+        }
+
+        async function gatherFiscalPrefillContext() {
+            let orderDoc = null;
+            if (currentLoadedOrderId) {
+                const snap = await db.collection('orcamentos').doc(currentLoadedOrderId).get();
+                if (snap.exists) orderDoc = snap.data();
+            }
+
+            let client = null;
+            const clientIdInput = document.getElementById('selected-client-id');
+            let clientId = clientIdInput?.value || orderDoc?.clientId || '';
+            if (clientId && clientIdInput && !clientIdInput.value) clientIdInput.value = clientId;
+            if (clientId) {
+                const clientSnap = await db.collection('clientes').doc(clientId).get();
+                if (clientSnap.exists) client = { id: clientId, ...clientSnap.data() };
+            }
+
+            const totals = calculateOrderTotals();
+            const modificadorTipo = document.getElementById('desconto-tipo-btn').innerText;
+            const modificadorOperacao = document.getElementById('desconto-acrescimo-toggle-btn').innerText;
+            const modificadorValor = parseCurrencyToNumber(document.getElementById('valor-desconto-acrescimo').value);
+
+            return {
+                saved: orderDoc?.fiscalData || null,
+                client,
+                order: {
+                    saleNumber: document.getElementById('sale-number').innerText.trim(),
+                    saleDate: document.getElementById('sale-date').innerText.trim(),
+                    cliente: document.getElementById('cliente').value.trim(),
+                    endereco: document.getElementById('endereco').value.trim(),
+                    celular: document.getElementById('celular').value.trim(),
+                    vendedor: document.getElementById('vendedor').value.trim(),
+                    tipoDocumento: document.getElementById('tipo-documento').value,
+                    extraObs: document.getElementById('extra-observations').innerText.trim(),
+                    generalObs: document.getElementById('observation-display').innerText.trim(),
+                    modificadorTipo,
+                    modificadorOperacao,
+                    modificadorValor,
+                    ...totals
+                }
+            };
+        }
+
+        function renderFiscalView(context) {
+            const container = document.getElementById('fiscal-fields-container');
+            container.innerHTML = '';
             const { regime, tipo } = fiscalConfig;
+            const { saved, client, order } = context;
 
             if (!regime || !tipo) {
                 container.innerHTML = `
                     <div class="fiscal-placeholder">
                         <i class="fas fa-file-alt"></i>
                         <p>A configuração fiscal global não foi definida. Vá para Administração > Fiscal.</p>
-                    </div>
-                `;
+                    </div>`;
                 return;
             }
 
-            // --- Estrutura de Abas ---
+            const savedGerais = saved?.gerais || {};
+            const savedDest = saved?.destinatario || {};
+            const savedTransp = saved?.transporte || {};
+            const savedRefs = saved?.referencias || {};
+            const savedDanfe = saved?.danfe || {};
+            const paymentsInfo = buildPaymentsFiscalSummary();
+            const today = getTodayISO();
+            const addr = client?.address || {};
+            const clientName = (client?.name || client?.nomeFantasia || order.cliente || '').replace(/\(\d{3}\)\s*$/, '').trim();
+            const clientDoc = client?.document || savedDest.documento || '';
+            const isVenda = order.tipoDocumento === 'venda';
+            const cfopPadraoOperacao = savedGerais.cfopPadrao || getDefaultOperationCfop();
+
             container.innerHTML = `
+                <div class="fiscal-order-summary">
+                    <div><strong>Nota / Venda</strong>${order.saleNumber || '—'}</div>
+                    <div><strong>Cliente</strong>${clientName || '—'}</div>
+                    <div><strong>Tipo</strong>${isVenda ? 'Venda' : 'Orçamento'}</div>
+                    <div><strong>Total</strong>${formatarValorMonetario(order.total)}</div>
+                    <div><strong>Vendedor</strong>${order.vendedor || '—'}</div>
+                    <div><strong>Regime</strong>${regime === 'simples' ? 'Simples Nacional' : (regime === 'presumido' ? 'Lucro Presumido' : 'Lucro Real')}</div>
+                </div>
                 <div class="fiscal-tabs">
                     <button class="fiscal-tab-btn active" data-tab="gerais">Dados Gerais</button>
                     <button class="fiscal-tab-btn" data-tab="destinatario">Destinatário</button>
@@ -2885,52 +3326,137 @@
                     <div id="tab-referencias" class="fiscal-tab-pane fiscal-fields-grid"></div>
                     <div id="tab-pagamentos" class="fiscal-tab-pane fiscal-fields-grid"></div>
                     <div id="tab-danfe" class="fiscal-tab-pane fiscal-fields-grid"></div>
-                </div>
-            `;
+                </div>`;
 
-            // --- Lógica de troca de abas ---
             const fiscalTabsContainer = container.querySelector('.fiscal-tabs');
             const fiscalPanes = container.querySelectorAll('.fiscal-tab-pane');
             fiscalTabsContainer.addEventListener('click', (e) => {
-                if (e.target.tagName === 'BUTTON') {
-                    const targetTab = e.target.dataset.tab;
-                    fiscalTabsContainer.querySelectorAll('.fiscal-tab-btn').forEach(btn => btn.classList.remove('active'));
-                    e.target.classList.add('active');
-                    fiscalPanes.forEach(pane => {
-                        pane.classList.toggle('active', pane.id === `tab-${targetTab}`);
-                    });
-                }
+                if (e.target.tagName !== 'BUTTON') return;
+                const targetTab = e.target.dataset.tab;
+                fiscalTabsContainer.querySelectorAll('.fiscal-tab-btn').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                fiscalPanes.forEach(pane => pane.classList.toggle('active', pane.id === `tab-${targetTab}`));
             });
 
-            // --- Funções Auxiliares para criar campos ---
             const createField = (label, id, type = 'text', config = {}) => {
                 const group = document.createElement('div');
                 group.className = 'fiscal-form-group';
                 group.innerHTML = `<label for="${id}">${label}</label>`;
                 const input = document.createElement(type === 'textarea' ? 'textarea' : 'input');
-                input.type = type;
+                if (type !== 'textarea') input.type = type;
                 input.id = id;
-                if (config.readonly) input.readOnly = true;
-                if (config.value) input.value = config.value;
+                if (config.readonly) { input.readOnly = true; input.classList.add('fiscal-readonly'); }
+                if (config.value != null) input.value = config.value;
                 group.appendChild(input);
                 return group;
             };
 
-            // --- Populando as Abas ---
-            // Aba: Dados Gerais
-            const tabGerais = container.querySelector('#tab-gerais');
-            tabGerais.appendChild(createField('Natureza da Operação', 'fiscal-natureza-op'));
-            tabGerais.appendChild(createField('Número da Nota', 'fiscal-numero'));
-            tabGerais.appendChild(createField('Série', 'fiscal-serie'));
-            tabGerais.appendChild(createField('Data de Emissão', 'fiscal-data-emissao', 'date'));
-            tabGerais.appendChild(createField('Data de Saída/Entrada', 'fiscal-data-saida', 'date'));
+            const createSelectField = (label, id, options, config = {}) => {
+                const group = document.createElement('div');
+                group.className = 'fiscal-form-group';
+                group.innerHTML = `<label for="${id}">${label}</label>`;
+                const select = document.createElement('select');
+                select.id = id;
+                options.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt.value;
+                    option.textContent = opt.label;
+                    if (String(config.value) === String(opt.value)) option.selected = true;
+                    select.appendChild(option);
+                });
+                if (config.readonly) { select.disabled = true; select.classList.add('fiscal-readonly'); }
+                group.appendChild(select);
+                return group;
+            };
 
-            // Aba: Destinatário
+            const tabGerais = container.querySelector('#tab-gerais');
+            tabGerais.appendChild(createField('Natureza da Operação', 'fiscal-natureza-op', 'text', {
+                value: savedGerais.naturezaOperacao || 'Venda de mercadoria'
+            }));
+            tabGerais.appendChild(createField('CFOP da Operação', 'fiscal-cfop-padrao', 'text', {
+                value: cfopPadraoOperacao
+            }));
+            tabGerais.appendChild(createSelectField('Modelo do Documento', 'fiscal-modelo', [
+                { value: '55', label: '55 - NF-e' },
+                { value: '65', label: '65 - NFC-e' }
+            ], { value: savedGerais.modelo || (isVenda ? '55' : '55') }));
+            tabGerais.appendChild(createSelectField('Finalidade', 'fiscal-finalidade', [
+                { value: '1', label: '1 - Normal' },
+                { value: '2', label: '2 - Complementar' },
+                { value: '3', label: '3 - Ajuste' },
+                { value: '4', label: '4 - Devolução' }
+            ], { value: savedGerais.finalidade || '1' }));
+            tabGerais.appendChild(createField('Número da Nota / Referência', 'fiscal-numero', 'text', {
+                value: savedGerais.numero || order.saleNumber || ''
+            }));
+            tabGerais.appendChild(createField('Série', 'fiscal-serie', 'text', {
+                value: savedGerais.serie || '1'
+            }));
+            tabGerais.appendChild(createField('Data de Emissão', 'fiscal-data-emissao', 'date', {
+                value: savedGerais.dataEmissao || today
+            }));
+            tabGerais.appendChild(createField('Data de Saída/Entrada', 'fiscal-data-saida', 'date', {
+                value: savedGerais.dataSaida || today
+            }));
+            tabGerais.appendChild(createField('Valor dos Produtos', 'fiscal-valor-produtos', 'text', {
+                readonly: true, value: formatarValorMonetario(order.subtotal)
+            }));
+            tabGerais.appendChild(createField('Desconto/Acréscimo', 'fiscal-modificador', 'text', {
+                readonly: true,
+                value: order.modificadorValor
+                    ? `${order.modificadorOperacao === '-' ? 'Desconto' : 'Acréscimo'} (${order.modificadorTipo}): ${order.modificadorTipo === '%' ? order.modificadorValor + '%' : formatarValorMonetario(order.modificadorValor)}`
+                    : '—'
+            }));
+            tabGerais.appendChild(createField('Valor Total da Nota', 'fiscal-valor-total', 'text', {
+                readonly: true, value: formatarValorMonetario(order.total)
+            }));
+
+            setupAutocomplete(document.getElementById('fiscal-cfop-padrao'), 'cfop');
+            document.getElementById('fiscal-cfop-padrao')?.addEventListener('change', () => {
+                const val = document.getElementById('fiscal-cfop-padrao').value;
+                document.querySelectorAll('#fiscal-item-table tbody input[id^="cfop-"]').forEach(inp => {
+                    if (!inp.dataset.userEdited) inp.value = val;
+                });
+            });
+
             const tabDestinatario = container.querySelector('#tab-destinatario');
-            tabDestinatario.appendChild(createField('Nome/Razão Social', 'fiscal-dest-nome', 'text', { readonly: true, value: document.getElementById('cliente').value }));
-            tabDestinatario.appendChild(createField('Endereço', 'fiscal-dest-endereco', 'text', { readonly: true, value: document.getElementById('endereco').value }));
-            
-            // Aba: Produtos (a tabela existente)
+            tabDestinatario.appendChild(createField('Nome / Razão Social', 'fiscal-dest-nome', 'text', {
+                value: savedDest.nome || clientName
+            }));
+            tabDestinatario.appendChild(createField('CPF / CNPJ', 'fiscal-dest-documento', 'text', {
+                value: savedDest.documento || clientDoc
+            }));
+            tabDestinatario.appendChild(createField('Inscrição Estadual', 'fiscal-dest-ie', 'text', {
+                value: savedDest.ie || client?.ie || ''
+            }));
+            tabDestinatario.appendChild(createField('E-mail', 'fiscal-dest-email', 'email', {
+                value: savedDest.email || client?.email || ''
+            }));
+            tabDestinatario.appendChild(createField('Telefone', 'fiscal-dest-telefone', 'text', {
+                value: savedDest.telefone || client?.phone || order.celular || ''
+            }));
+            tabDestinatario.appendChild(createField('CEP', 'fiscal-dest-cep', 'text', {
+                value: savedDest.cep || addr.cep || ''
+            }));
+            tabDestinatario.appendChild(createField('Logradouro', 'fiscal-dest-logradouro', 'text', {
+                value: savedDest.logradouro || addr.logradouro || order.endereco || ''
+            }));
+            tabDestinatario.appendChild(createField('Número', 'fiscal-dest-numero', 'text', {
+                value: savedDest.numero || addr.numero || ''
+            }));
+            tabDestinatario.appendChild(createField('Complemento', 'fiscal-dest-complemento', 'text', {
+                value: savedDest.complemento || addr.complemento || ''
+            }));
+            tabDestinatario.appendChild(createField('Bairro', 'fiscal-dest-bairro', 'text', {
+                value: savedDest.bairro || addr.bairro || ''
+            }));
+            tabDestinatario.appendChild(createField('Cidade', 'fiscal-dest-cidade', 'text', {
+                value: savedDest.cidade || addr.cidade || ''
+            }));
+            tabDestinatario.appendChild(createField('UF', 'fiscal-dest-uf', 'text', {
+                value: savedDest.uf || addr.uf || ''
+            }));
+
             const tabProdutos = container.querySelector('#tab-produtos');
             const tableContainer = document.createElement('div');
             tableContainer.id = 'fiscal-item-table-container';
@@ -2938,30 +3464,88 @@
             table.id = 'fiscal-item-table';
             const thead = document.createElement('thead');
             const tbody = document.createElement('tbody');
-            let headerHTML = '<th>Produto</th><th>NCM</th><th>CFOP</th>';
-            if (regime === 'simples') headerHTML += '<th>CSOSN</th><th>Alíq. ICMS (%)</th><th>Valor ICMS</th>';
-            if (regime === 'presumido' || regime === 'real') headerHTML += '<th>CST ICMS</th><th>BC ICMS</th><th>Alíq. ICMS (%)</th><th>Valor ICMS</th><th>CST IPI</th><th>BC IPI</th><th>Alíq. IPI (%)</th><th>Valor IPI</th><th>CST PIS</th><th>BC PIS</th><th>Alíq. PIS (%)</th><th>Valor PIS</th><th>CST COFINS</th><th>BC COFINS</th><th>Alíq. COFINS (%)</th><th>Valor COFINS</th>';
+            let headerHTML = '<th>Produto</th><th>Qtd</th><th>Un</th><th>V. Unit.</th><th>V. Total</th><th>NCM</th><th>CEST</th><th>CFOP</th><th>Orig.</th>';
+            if (regime === 'simples') headerHTML += '<th>CSOSN</th><th>Alíq. ICMS (%)</th><th>V. ICMS</th>';
+            if (regime === 'presumido' || regime === 'real') {
+                headerHTML += '<th>CST ICMS</th><th>BC ICMS</th><th>Alíq. ICMS (%)</th><th>V. ICMS</th>';
+                headerHTML += '<th>CST IPI</th><th>BC IPI</th><th>Alíq. IPI (%)</th><th>V. IPI</th>';
+                headerHTML += '<th>CST PIS</th><th>BC PIS</th><th>Alíq. PIS (%)</th><th>V. PIS</th>';
+                headerHTML += '<th>CST COFINS</th><th>BC COFINS</th><th>Alíq. COFINS (%)</th><th>V. COFINS</th>';
+            }
             thead.innerHTML = `<tr>${headerHTML}</tr>`;
             table.appendChild(thead);
-            
+
             const orderItems = document.querySelectorAll('#order-items-body .order-item:not(.removed)');
             orderItems.forEach((itemRow, index) => {
                 const productId = itemRow.dataset.productId;
-                const productName = itemRow.querySelector('td:nth-child(3) > div').textContent;
-                const totalItem = parseCurrencyToNumber(itemRow.querySelector('.total-cell').textContent);
+                const product = catalogoProdutos.find(p => p.id === productId);
+                const productName = itemRow.querySelector('td:nth-child(3) > div')?.textContent?.trim() || product?.nome || 'Produto';
+                const obsText = itemRow.querySelector('.obs-input-div')?.innerText?.trim() || '';
+                const quantidade = parseFloat(itemRow.dataset.quantidade) || 1;
+                const precoUnit = parseFloat(itemRow.dataset.preco) || 0;
+                const totalItem = parseCurrencyToNumber(itemRow.querySelector('.total-cell')?.textContent) || (precoUnit * quantidade);
+                const defaults = getProductFiscalDefaults(product, client);
+                const savedItem = (saved?.items || []).find(it => it.productId === productId && (it.itemIndex == null || it.itemIndex === index))
+                    || (saved?.items || []).find(it => it.productId === productId);
+                const merged = {
+                    ...defaults,
+                    ...(savedItem || {}),
+                    cfop: savedItem?.cfop || cfopPadraoOperacao
+                };
+
                 const tr = document.createElement('tr');
                 tr.dataset.productId = productId;
+                tr.dataset.itemIndex = index;
                 tr.dataset.itemTotal = totalItem;
-                let rowHTML = `<td>${productName}</td><td><input type="text" id="ncm-${index}"></td><td><input type="text" id="cfop-${index}"></td>`;
-                if (regime === 'simples') rowHTML += `<td><input type="text" id="csosn-${index}"></td><td><input type="number" id="icms_aliq_simples-${index}" class="tax-calc-trigger"></td><td><input type="text" id="icms_valor_simples-${index}" readonly></td>`;
-                if (regime === 'presumido' || regime === 'real') rowHTML += `<td><input type="text" id="cst_icms-${index}"></td><td><input type="text" id="icms_bc-${index}" class="tax-calc-trigger base-calc"></td><td><input type="number" id="icms_aliq-${index}" class="tax-calc-trigger"></td><td><input type="text" id="icms_valor-${index}" readonly></td><td><input type="text" id="cst_ipi-${index}"></td><td><input type="text" id="ipi_bc-${index}" class="tax-calc-trigger base-calc"></td><td><input type="number" id="ipi_aliq-${index}" class="tax-calc-trigger"></td><td><input type="text" id="ipi_valor-${index}" readonly></td><td><input type="text" id="cst_pis-${index}"></td><td><input type="text" id="pis_bc-${index}" class="tax-calc-trigger base-calc"></td><td><input type="number" id="pis_aliq-${index}" class="tax-calc-trigger"></td><td><input type="text" id="pis_valor-${index}" readonly></td><td><input type="text" id="cst_cofins-${index}"></td><td><input type="text" id="cofins_bc-${index}" class="tax-calc-trigger base-calc"></td><td><input type="number" id="cofins_aliq-${index}" class="tax-calc-trigger"></td><td><input type="text" id="cofins_valor-${index}" readonly></td>`;
+
+                let rowHTML = `
+                    <td>
+                        <div class="fiscal-product-name">${productName}</div>
+                        ${obsText ? `<div class="fiscal-product-meta">${obsText.replace(/\n/g, '<br>')}</div>` : ''}
+                        ${product?.codigo ? `<div class="fiscal-product-meta">Cód: ${product.codigo}</div>` : ''}
+                    </td>
+                    <td><input type="text" class="fiscal-readonly" id="qty-${index}" readonly value="${quantidade}"></td>
+                    <td><input type="text" class="fiscal-readonly" id="un-${index}" readonly value="${merged.unidade || defaults.unidade}"></td>
+                    <td><input type="text" class="fiscal-readonly" id="vunit-${index}" readonly value="${formatarValorMonetario(precoUnit)}"></td>
+                    <td><input type="text" class="fiscal-readonly" id="vtotal-${index}" readonly value="${formatarValorMonetario(totalItem)}"></td>
+                    <td><input type="text" id="ncm-${index}" value="${merged.ncm || ''}"></td>
+                    <td><input type="text" id="cest-${index}" value="${merged.cest || ''}"></td>
+                    <td><input type="text" id="cfop-${index}" value="${merged.cfop || ''}"></td>
+                    <td><input type="text" id="origem-${index}" value="${merged.origem != null ? merged.origem : '0'}" maxlength="1"></td>`;
+
+                if (regime === 'simples') {
+                    rowHTML += `
+                        <td><input type="text" id="csosn-${index}" value="${merged.csosn || ''}"></td>
+                        <td><input type="number" id="icms_aliq_simples-${index}" class="tax-calc-trigger" step="0.01" value="${merged.aliqIcms ?? 0}"></td>
+                        <td><input type="text" id="icms_valor_simples-${index}" readonly class="fiscal-readonly"></td>`;
+                }
+                if (regime === 'presumido' || regime === 'real') {
+                    rowHTML += `
+                        <td><input type="text" id="cst_icms-${index}" value="${merged.cstIcms || ''}"></td>
+                        <td><input type="text" id="icms_bc-${index}" class="tax-calc-trigger base-calc" value="${formatNumberToCurrencyString(totalItem)}"></td>
+                        <td><input type="number" id="icms_aliq-${index}" class="tax-calc-trigger" step="0.01" value="${merged.aliqIcms ?? 0}"></td>
+                        <td><input type="text" id="icms_valor-${index}" readonly class="fiscal-readonly"></td>
+                        <td><input type="text" id="cst_ipi-${index}" value="${merged.cstIpi || ''}"></td>
+                        <td><input type="text" id="ipi_bc-${index}" class="tax-calc-trigger base-calc" value="${formatNumberToCurrencyString(totalItem)}"></td>
+                        <td><input type="number" id="ipi_aliq-${index}" class="tax-calc-trigger" step="0.01" value="${merged.aliqIpi ?? 0}"></td>
+                        <td><input type="text" id="ipi_valor-${index}" readonly class="fiscal-readonly"></td>
+                        <td><input type="text" id="cst_pis-${index}" value="${merged.cstPis || ''}"></td>
+                        <td><input type="text" id="pis_bc-${index}" class="tax-calc-trigger base-calc" value="${formatNumberToCurrencyString(totalItem)}"></td>
+                        <td><input type="number" id="pis_aliq-${index}" class="tax-calc-trigger" step="0.01" value="${merged.aliqPis ?? 0}"></td>
+                        <td><input type="text" id="pis_valor-${index}" readonly class="fiscal-readonly"></td>
+                        <td><input type="text" id="cst_cofins-${index}" value="${merged.cstCofins || ''}"></td>
+                        <td><input type="text" id="cofins_bc-${index}" class="tax-calc-trigger base-calc" value="${formatNumberToCurrencyString(totalItem)}"></td>
+                        <td><input type="number" id="cofins_aliq-${index}" class="tax-calc-trigger" step="0.01" value="${merged.aliqCofins ?? 0}"></td>
+                        <td><input type="text" id="cofins_valor-${index}" readonly class="fiscal-readonly"></td>`;
+                }
                 tr.innerHTML = rowHTML;
                 tbody.appendChild(tr);
+
                 setupAutocomplete(tr.querySelector(`#ncm-${index}`), 'ncm');
-                const cfopInput = tr.querySelector(`#cfop-${index}`);
-                setupAutocomplete(cfopInput, 'cfop');
-                const cfopDefault = fiscalDataSources.cfop?.find(item => item.code === '5102');
-                if (cfopDefault) { cfopInput.value = `${cfopDefault.code} - ${cfopDefault.desc}`; }
+                setupAutocomplete(tr.querySelector(`#cfop-${index}`), 'cfop');
+                tr.querySelector(`#cfop-${index}`)?.addEventListener('input', function() {
+                    this.dataset.userEdited = '1';
+                });
                 if (regime === 'simples') setupAutocomplete(tr.querySelector(`#csosn-${index}`), 'csosn');
                 if (regime === 'presumido' || regime === 'real') {
                     setupAutocomplete(tr.querySelector(`#cst_icms-${index}`), 'cst_icms');
@@ -2975,41 +3559,153 @@
             tableContainer.appendChild(table);
             tabProdutos.appendChild(tableContainer);
 
-            // Aba: Transporte
             const tabTransporte = container.querySelector('#tab-transporte');
-            tabTransporte.appendChild(createField('Modalidade do Frete', 'fiscal-frete-modalidade'));
-            tabTransporte.appendChild(createField('Nome do Transportador', 'fiscal-transportador-nome'));
-            tabTransporte.appendChild(createField('Placa do Veículo', 'fiscal-veiculo-placa'));
+            tabTransporte.appendChild(createSelectField('Modalidade do Frete', 'fiscal-frete-modalidade', [
+                { value: '9', label: '9 - Sem ocorrência de transporte' },
+                { value: '0', label: '0 - Contratação do frete por conta do Remetente (CIF)' },
+                { value: '1', label: '1 - Contratação do frete por conta do Destinatário (FOB)' },
+                { value: '2', label: '2 - Contratação do frete por conta de terceiros' },
+                { value: '3', label: '3 - Transporte próprio por conta do Remetente' },
+                { value: '4', label: '4 - Transporte próprio por conta do Destinatário' }
+            ], { value: savedTransp.modalidadeFrete || '9' }));
+            tabTransporte.appendChild(createField('Transportador', 'fiscal-transportador-nome', 'text', {
+                value: savedTransp.transportadorNome || ''
+            }));
+            tabTransporte.appendChild(createField('Placa do Veículo', 'fiscal-veiculo-placa', 'text', {
+                value: savedTransp.veiculoPlaca || ''
+            }));
+            tabTransporte.appendChild(createField('UF do Veículo', 'fiscal-veiculo-uf', 'text', {
+                value: savedTransp.veiculoUf || ''
+            }));
 
-            // Aba: Referências
             const tabReferencias = container.querySelector('#tab-referencias');
-            tabReferencias.appendChild(createField('Chave de Acesso da NF-e Referenciada', 'fiscal-ref-chave'));
+            tabReferencias.appendChild(createField('Chave NF-e Referenciada', 'fiscal-ref-chave', 'text', {
+                value: savedRefs.chaveNfeReferenciada || ''
+            }));
+            tabReferencias.appendChild(createField('Observações da Referência', 'fiscal-ref-obs', 'textarea', {
+                value: savedRefs.observacoes || ''
+            }));
 
-            // Aba: Pagamentos
             const tabPagamentos = container.querySelector('#tab-pagamentos');
-            tabPagamentos.appendChild(createField('Resumo dos Pagamentos', 'fiscal-pagamentos-resumo', 'textarea', { readonly: true, value: 'Resumo será gerado aqui.' }));
+            tabPagamentos.appendChild(createField('Resumo dos Pagamentos', 'fiscal-pagamentos-resumo', 'textarea', {
+                readonly: true,
+                value: saved?.pagamentos?.resumo || paymentsInfo.resumo
+            }));
+            tabPagamentos.appendChild(createField('Indicador de Pagamento', 'fiscal-ind-pag', 'text', {
+                readonly: true,
+                value: Math.abs(paymentsInfo.remaining) <= 0.01 ? 'À vista (pagamento integral)' : 'Pagamento parcial / crediário'
+            }));
 
-            // Aba: DANFE
             const tabDanfe = container.querySelector('#tab-danfe');
-            tabDanfe.appendChild(createField('Informações Adicionais', 'fiscal-danfe-info', 'textarea'));
+            const danfeDefaultParts = [
+                order.generalObs ? `Observações gerais: ${order.generalObs}` : '',
+                order.extraObs ? `Detalhes da compra: ${order.extraObs}` : '',
+                order.vendedor ? `Vendedor: ${order.vendedor}` : ''
+            ].filter(Boolean);
+            tabDanfe.appendChild(createField('Informações Complementares (DANFE)', 'fiscal-danfe-info', 'textarea', {
+                value: savedDanfe.informacoesAdicionais || danfeDefaultParts.join('\n')
+            }));
+        }
+
+        function readFiscalField(id) {
+            const el = document.getElementById(id);
+            return el ? el.value.trim() : '';
         }
 
         function getFiscalDataFromModal() {
-            const data = {};
-            data.naturezaOperacao = document.getElementById('fiscal-natureza-op')?.value || '';
-            data.items = [];
+            const { regime } = fiscalConfig;
+            const paymentsInfo = buildPaymentsFiscalSummary();
+            const data = {
+                regime,
+                updatedAt: new Date().toISOString(),
+                gerais: {
+                    naturezaOperacao: readFiscalField('fiscal-natureza-op'),
+                    cfopPadrao: readFiscalField('fiscal-cfop-padrao'),
+                    modelo: readFiscalField('fiscal-modelo'),
+                    finalidade: readFiscalField('fiscal-finalidade'),
+                    numero: readFiscalField('fiscal-numero'),
+                    serie: readFiscalField('fiscal-serie'),
+                    dataEmissao: readFiscalField('fiscal-data-emissao'),
+                    dataSaida: readFiscalField('fiscal-data-saida'),
+                    valorProdutos: readFiscalField('fiscal-valor-produtos'),
+                    valorTotal: readFiscalField('fiscal-valor-total')
+                },
+                destinatario: {
+                    nome: readFiscalField('fiscal-dest-nome'),
+                    documento: readFiscalField('fiscal-dest-documento'),
+                    ie: readFiscalField('fiscal-dest-ie'),
+                    email: readFiscalField('fiscal-dest-email'),
+                    telefone: readFiscalField('fiscal-dest-telefone'),
+                    cep: readFiscalField('fiscal-dest-cep'),
+                    logradouro: readFiscalField('fiscal-dest-logradouro'),
+                    numero: readFiscalField('fiscal-dest-numero'),
+                    complemento: readFiscalField('fiscal-dest-complemento'),
+                    bairro: readFiscalField('fiscal-dest-bairro'),
+                    cidade: readFiscalField('fiscal-dest-cidade'),
+                    uf: readFiscalField('fiscal-dest-uf')
+                },
+                items: [],
+                transporte: {
+                    modalidadeFrete: readFiscalField('fiscal-frete-modalidade'),
+                    transportadorNome: readFiscalField('fiscal-transportador-nome'),
+                    veiculoPlaca: readFiscalField('fiscal-veiculo-placa'),
+                    veiculoUf: readFiscalField('fiscal-veiculo-uf')
+                },
+                referencias: {
+                    chaveNfeReferenciada: readFiscalField('fiscal-ref-chave'),
+                    observacoes: readFiscalField('fiscal-ref-obs')
+                },
+                pagamentos: {
+                    resumo: readFiscalField('fiscal-pagamentos-resumo'),
+                    indicador: readFiscalField('fiscal-ind-pag'),
+                    detalhes: paymentsInfo.detalhes,
+                    total: paymentsInfo.total,
+                    remaining: paymentsInfo.remaining
+                },
+                danfe: {
+                    informacoesAdicionais: readFiscalField('fiscal-danfe-info')
+                }
+            };
 
-            const itemRows = document.querySelectorAll('#fiscal-item-table tbody tr');
-            itemRows.forEach((row, index) => {
-                const itemData = {
+            document.querySelectorAll('#fiscal-item-table tbody tr').forEach(row => {
+                const index = row.dataset.itemIndex;
+                const item = {
                     productId: row.dataset.productId,
+                    itemIndex: parseInt(index, 10),
+                    quantidade: row.querySelector(`#qty-${index}`)?.value,
+                    unidade: row.querySelector(`#un-${index}`)?.value,
+                    valorUnitario: row.querySelector(`#vunit-${index}`)?.value,
+                    valorTotal: row.querySelector(`#vtotal-${index}`)?.value,
                     ncm: row.querySelector(`#ncm-${index}`)?.value,
+                    cest: row.querySelector(`#cest-${index}`)?.value,
                     cfop: row.querySelector(`#cfop-${index}`)?.value,
-                    // Adicionar outros campos aqui conforme eles são adicionados à tabela
+                    origem: row.querySelector(`#origem-${index}`)?.value
                 };
-                data.items.push(itemData);
+                if (regime === 'simples') {
+                    item.csosn = row.querySelector(`#csosn-${index}`)?.value;
+                    item.aliqIcms = row.querySelector(`#icms_aliq_simples-${index}`)?.value;
+                    item.valorIcms = row.querySelector(`#icms_valor_simples-${index}`)?.value;
+                }
+                if (regime === 'presumido' || regime === 'real') {
+                    item.cstIcms = row.querySelector(`#cst_icms-${index}`)?.value;
+                    item.icmsBc = row.querySelector(`#icms_bc-${index}`)?.value;
+                    item.aliqIcms = row.querySelector(`#icms_aliq-${index}`)?.value;
+                    item.valorIcms = row.querySelector(`#icms_valor-${index}`)?.value;
+                    item.cstIpi = row.querySelector(`#cst_ipi-${index}`)?.value;
+                    item.ipiBc = row.querySelector(`#ipi_bc-${index}`)?.value;
+                    item.aliqIpi = row.querySelector(`#ipi_aliq-${index}`)?.value;
+                    item.valorIpi = row.querySelector(`#ipi_valor-${index}`)?.value;
+                    item.cstPis = row.querySelector(`#cst_pis-${index}`)?.value;
+                    item.pisBc = row.querySelector(`#pis_bc-${index}`)?.value;
+                    item.aliqPis = row.querySelector(`#pis_aliq-${index}`)?.value;
+                    item.valorPis = row.querySelector(`#pis_valor-${index}`)?.value;
+                    item.cstCofins = row.querySelector(`#cst_cofins-${index}`)?.value;
+                    item.cofinsBc = row.querySelector(`#cofins_bc-${index}`)?.value;
+                    item.aliqCofins = row.querySelector(`#cofins_aliq-${index}`)?.value;
+                    item.valorCofins = row.querySelector(`#cofins_valor-${index}`)?.value;
+                }
+                data.items.push(item);
             });
-
             return data;
         }
 
@@ -3030,23 +3726,27 @@
 
             try {
                 await loadFiscalDataSources();
+                await getProducts();
 
                 const doc = await db.collection('fiscal').doc('configuracao_global').get();
-                if (doc.exists) {
-                    const data = doc.data();
-                    fiscalConfig.regime = data.regime;
-                    fiscalConfig.tipo = data.tipo;
-
-                    const regimeText = data.regime ? data.regime.charAt(0).toUpperCase() + data.regime.slice(1) : 'Não definido';
-                    const tipoText = data.tipo ? data.tipo.toUpperCase() : 'Não definido';
-                    infoDisplay.innerHTML = `Configuração Atual: <strong>${regimeText.replace('Presumido', 'L. Presumido').replace('Real', 'L. Real')}</strong> / <strong>${tipoText}</strong>`;
-
-                    renderFiscalView();
-                } else {
+                if (!doc.exists) {
                     infoDisplay.innerHTML = 'Configuração fiscal não encontrada.';
-                    fieldsContainer.innerHTML = `<div class="fiscal-placeholder"><i class="fas fa-exclamation-triangle"></i><p>Por favor, configure os dados fiscais no painel de Administração.</p></div>`;
+                    fieldsContainer.innerHTML = `<div class="fiscal-placeholder"><i class="fas fa-exclamation-triangle"></i><p>Configure os dados fiscais em Administração > Fiscal.</p></div>`;
                     showNotification("Configuração fiscal não encontrada.", "error");
+                    return;
                 }
+
+                const configData = doc.data();
+                fiscalConfig.regime = configData.regime;
+                fiscalConfig.tipo = configData.tipo;
+
+                const regimeText = configData.regime === 'simples' ? 'Simples Nacional'
+                    : (configData.regime === 'presumido' ? 'Lucro Presumido' : 'Lucro Real');
+                const tipoText = configData.tipo ? configData.tipo.toUpperCase() : '—';
+                infoDisplay.innerHTML = `Lançamento fiscal — <strong>${regimeText}</strong> / <strong>${tipoText}</strong>`;
+
+                const prefillContext = await gatherFiscalPrefillContext();
+                renderFiscalView(prefillContext);
             } catch (error) {
                 console.error("Erro ao carregar configuração fiscal:", error);
                 infoDisplay.innerHTML = 'Erro ao carregar configuração fiscal.';
@@ -3058,7 +3758,6 @@
         function setupRowCalculations(row) {
             const itemTotal = parseFloat(row.dataset.itemTotal) || 0;
 
-            // Função auxiliar para configurar um calculador de imposto padrão (BC x Alíquota = Valor)
             const setupTaxCalculator = (taxName) => {
                 const bcInput = row.querySelector(`input[id^="${taxName}_bc-"]`);
                 const aliqInput = row.querySelector(`input[id^="${taxName}_aliq-"]`);
@@ -3066,30 +3765,37 @@
 
                 if (!bcInput || !aliqInput || !valorInput) return;
 
-                // Pré-preenche a Base de Cálculo com o total do pedido
                 bcInput.value = formatNumberToCurrencyString(itemTotal);
-                bcInput.addEventListener('blur', liveFormatCurrency); // Formata o campo ao sair
+                bcInput.addEventListener('blur', liveFormatCurrency);
 
-                // Torna o campo de valor somente leitura e o estiliza
                 valorInput.readOnly = true;
-                valorInput.style.backgroundColor = '#e9ecef';
-                valorInput.style.cursor = 'default';
+                valorInput.classList.add('fiscal-readonly');
 
                 const calculate = () => {
                     const bc = parseCurrencyToNumber(bcInput.value);
                     const aliq = parseFloat(aliqInput.value) || 0;
-                    const valor = bc * (aliq / 100);
-                    valorInput.value = formatarValorMonetario(valor);
+                    valorInput.value = formatarValorMonetario(bc * (aliq / 100));
                 };
 
-                // Recalcula sempre que a Base de Cálculo ou a Alíquota mudarem
                 bcInput.addEventListener('input', calculate);
                 aliqInput.addEventListener('input', calculate);
-                
-                calculate(); // Executa o cálculo inicial
+                calculate();
             };
 
-            // Configura os calculadores para os impostos de Lucro Presumido/Real
+            // Simples Nacional: alíquota ICMS sobre o total do item
+            const simplesAliq = row.querySelector('input[id^="icms_aliq_simples-"]');
+            const simplesValor = row.querySelector('input[id^="icms_valor_simples-"]');
+            if (simplesAliq && simplesValor) {
+                simplesValor.readOnly = true;
+                simplesValor.classList.add('fiscal-readonly');
+                const calcSimples = () => {
+                    const aliq = parseFloat(simplesAliq.value) || 0;
+                    simplesValor.value = formatarValorMonetario(itemTotal * (aliq / 100));
+                };
+                simplesAliq.addEventListener('input', calcSimples);
+                calcSimples();
+            }
+
             setupTaxCalculator('icms');
             setupTaxCalculator('ipi');
             setupTaxCalculator('pis');
@@ -3236,20 +3942,39 @@
             }
         }
 
+        function parseClientCodeValue(value) {
+            if (typeof value === 'number' && Number.isFinite(value)) return Math.floor(value);
+            if (typeof value === 'string' && value.trim() !== '') {
+                const n = Number(value);
+                if (Number.isFinite(n)) return Math.floor(n);
+            }
+            return null;
+        }
+
         async function recoverClientCounterBase() {
-            const snapshot = await db.collection('clientes').get();
-            let maxCode = 0;
-            snapshot.forEach(doc => {
-                const code = doc.data().code;
-                if (typeof code === 'number' && Number.isFinite(code) && code > 0) {
-                    maxCode = Math.max(maxCode, code);
+            // 1 leitura em vez de carregar a coleção inteira (isso esgotava a cota do Firebase)
+            try {
+                const snap = await db.collection('clientes').orderBy('code', 'desc').limit(1).get();
+                if (!snap.empty) {
+                    const parsed = parseClientCodeValue(snap.docs[0].data().code);
+                    if (parsed !== null && parsed > 0) return parsed;
                 }
-            });
-            return maxCode > 0 ? maxCode : snapshot.size;
+                return 0;
+            } catch (error) {
+                console.warn('Recover otimizado falhou, usando fallback select(code):', error);
+                const snapshot = await db.collection('clientes').select('code').get();
+                let maxCode = 0;
+                snapshot.forEach(doc => {
+                    const parsed = parseClientCodeValue(doc.data().code);
+                    if (parsed !== null && parsed > maxCode) maxCode = parsed;
+                });
+                return maxCode;
+            }
         }
 
         function isValidClientCode(value) {
-            return typeof value === 'number' && Number.isFinite(value) && value > 0;
+            const parsed = parseClientCodeValue(value);
+            return parsed !== null && parsed > 0;
         }
 
         function formatClientCode(code) {
@@ -3290,6 +4015,27 @@
         async function isClientRenumberingActive() {
             const snap = await db.collection('contadores').doc('clientes').get();
             return snap.exists && snap.data().renumberingInProgress === true;
+        }
+
+        let clientsCache = null;
+        let clientsCacheAt = 0;
+        let clientSearchDebounceTimer = null;
+        const CLIENTS_CACHE_TTL_MS = 90 * 1000;
+
+        function invalidateClientsCache() {
+            clientsCache = null;
+            clientsCacheAt = 0;
+        }
+
+        async function getClientsCached(forceRefresh = false) {
+            const now = Date.now();
+            if (!forceRefresh && clientsCache && (now - clientsCacheAt) < CLIENTS_CACHE_TTL_MS) {
+                return clientsCache;
+            }
+            const querySnapshot = await db.collection('clientes').get();
+            clientsCache = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            clientsCacheAt = now;
+            return clientsCache;
         }
 
         function startButtonCooldown(button, seconds = 5, originalText = null) {
@@ -3336,46 +4082,66 @@
         async function getNextClientCode() {
             const counterRef = db.collection('contadores').doc('clientes');
 
-            try {
-                if (await isClientRenumberingActive()) {
-                    throw new Error('RENUMBERING_IN_PROGRESS');
-                }
-
-                const counterSnap = await counterRef.get();
-                let baseCode = counterSnap.exists ? counterSnap.data().lastCode : 0;
-
-                if (!isValidClientCode(baseCode)) {
-                    console.warn('Contador de clientes inválido (', baseCode, '). Recalculando...');
-                    baseCode = await recoverClientCounterBase();
-                    await counterRef.set({ lastCode: baseCode }, { merge: true });
-                }
-
-                const newCode = await db.runTransaction(async (transaction) => {
+            const allocateInTransaction = async (fallbackBase = null) => {
+                return db.runTransaction(async (transaction) => {
                     const counterDoc = await transaction.get(counterRef);
                     const data = counterDoc.exists ? counterDoc.data() : {};
                     if (data.renumberingInProgress === true) {
                         throw new Error('RENUMBERING_IN_PROGRESS');
                     }
-                    let currentCode = counterDoc.exists ? counterDoc.data().lastCode : baseCode;
-                    if (!isValidClientCode(currentCode)) {
-                        currentCode = baseCode;
+
+                    let currentCode = parseClientCodeValue(data.lastCode);
+                    // 0 é válido como base (próximo = 1). Só recupera se estiver ausente/inválido.
+                    if (currentCode === null || currentCode < 0) {
+                        if (fallbackBase === null) {
+                            throw new Error('COUNTER_NEEDS_RECOVERY');
+                        }
+                        currentCode = fallbackBase;
                     }
+
                     const nextCode = currentCode + 1;
                     transaction.set(counterRef, { lastCode: nextCode }, { merge: true });
                     return nextCode;
                 });
+            };
 
-                if (!isValidClientCode(newCode)) {
-                    throw new Error(`Código gerado inválido: ${newCode}`);
+            try {
+                try {
+                    const newCode = await allocateInTransaction();
+                    if (!isValidClientCode(newCode)) {
+                        throw new Error(`Código gerado inválido: ${newCode}`);
+                    }
+                    return newCode;
+                } catch (error) {
+                    if (error.message === 'RENUMBERING_IN_PROGRESS') {
+                        return 'RENUMBERING_IN_PROGRESS';
+                    }
+                    if (error.message !== 'COUNTER_NEEDS_RECOVERY') {
+                        throw error;
+                    }
+                    console.warn('Contador de clientes inválido/ausente. Recalculando com 1 leitura...');
+                    const baseCode = await recoverClientCounterBase();
+                    const newCode = await allocateInTransaction(baseCode >= 0 ? baseCode : 0);
+                    if (!isValidClientCode(newCode)) {
+                        throw new Error(`Código gerado inválido: ${newCode}`);
+                    }
+                    return newCode;
                 }
-                return newCode;
             } catch (error) {
                 if (error.message === 'RENUMBERING_IN_PROGRESS') {
                     return 'RENUMBERING_IN_PROGRESS';
                 }
                 console.error("Erro ao gerar código do cliente:", error);
-                const detail = error?.code ? `${error.code}: ${error.message}` : (error?.message || 'Erro desconhecido');
-                showNotification(`Falha ao gerar código único para o cliente. ${detail}`, 'error');
+                const errCode = error?.code || '';
+                if (errCode === 'resource-exhausted' || /quota/i.test(error?.message || '')) {
+                    showNotification(
+                        'Cota do Firebase esgotada. Aguarde o reset (geralmente diário) ou verifique o plano no Console Firebase. A busca de clientes foi otimizada para não consumir tanta cota.',
+                        'error'
+                    );
+                } else {
+                    const detail = errCode ? `${errCode}: ${error.message}` : (error?.message || 'Erro desconhecido');
+                    showNotification(`Falha ao gerar código único para o cliente. ${detail}`, 'error');
+                }
                 return null;
             }
         }
@@ -3655,6 +4421,7 @@
         let clientTypePopup = 'pf';
         let orderIdToDelete = null; // NOVO: Armazena o ID do orçamento a ser apagado
         let isSelectionModeActive = false; // NOVO: Controla o modo de seleção para apagar múltiplos orçamentos
+        let editingImageWrapper = null; // Imagem aberta no modal de edição (botão direito → Editar)
 
         // NOVO: Variáveis para o modal de variantes de componente
         let currentProductForVariantView = null;
@@ -3694,7 +4461,8 @@
 
         // Cache do catálogo de produtos (evita recarregar tudo a cada abertura do modal)
         let lastProductsLoadTime = 0;
-        const PRODUCTS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
+        const PRODUCTS_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutos
+        let allBudgetsCache = []; // lista leve em memória (evita JSON no dataset)
 
         const LINKAGEM_STORAGE_BASE = 'orcamentoLinkagemEnabled';
 
@@ -4190,6 +4958,152 @@
             return componentValue;
         }
 
+        // Canvas de desenho alinhado à área real da imagem (object-fit: contain na moldura 150x120)
+        const PREVIEW_DRAW_WIDTH = 600;
+        const PREVIEW_DRAW_HEIGHT = 480;
+        const IMAGE_FRAME_W = 150;
+        const IMAGE_FRAME_H = 120;
+
+        function getObjectFitContainRect(containerW, containerH, imgW, imgH) {
+            if (!imgW || !imgH) return { x: 0, y: 0, w: containerW, h: containerH };
+            const containerRatio = containerW / containerH;
+            const imgRatio = imgW / imgH;
+            let w, h;
+            if (imgRatio > containerRatio) {
+                w = containerW;
+                h = containerW / imgRatio;
+            } else {
+                h = containerH;
+                w = containerH * imgRatio;
+            }
+            return {
+                x: (containerW - w) / 2,
+                y: (containerH - h) / 2,
+                w,
+                h
+            };
+        }
+
+        function applyDrawingCanvasLayout(canvas, img, { preserveDrawing = true } = {}) {
+            if (!canvas) return;
+            const nw = (img && img.naturalWidth) ? img.naturalWidth : IMAGE_FRAME_W;
+            const nh = (img && img.naturalHeight) ? img.naturalHeight : IMAGE_FRAME_H;
+            const box = getObjectFitContainRect(IMAGE_FRAME_W, IMAGE_FRAME_H, nw, nh);
+            // Cap na resolução de preview — a moldura é 150x120; canvas gigante só atrasa
+            const aspect = nh / Math.max(nw, 1);
+            let pixelW = Math.min(PREVIEW_DRAW_WIDTH, Math.max(IMAGE_FRAME_W * 2, Math.round(nw)));
+            pixelW = Math.min(pixelW, PREVIEW_DRAW_WIDTH);
+            let pixelH = Math.max(1, Math.round(pixelW * aspect));
+            if (pixelH > PREVIEW_DRAW_HEIGHT) {
+                pixelH = PREVIEW_DRAW_HEIGHT;
+                pixelW = Math.max(1, Math.round(pixelH / aspect));
+            }
+
+            let old = null;
+            if (preserveDrawing && canvas.width > 0 && canvas.height > 0) {
+                old = document.createElement('canvas');
+                old.width = canvas.width;
+                old.height = canvas.height;
+                old.getContext('2d').drawImage(canvas, 0, 0);
+            }
+
+            canvas.width = pixelW;
+            canvas.height = pixelH;
+            canvas.style.left = `${box.x}px`;
+            canvas.style.top = `${box.y}px`;
+            canvas.style.width = `${box.w}px`;
+            canvas.style.height = `${box.h}px`;
+
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, pixelW, pixelH);
+            if (old) {
+                ctx.drawImage(old, 0, 0, pixelW, pixelH);
+            }
+        }
+
+        function initDrawingCanvas(canvas, drawingDataUrl = null, img = null) {
+            if (!canvas) return;
+
+            const finish = () => {
+                applyDrawingCanvasLayout(canvas, img, { preserveDrawing: false });
+                if (!drawingDataUrl) return;
+                const drawingImage = new Image();
+                drawingImage.onload = () => {
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(drawingImage, 0, 0, canvas.width, canvas.height);
+                };
+                drawingImage.src = drawingDataUrl;
+            };
+
+            if (img && (!img.complete || !img.naturalWidth)) {
+                canvas.width = PREVIEW_DRAW_WIDTH;
+                canvas.height = PREVIEW_DRAW_HEIGHT;
+                canvas.style.left = '0px';
+                canvas.style.top = '0px';
+                canvas.style.width = `${IMAGE_FRAME_W}px`;
+                canvas.style.height = `${IMAGE_FRAME_H}px`;
+                img.addEventListener('load', finish, { once: true });
+            } else {
+                finish();
+            }
+        }
+
+        function saveEditorDrawingToPreview(wrapper, sourceEditorCanvas) {
+            const img = wrapper.querySelector('img');
+            const previewCanvas = wrapper.querySelector('.drawing-canvas');
+            if (!previewCanvas) return;
+            applyDrawingCanvasLayout(previewCanvas, img, { preserveDrawing: false });
+            const ctx = previewCanvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(sourceEditorCanvas, 0, 0, previewCanvas.width, previewCanvas.height);
+        }
+
+        function isDrawingCanvasEmpty(canvas) {
+            if (!canvas || !canvas.width || !canvas.height) return true;
+            try {
+                const data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+                for (let i = 3; i < data.length; i += 4) {
+                    if (data[i] !== 0) return false;
+                }
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // cloneNode NÃO copia pixels do canvas — mescla o desenho do original na imagem do alvo (PDF/imagem/impressão)
+        function bakeDrawingsIntoImages(sourceRoot, targetRoot) {
+            const sources = Array.from(sourceRoot.querySelectorAll('.image-canvas-wrapper'));
+            const targets = Array.from(targetRoot.querySelectorAll('.image-canvas-wrapper'));
+            targets.forEach((wrapper, index) => {
+                const sourceWrapper = sources[index % sources.length];
+                if (!sourceWrapper) return;
+                const sourceCanvas = sourceWrapper.querySelector('.drawing-canvas');
+                const img = wrapper.querySelector('img');
+                const targetCanvas = wrapper.querySelector('.drawing-canvas');
+                if (!img || !sourceCanvas) return;
+
+                if (isDrawingCanvasEmpty(sourceCanvas)) {
+                    if (targetCanvas) targetCanvas.style.display = 'none';
+                    return;
+                }
+
+                const outW = img.naturalWidth || sourceCanvas.width || PREVIEW_DRAW_WIDTH;
+                const outH = img.naturalHeight || sourceCanvas.height || PREVIEW_DRAW_HEIGHT;
+                const temp = document.createElement('canvas');
+                temp.width = outW;
+                temp.height = outH;
+                const ctx = temp.getContext('2d');
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(img, 0, 0, outW, outH);
+                ctx.drawImage(sourceCanvas, 0, 0, outW, outH);
+                img.src = temp.toDataURL('image/png');
+                if (targetCanvas) targetCanvas.style.display = 'none';
+            });
+        }
+
         function createImageWrapper(imageType, pairId = null) {
             const previewContainer = document.getElementById('image-preview-container');
             const wrapper = document.createElement('div');
@@ -4211,8 +5125,7 @@
 
             const canvas = document.createElement('canvas');
             canvas.className = 'drawing-canvas';
-            canvas.width = 150;
-            canvas.height = 120;
+            initDrawingCanvas(canvas, null, img);
 
             const descDiv = document.createElement('div');
             descDiv.className = 'image-description';
@@ -4241,9 +5154,17 @@
             const clonedImg = clone.querySelector('img');
             if (clonedImg) clonedImg.draggable = true;
             if (originalCanvas && clonedCanvas) {
+                initDrawingCanvas(clonedCanvas, null, clonedImg);
                 const ctx = clonedCanvas.getContext('2d');
-                ctx.clearRect(0, 0, clonedCanvas.width, clonedCanvas.height);
-                ctx.drawImage(originalCanvas, 0, 0);
+                const copyPixels = () => {
+                    applyDrawingCanvasLayout(clonedCanvas, clonedImg, { preserveDrawing: false });
+                    ctx.drawImage(originalCanvas, 0, 0, clonedCanvas.width, clonedCanvas.height);
+                };
+                if (clonedImg && (!clonedImg.complete || !clonedImg.naturalWidth)) {
+                    clonedImg.addEventListener('load', copyPixels, { once: true });
+                } else {
+                    copyPixels();
+                }
             }
 
             sourceWrapper.after(clone);
@@ -4321,13 +5242,52 @@
                 });
                 lastProductsLoadTime = Date.now();
                 console.log('Catálogo de produtos carregado:', catalogoProdutos.length, 'itens.');
-                // Salva no localStorage para uso futuro
-                localStorage.setItem('productCatalog', JSON.stringify(catalogoProdutos));
-                localStorage.setItem('productCatalogTime', String(lastProductsLoadTime));
+                try {
+                    localStorage.setItem('productCatalog', JSON.stringify(catalogoProdutos));
+                    localStorage.setItem('productCatalogTime', String(lastProductsLoadTime));
+                } catch (storageErr) {
+                    console.warn('Não foi possível cachear catálogo no localStorage:', storageErr);
+                }
             } catch (error) {
                 console.error("Erro ao carregar catálogo de produtos:", error);
                 showNotification("Falha ao carregar o catálogo de produtos.", "error");
             }
+        }
+
+        function hydrateProductsFromLocalStorage() {
+            try {
+                const raw = localStorage.getItem('productCatalog');
+                const timeRaw = localStorage.getItem('productCatalogTime');
+                if (!raw) return false;
+                const parsed = JSON.parse(raw);
+                if (!Array.isArray(parsed) || parsed.length === 0) return false;
+                catalogoProdutos = parsed;
+                lastProductsLoadTime = timeRaw ? parseInt(timeRaw, 10) || Date.now() : Date.now();
+                console.log('Catálogo hidratado do localStorage:', catalogoProdutos.length, 'itens.');
+                return true;
+            } catch (e) {
+                console.warn('Falha ao hidratar catálogo do localStorage:', e);
+                return false;
+            }
+        }
+
+        async function getProducts(forceRefresh = false) {
+            if (forceRefresh) {
+                await loadProductsFromFirebase();
+                return;
+            }
+            // Já tem catálogo em memória: não bloqueia a UI. Atualiza em background se expirou.
+            if (catalogoProdutos.length > 0) {
+                if ((Date.now() - lastProductsLoadTime) >= PRODUCTS_CACHE_TTL_MS) {
+                    loadProductsFromFirebase().catch(() => {});
+                }
+                return;
+            }
+            if (hydrateProductsFromLocalStorage()) {
+                loadProductsFromFirebase().catch(() => {});
+                return;
+            }
+            await loadProductsFromFirebase();
         }
 
         function addExitAnimationAndRedirect(urlDestino) {
@@ -4526,29 +5486,17 @@
             return num.toFixed(2).replace('.', ',');
         }
 
-        async function getProducts(forceRefresh = false) {
-            if (forceRefresh) {
-                await loadProductsFromFirebase();
-                return;
-            }
-            const isFresh = catalogoProdutos.length > 0 &&
-                (Date.now() - lastProductsLoadTime) < PRODUCTS_CACHE_TTL_MS;
-            if (isFresh) return;
-            await loadProductsFromFirebase();
-        }
-
         async function openProductSelection() {
-            // Usa cache (TTL) em vez de recarregar tudo a cada abertura.
-            await getProducts();
-
             selectedRowToEdit = null;
             currentEditingProduct = null;
             selectedVariant = null;
 
             document.body.classList.add('modal-open');
-            renderProductModalList([], 1, true); // Renderiza a lista vazia com a mensagem inicial
+            renderProductModalList([], 1, true);
             document.getElementById('product-modal').style.display = 'flex';
             document.getElementById('product-search-input').focus();
+            // Catálogo em background se necessário (não bloqueia abertura)
+            getProducts().catch(() => {});
         }
 
         function closeModal(modalId) {
@@ -4559,6 +5507,13 @@
                 // Só limpa o formulário após o usuário decidir sobre o envio ao cliente
                 pendingOrderReset = false;
                 resetOrderForm();
+            }
+            if (modalId === 'load-modal') {
+                const menu = document.getElementById('load-order-context-menu');
+                if (menu) menu.style.display = 'none';
+            }
+            if (modalId === 'image-editor-modal') {
+                editingImageWrapper = null;
             }
             if (modalId === 'product-modal') {
                 document.getElementById('product-search-input').value = '';
@@ -4741,10 +5696,25 @@
             quantityInput.focus();
         }
 
+            renderSectionSelectors(document.getElementById('mtm-sections-container'), product, existingSections || {});
+        }
+
         function openMadeToMeasureModal(product, existingScope = null, existingVariants = null, existingComponents = null, existingSections = null) {
             selectedProduct = product;
             document.getElementById('mtm-product-name').textContent = product.nome;
+            const variablesContainer = document.getElementById('mtm-variables-container');
+            variablesContainer.innerHTML = '<p style="text-align:center;color:#888;padding:12px;">Carregando opções...</p>';
+            const sectionsContainer = document.getElementById('mtm-sections-container');
+            if (sectionsContainer) sectionsContainer.innerHTML = '';
+            document.getElementById('made-to-measure-modal').style.display = 'flex';
+            document.body.classList.add('modal-open');
 
+            requestAnimationFrame(() => {
+                buildMadeToMeasureModalContent(product, existingScope, existingVariants, existingComponents, existingSections);
+            });
+        }
+
+        function buildMadeToMeasureModalContent(product, existingScope = null, existingVariants = null, existingComponents = null, existingSections = null) {
             const variablesContainer = document.getElementById('mtm-variables-container');
             variablesContainer.innerHTML = '';
 
@@ -4855,9 +5825,6 @@
             }
 
             renderSectionSelectors(document.getElementById('mtm-sections-container'), product, existingSections || {});
-
-            document.getElementById('made-to-measure-modal').style.display = 'flex';
-            document.body.classList.add('modal-open');
         }
 
         function openToldoCompletoConfigurator(product, existingConfig = {}) { // A variável 'product' aqui é a correta
@@ -5521,6 +6488,7 @@
             const orderData = {
                 saleNumber: document.getElementById('sale-number').innerText,
                 cliente: document.getElementById('cliente').value,
+                clientId: document.getElementById('selected-client-id')?.value || '',
                 filial: userBranch,
                 endereco: document.getElementById('endereco').value,
                 celular: document.getElementById('celular').value,
@@ -5725,6 +6693,7 @@
             paginatedBudgets.forEach(orcamento => {
                 const item = document.createElement('div');
                 item.classList.add('load-list-item');
+                item.dataset.orderId = orcamento.id;
 
                 const hasCrediario = (orcamento.payments || []).some(p => p.tipo === 'crediario');
                 const isVisible = isSelectionModeActive ? '' : 'style="display: none;"';
@@ -5751,7 +6720,6 @@
                     <div class="item-buttons" data-order-id="${orcamento.id}">
                         <button class="button select-product-button" data-action="load">Carregar</button>
                         <button class="button fiscal-load-button" data-action="fiscal">Fiscal</button>
-                        <button class="button" data-action="delete" style="background-color: #dc3545;">Apagar</button>
                     </div>
                 `;
                 loadList.appendChild(item);
@@ -5808,8 +6776,7 @@
         }
 
         function runLoadFilter(page = 1) {
-            const loadModal = document.getElementById('load-modal');
-            const allBudgets = JSON.parse(loadModal.dataset.allBudgets || '[]');
+            const allBudgets = allBudgetsCache;
 
             const nameFilter = normalizeString(document.getElementById('load-filter-name').value.trim());
             const saleFilter = normalizeString(document.getElementById('load-filter-sale').value.trim());
@@ -5852,7 +6819,7 @@
         }
 
         function renderInitialLoadView() {
-            const allBudgets = JSON.parse(document.getElementById('load-modal').dataset.allBudgets || '[]');
+            const allBudgets = allBudgetsCache;
             const loadList = document.getElementById('load-list');
             document.getElementById('load-pagination').innerHTML = '';
             loadList.innerHTML = '';
@@ -5865,6 +6832,7 @@
                 recentBudgets.forEach(orcamento => {
                     const item = document.createElement('div');
                     item.classList.add('load-list-item');
+                    item.dataset.orderId = orcamento.id;
 
                     const hasCrediario = (orcamento.payments || []).some(p => p.tipo === 'crediario');
                 const isVisible = isSelectionModeActive ? '' : 'style="display: none;"';
@@ -5886,7 +6854,6 @@
                     <div class="item-buttons" data-order-id="${orcamento.id}">
                             <button class="button select-product-button" data-action="load">Carregar</button>
                             <button class="button fiscal-load-button" data-action="fiscal">Fiscal</button>
-                            <button class="button" data-action="delete" style="background-color: #dc3545;">Apagar</button>
                         </div>
                     `;
                     loadList.appendChild(item);
@@ -5921,39 +6888,46 @@
             try {
                 // Primeira página rápida: busca poucos, ordenados do mais recente.
                 // (Se faltar índice composto, cai no fallback sem ordenação abaixo.)
+                const lightFields = ['cliente', 'saleNumber', 'grandTotal', 'tipoDocumento', 'payments', 'saveTimestamp', 'data', 'filial'];
                 try {
                     const quickSnap = await db.collection('orcamentos')
                         .where('filial', '==', userBranch)
                         .orderBy('saveTimestamp', 'desc')
                         .limit(LOAD_ITEMS_PER_PAGE)
+                        .select(...lightFields)
                         .get();
                     const quickList = quickSnap.docs.map(mapBudgetLight);
                     if (quickList.length > 0) {
-                        loadModal.dataset.allBudgets = JSON.stringify(quickList);
+                        allBudgetsCache = quickList;
                         renderInitialLoadView();
                     }
                 } catch (idxErr) {
-                    // Provável falta de índice composto (filial + saveTimestamp). Segue para busca completa.
+                    // Provável falta de índice composto (filial + saveTimestamp) ou select.
                     console.warn('Busca rápida indisponível (usando busca completa):', idxErr?.message || idxErr);
                 }
 
-                const querySnapshot = await db.collection('orcamentos')
-                    .where('filial', '==', userBranch).get();
-                // IMPORTANTE: guardamos apenas os campos leves usados na lista/filtros.
-                // Os documentos completos (com imagens em base64) são recarregados sob
-                // demanda em loadSelectedOrder(id). Isso evita travar a abertura do modal.
+                let querySnapshot;
+                try {
+                    querySnapshot = await db.collection('orcamentos')
+                        .where('filial', '==', userBranch)
+                        .select(...lightFields)
+                        .get();
+                } catch (selectErr) {
+                    console.warn('select() indisponível, buscando documentos completos:', selectErr?.message || selectErr);
+                    querySnapshot = await db.collection('orcamentos')
+                        .where('filial', '==', userBranch)
+                        .get();
+                }
+                // Campos leves para lista/filtros; documento completo só em loadSelectedOrder(id).
                 let savedOrçamentos = querySnapshot.docs.map(mapBudgetLight);
 
-                // Ordena os resultados no lado do cliente para evitar a necessidade de um índice composto
                 savedOrçamentos.sort((a, b) => {
                     const timeA = a.saveTimestamp ? a.saveTimestamp.seconds : 0;
                     const timeB = b.saveTimestamp ? b.saveTimestamp.seconds : 0;
-                    return timeB - timeA; // Ordem decrescente (mais recente primeiro)
+                    return timeB - timeA;
                 });
 
-                loadModal.dataset.allBudgets = JSON.stringify(savedOrçamentos);
-
-                // Reaplica os filtros atuais (renderiza a lista completa e ordenada)
+                allBudgetsCache = savedOrçamentos;
                 runLoadFilter(1);
 
             } catch (error) {
@@ -5978,13 +6952,12 @@
             };
         }
 
-        async function loadSelectedOrder(orderId) {
+        async function loadSelectedOrder(orderId, { silent = false } = {}) {
             try {
-                // CORREÇÃO: Garante que o catálogo de produtos esteja carregado antes de processar o orçamento.
-                await getProducts();
-
-                const docRef = db.collection('orcamentos').doc(orderId);
-                const docSnap = await docRef.get();
+                // Catálogo + documento em paralelo (não espera catálogo se já estiver em memória)
+                const docPromise = db.collection('orcamentos').doc(orderId).get();
+                const productsPromise = getProducts();
+                const [, docSnap] = await Promise.all([productsPromise, docPromise]);
 
                 if (!docSnap.exists) {
                     showNotification("Orçamento não encontrado.", "error");
@@ -6000,6 +6973,8 @@
                 const saleDate = data.saveTimestamp ? new Date(data.saveTimestamp.seconds * 1000).toLocaleDateString('pt-BR') : data.data;
                 document.getElementById('sale-date').innerText = saleDate;
                 document.getElementById('cliente').value = data.cliente;
+                const clientIdInput = document.getElementById('selected-client-id');
+                if (clientIdInput) clientIdInput.value = data.clientId || '';
                 document.getElementById('endereco').value = data.endereco;
                 document.getElementById('celular').value = data.celular;
                 document.getElementById('vendedor').value = data.vendedor;
@@ -6046,14 +7021,7 @@
 
                 const canvas = document.createElement('canvas');
                 canvas.className = 'drawing-canvas';
-                canvas.width = 150;
-                canvas.height = 120;
-                if(imageData.drawing) {
-                    const ctx = canvas.getContext('2d');
-                    const drawingImage = new Image();
-                    drawingImage.onload = () => ctx.drawImage(drawingImage, 0, 0);
-                    drawingImage.src = imageData.drawing;
-                }
+                initDrawingCanvas(canvas, imageData.drawing || null, img);
 
                 imageCanvasWrapper.appendChild(img);
                 imageCanvasWrapper.appendChild(canvas);
@@ -6173,12 +7141,41 @@
                 updateSaveButtonState(); // Adiciona chamada para atualizar o estado do botão
                 updateTotals();
                 markOrderClean(); // Pedido recém-carregado não tem alterações pendentes
-                showNotification("Orçamento carregado com sucesso!", "success");
+                if (!silent) {
+                    showNotification("Orçamento carregado com sucesso!", "success");
+                }
             } catch (error) {
                 console.error("Erro ao carregar orçamento: ", error);
                 showNotification("Ocorreu um erro ao carregar o orçamento.", "error");
                 resetOrderForm(); // Limpa o formulário em caso de erro no carregamento
                 return Promise.reject("Erro ao carregar orçamento.");
+            }
+        }
+
+        function waitForPreviewAssets() {
+            const imgs = Array.from(document.querySelectorAll('#image-preview-container img'));
+            const imageWaits = imgs.map(img => {
+                if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+                return new Promise(resolve => {
+                    const done = () => resolve();
+                    img.addEventListener('load', done, { once: true });
+                    img.addEventListener('error', done, { once: true });
+                });
+            });
+            // Pequena folga para desenhos dos canvases terminarem de carregar
+            return Promise.all(imageWaits).then(() => new Promise(resolve => setTimeout(resolve, 250)));
+        }
+
+        async function printOrderFromLoadList(orderId) {
+            try {
+                showNotification('Preparando impressão...', 'success');
+                await loadSelectedOrder(orderId, { silent: true });
+                closeModal('load-modal');
+                await waitForPreviewAssets();
+                await generatePDF('print');
+            } catch (error) {
+                console.error('Erro ao imprimir orçamento da lista:', error);
+                showNotification('Não foi possível imprimir o orçamento.', 'error');
             }
         }
         
@@ -6294,28 +7291,16 @@
             document.body.appendChild(pdfWrapper);
             originalElement.style.display = 'none';
             
-            // NOVO: Combina o canvas de desenho com a imagem para o PDF
-            pdfWrapper.querySelectorAll('.image-canvas-wrapper').forEach(wrapper => {
-                const img = wrapper.querySelector('img');
-                const drawingCanvas = wrapper.querySelector('.drawing-canvas');
-        
-                if (img && drawingCanvas) {
-                    // Cria um canvas temporário para mesclar a imagem e o desenho
-                    const tempCanvas = document.createElement('canvas');
-                    // Usa as dimensões do canvas de desenho para manter a proporção correta
-                    tempCanvas.width = drawingCanvas.width;
-                    tempCanvas.height = drawingCanvas.height;
-                    const tempCtx = tempCanvas.getContext('2d');
-        
-                    // 1. Desenha a imagem original
-                    tempCtx.drawImage(img, 0, 0, tempCanvas.width, tempCanvas.height);
-        
-                    // 2. Desenha o canvas de pintura por cima, ajustando a escala
-                    tempCtx.drawImage(drawingCanvas, 0, 0);
-        
-                    // 3. Substitui o src da imagem pelo resultado mesclado
-                    img.src = tempCanvas.toDataURL('image/png');
-                }
+            // Mescla desenhos do original (cloneNode não copia pixels do canvas)
+            bakeDrawingsIntoImages(originalElement, pdfWrapper);
+
+            // Aguarda imagens mescladas carregarem antes de gerar o PDF
+            const bakedImageWaits = Array.from(pdfWrapper.querySelectorAll('img')).map(img => {
+                if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+                return new Promise(resolve => {
+                    img.onload = () => resolve();
+                    img.onerror = () => resolve();
+                });
             });
 
             // Aplica as classes de modo PDF
@@ -6361,6 +7346,7 @@
 
             // Timeout para garantir que os estilos sejam aplicados antes da renderização do PDF
             return new Promise((resolve) => {
+                Promise.all(bakedImageWaits).then(() => {
                 setTimeout(async () => {
                     const options = {
                         margin: 10,
@@ -6390,7 +7376,8 @@
                         cleanup();
                         resolve();
                     }
-                }, 150);
+                }, 200);
+                });
             });
         }
 
@@ -6485,19 +7472,16 @@
             overlay.appendChild(pdfWrapper);
             document.body.appendChild(overlay);
 
-            pdfWrapper.querySelectorAll('.image-canvas-wrapper').forEach(wrapper => {
-                const img = wrapper.querySelector('img');
-                const drawingCanvas = wrapper.querySelector('.drawing-canvas');
-                if (img && drawingCanvas && drawingCanvas.width > 0 && drawingCanvas.height > 0) {
-                    const tempCanvas = document.createElement('canvas');
-                    tempCanvas.width = drawingCanvas.width;
-                    tempCanvas.height = drawingCanvas.height;
-                    const tempCtx = tempCanvas.getContext('2d');
-                    tempCtx.drawImage(img, 0, 0, tempCanvas.width, tempCanvas.height);
-                    tempCtx.drawImage(drawingCanvas, 0, 0);
-                    img.src = tempCanvas.toDataURL('image/png');
-                }
-            });
+            bakeDrawingsIntoImages(document.querySelector('.container'), pdfWrapper);
+
+            // Aguarda o decode das imagens mescladas antes de capturar
+            await Promise.all(Array.from(pdfWrapper.querySelectorAll('img')).map(img => {
+                if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+                return new Promise(resolve => {
+                    img.onload = () => resolve();
+                    img.onerror = () => resolve();
+                });
+            }));
 
             pdfWrapper.querySelectorAll('.obs-input-div').forEach(div => {
                 div.innerHTML = div.innerText.replace(/\n/g, '<br>');
@@ -6762,10 +7746,6 @@
             // Se for um novo cliente, gera um código para ele
             let clientCode = null;
             if (!editingClientId) {
-                if (await isClientRenumberingActive()) {
-                    startClientSaveCooldown(5);
-                    return;
-                }
                 clientCode = await getNextClientCode();
                 if (clientCode === 'RENUMBERING_IN_PROGRESS') {
                     startClientSaveCooldown(5);
@@ -6827,6 +7807,7 @@
                 let clientNameToDisplay;
                 if (editingClientId) {
                     await db.collection('clientes').doc(editingClientId).set(clientData, { merge: true });
+                    invalidateClientsCache();
                     applyClientToOrderForm({ ...clientData, code: clientCode }, editingClientId);
                     showNotification('Cliente atualizado com sucesso!', 'success');
                 } else {
@@ -6840,6 +7821,7 @@
                     }
                     clientData.code = clientCode;
                     const docRef = await db.collection('clientes').add(clientData);
+                    invalidateClientsCache();
                     applyClientToOrderForm(clientData, docRef.id);
                     showNotification('Cliente salvo com sucesso!', 'success');
                     closeModal('client-modal');
@@ -6849,8 +7831,13 @@
 
             } catch (error) {
                 console.error("Erro ao salvar cliente: ", error);
-                const detail = error?.code ? `${error.code}: ${error.message}` : (error?.message || 'Erro desconhecido');
-                showNotification(`Erro ao salvar cliente. ${detail}`, 'error');
+                const errCode = error?.code || '';
+                if (errCode === 'resource-exhausted' || /quota/i.test(error?.message || '')) {
+                    showNotification('Cota do Firebase esgotada ao salvar. Aguarde o reset ou verifique o plano no Console Firebase.', 'error');
+                } else {
+                    const detail = errCode ? `${errCode}: ${error.message}` : (error?.message || 'Erro desconhecido');
+                    showNotification(`Erro ao salvar cliente. ${detail}`, 'error');
+                }
             }
             } finally {
                 isSavingClient = false;
@@ -6887,8 +7874,7 @@
             listContainer.innerHTML = '<p style="text-align: center; padding: 20px;">Buscando...</p>';
 
             try {
-                const querySnapshot = await db.collection('clientes').get();
-                const clients = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const clients = await getClientsCached();
 
                 const normalizedSearchTerm = normalizeString(searchTerm);
                 const normalizedDocFilter = normalizeString(docFilter);
@@ -7230,7 +8216,12 @@
             }
 
             await fetchFiliais();
-            await loadProductsFromFirebase();
+            // Hidrata catálogo do disco e libera a UI; Firebase atualiza em background
+            if (!hydrateProductsFromLocalStorage()) {
+                await loadProductsFromFirebase();
+            } else {
+                loadProductsFromFirebase().catch(() => {});
+            }
             generateSaleNumberAndDate();
             // Defesa contra restauração de campos pelo navegador ao duplicar a aba:
             // garante que desconto e observações comecem zerados numa nota nova.
@@ -7448,7 +8439,10 @@
             document.getElementById('client-search-input').addEventListener('keyup', (e) => {
                 // Não refaz a busca ao usar as setas/Enter (evita re-renderizar e perder o destaque)
                 if (['ArrowDown', 'ArrowUp', 'Enter'].includes(e.key)) return;
-                renderClientList(e.target.value);
+                clearTimeout(clientSearchDebounceTimer);
+                clientSearchDebounceTimer = setTimeout(() => {
+                    renderClientList(e.target.value);
+                }, 350);
             });
             setupListKeyboardNav(
                 document.getElementById('client-search-input'),
@@ -7523,6 +8517,7 @@
 
                     // Se a autenticação foi bem-sucedida, apaga o cliente
                     await db.collection('clientes').doc(editingClientId).delete();
+                    invalidateClientsCache();
                     showNotification("Cliente excluído com sucesso!", "success");
 
                     closeModal('delete-client-password-modal');
@@ -7677,7 +8672,11 @@
                     // produto vinculado). Usa o cache (TTL) em vez de recarregar do Firebase
                     // a cada clique — assim a imagem aparece instantaneamente.
                     if (isLinkagemEnabled()) {
-                        await getProducts();
+                        if (catalogoProdutos.length === 0) {
+                            await getProducts();
+                        } else {
+                            getProducts().catch(() => {});
+                        }
                         if (startLinkedProductFlow(imageType)) {
                             markOrderDirty();
                             return;
@@ -7693,7 +8692,6 @@
             const previewContainer = document.getElementById('image-preview-container');
             let draggingElement = null;
             let dragOverElement = null; // NOVO: Armazena o elemento sobre o qual estamos arrastando
-            let activeDrawingCanvas = null; // NOVO: Armazena o canvas ativo para desenho
 
             previewContainer.addEventListener('dragstart', (e) => {
                 // Inicia o arraste apenas se o alvo for a imagem
@@ -7768,6 +8766,52 @@
                 currentImageWrapper = null;
             };
 
+            function openImageEditorModal(wrapper, sourceImg, sourceCanvas) {
+                editingImageWrapper = wrapper;
+                editorImageBg.onload = null;
+                if (typeof hideEditorTextInput === 'function') hideEditorTextInput();
+                if (typeof resetEditorZoom === 'function') resetEditorZoom();
+
+                const finishOpen = () => {
+                    imageEditorModal.style.display = 'flex';
+                    requestAnimationFrame(() => {
+                        const rect = editorImageBg.getBoundingClientRect();
+                        const zoom = (typeof editorZoom === 'number' && editorZoom > 0) ? editorZoom : 1;
+                        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                        const displayW = Math.max(1, Math.round(rect.width / zoom));
+                        const displayH = Math.max(1, Math.round(rect.height / zoom));
+                        const maxW = 1200;
+                        const maxH = 960;
+                        let pixelW = Math.round(displayW * dpr);
+                        let pixelH = Math.round(displayH * dpr);
+                        // Limita buffer do editor (evita getImageData lento em fotos grandes)
+                        if (pixelW > maxW || pixelH > maxH) {
+                            const scale = Math.min(maxW / pixelW, maxH / pixelH);
+                            pixelW = Math.max(1, Math.round(pixelW * scale));
+                            pixelH = Math.max(1, Math.round(pixelH * scale));
+                        }
+                        editorCanvas.width = pixelW;
+                        editorCanvas.height = pixelH;
+                        editorCanvas.style.width = `${displayW}px`;
+                        editorCanvas.style.height = `${displayH}px`;
+                        setupImageEditor(sourceCanvas);
+                        imageEditorModal.setAttribute('tabindex', '-1');
+                        imageEditorModal.focus();
+                    });
+                };
+
+                editorImageBg.src = sourceImg.src;
+                if (editorImageBg.complete && editorImageBg.naturalWidth > 0) {
+                    finishOpen();
+                } else {
+                    editorImageBg.onload = finishOpen;
+                    editorImageBg.onerror = () => {
+                        showNotification('Não foi possível abrir a imagem no editor.', 'error');
+                        editingImageWrapper = null;
+                    };
+                }
+            }
+
             // Listener para o clique com o botão direito no container de imagens
             previewContainer.addEventListener('contextmenu', (e) => {
                 const targetWrapper = e.target.closest('.image-with-desc');
@@ -7791,43 +8835,34 @@
 
             // Ações do menu de contexto
             imageContextMenu.addEventListener('click', (e) => {
-                const action = e.target.dataset.action;
+                const actionBtn = e.target.closest('button[data-action]');
+                const action = actionBtn?.dataset.action;
                 if (!action || !currentImageWrapper) return;
 
-                const canvas = currentImageWrapper.querySelector('.drawing-canvas');
-                const img = currentImageWrapper.querySelector('img');
+                const wrapper = currentImageWrapper;
+                const canvas = wrapper.querySelector('.drawing-canvas');
+                const img = wrapper.querySelector('img');
 
                 switch (action) {
-                    case 'edit-image':
-                        // Abre o novo modal de edição
-                        if (imageEditorModal) {
-                            // Passa a imagem e o desenho atual para o modal
-                            editorImageBg.src = img.src;
-                            
-                            // Ajusta o tamanho do canvas do editor para corresponder ao wrapper
-                            const wrapperRect = editorCanvas.parentElement.getBoundingClientRect();
-                            editorCanvas.width = wrapperRect.width;
-                            editorCanvas.height = wrapperRect.height;
-                            
-                            setupImageEditor(canvas); // Configura o editor com o canvas da imagem clicada
-                            imageEditorModal.style.display = 'flex';
+                    case 'edit-image': {
+                        const pairId = wrapper.dataset.pairId;
+                        const orderRow = pairId ? findPairedOrderRow(pairId) : null;
+                        if (!orderRow) {
+                            showNotification('Esta imagem não está vinculada a um produto para editar.', 'error');
+                            break;
                         }
+                        editOrderRow(orderRow);
                         break;
+                    }
 
                     case 'brush-image':
-                        if (activeDrawingCanvas) {
-                            activeDrawingCanvas.style.pointerEvents = 'none'; // Desativa o canvas antigo
-                        }
-                        activeDrawingCanvas = canvas;
-                        activeDrawingCanvas.style.pointerEvents = 'auto'; // Ativa o canvas atual
-                        setupCanvasForDrawing(activeDrawingCanvas);
-                        showNotification("Modo Pincel Ativado. Clique e arraste para desenhar. Clique fora da imagem para sair.", "success", 6000);
+                        openImageEditorModal(wrapper, img, canvas);
                         break;
 
                     case 'duplicate-image': {
-                        const sourcePairId = currentImageWrapper.dataset.pairId;
+                        const sourcePairId = wrapper.dataset.pairId;
                         const newPairId = sourcePairId ? generatePairId() : null;
-                        cloneImageWrapper(currentImageWrapper, newPairId);
+                        cloneImageWrapper(wrapper, newPairId);
 
                         if (sourcePairId && newPairId) {
                             const orderRow = findPairedOrderRow(sourcePairId);
@@ -7845,7 +8880,7 @@
                     }
 
                     case 'delete-image': {
-                        const pairId = currentImageWrapper.dataset.pairId;
+                        const pairId = wrapper.dataset.pairId;
                         if (pairId) {
                             // Imagem vinculada: some, e o item pareado fica vermelho/riscado
                             const orderRow = findPairedOrderRow(pairId);
@@ -7854,10 +8889,10 @@
                                 reindexOrderItems();
                                 updateTotals();
                             }
-                            currentImageWrapper.classList.add('pair-hidden');
+                            wrapper.classList.add('pair-hidden');
                         } else {
                             // Imagem sem vínculo: remove de fato
-                            currentImageWrapper.remove();
+                            wrapper.remove();
                         }
                         markOrderDirty();
                         break;
@@ -7866,130 +8901,523 @@
                 hideContextMenu();
             });
 
-            // CORREÇÃO: Reintroduz a função de desenho para o modo "Pincel" direto na miniatura.
-            function setupCanvasForDrawing(canvas) {
-                const ctx = canvas.getContext('2d');
-                // Usa as mesmas configurações do editor para consistência (preto e fino)
-                ctx.strokeStyle = 'black';
-                ctx.lineWidth = 1;
-                ctx.lineCap = 'round';
-                let isDrawing = false;
-                let lastX = 0;
-                let lastY = 0;
+            // --- Logica do Editor / Pincel (Modal) ---
+            let editorHistory = [];
+            let editorRedoStack = [];
+            let editorCtx = editorCanvas.getContext('2d');
+            let editorTool = 'brush';
+            let quadPoints = [];
+            let brushSize = 4;
+            let eraserSize = 24;
+            let textSize = 28;
+            let editorZoom = 1;
+            let pendingTextPos = null;
+            let editorTextOverlays = [];
+            let selectedTextEl = null;
+            let isPanning = false;
+            let panStartX = 0;
+            let panStartY = 0;
+            let panScrollLeft = 0;
+            let panScrollTop = 0;
+            let draggingTextEl = null;
+            let textDragOffsetX = 0;
+            let textDragOffsetY = 0;
 
-                function draw(e) {
-                    if (!isDrawing) return;
-                    e.preventDefault();
-                    const rect = canvas.getBoundingClientRect();
-                    const x = (e.clientX || e.touches[0].clientX) - rect.left;
-                    const y = (e.clientY || e.touches[0].clientY) - rect.top;
+            const editorHint = document.getElementById('image-editor-hint');
+            const editorSizeRail = document.getElementById('image-editor-size-rail');
+            const editorSizeSlider = document.getElementById('editor-size-slider');
+            const editorSizeValue = document.getElementById('editor-size-value');
+            const editorViewport = document.getElementById('image-editor-viewport');
+            const editorCanvasWrapper = document.getElementById('image-editor-canvas-wrapper');
+            const editorTextInput = document.getElementById('editor-text-input');
 
-                    ctx.beginPath();
-                    ctx.moveTo(lastX, lastY);
-                    ctx.lineTo(x, y);
-                    ctx.stroke();
-                    [lastX, lastY] = [x, y];
-                }
-
-                const startDrawing = (e) => {
-                    isDrawing = true;
-                    const rect = canvas.getBoundingClientRect();
-                    [lastX, lastY] = [(e.clientX || e.touches[0].clientX) - rect.left, (e.clientY || e.touches[0].clientY) - rect.top];
-                };
-
-                const stopDrawing = () => isDrawing = false;
-
-                canvas.onmousedown = startDrawing;
-                canvas.onmousemove = draw;
-                canvas.onmouseup = stopDrawing;
-                canvas.onmouseout = stopDrawing;
+            function getActiveToolSize() {
+                if (editorTool === 'eraser') return eraserSize;
+                if (editorTool === 'text') return textSize;
+                return brushSize;
             }
 
-            // --- NOVO: Lógica do Editor de Imagem (Modal) ---
-            let editorHistory = [];
-            let editorCtx = editorCanvas.getContext('2d');
+            function setActiveToolSize(value) {
+                const size = Math.max(2, Math.min(96, Number(value) || 4));
+                if (editorTool === 'eraser') eraserSize = size;
+                else if (editorTool === 'text') textSize = size;
+                else brushSize = size;
+                if (editorSizeSlider) editorSizeSlider.value = String(size);
+                if (editorSizeValue) editorSizeValue.textContent = String(size);
+                applyEditorStrokeStyle();
+            }
+
+            function syncSizeRailUI() {
+                const showRail = editorTool === 'brush' || editorTool === 'eraser' || editorTool === 'text';
+                if (editorSizeRail) {
+                    editorSizeRail.classList.toggle('visible', showRail);
+                    editorSizeRail.setAttribute('aria-hidden', showRail ? 'false' : 'true');
+                }
+                if (!showRail) return;
+                const size = getActiveToolSize();
+                if (editorSizeSlider) {
+                    editorSizeSlider.min = editorTool === 'text' ? '12' : '2';
+                    editorSizeSlider.max = editorTool === 'text' ? '96' : '80';
+                    editorSizeSlider.value = String(size);
+                }
+                if (editorSizeValue) editorSizeValue.textContent = String(size);
+            }
+
+            function updateEditorHint() {
+                if (!editorHint) return;
+                const hints = {
+                    brush: 'Pincel: arraste para desenhar. Scroll = zoom. Barra à esquerda = tamanho.',
+                    eraser: 'Borracha: arraste para apagar. Scroll = zoom. Barra à esquerda = tamanho.',
+                    pan: 'Mover: clique e arraste para navegar na imagem (útil com zoom).',
+                    line: 'Linha: clique, arraste e solte. Scroll = zoom.',
+                    circle: 'Círculo: clique no centro, arraste o raio e solte. Scroll = zoom.',
+                    quad: 'Quadrilátero: clique nos 4 cantos. Scroll = zoom.',
+                    text: 'Escrever: clique para criar. Clique em um texto existente e arraste para mover. Enter confirma.'
+                };
+                let text = hints[editorTool] || '';
+                if (editorTool === 'quad' && quadPoints.length) {
+                    text = `Quadrilátero: ponto ${quadPoints.length}/4 — clique no próximo canto.`;
+                }
+                if (editorZoom !== 1) {
+                    text += ` Zoom: ${Math.round(editorZoom * 100)}%`;
+                }
+                editorHint.textContent = text;
+            }
+
+            function applyEditorZoom() {
+                if (!editorCanvasWrapper) return;
+                editorCanvasWrapper.style.transform = `scale(${editorZoom})`;
+                updateEditorHint();
+            }
+
+            function resetEditorZoom() {
+                editorZoom = 1;
+                applyEditorZoom();
+            }
+
+            function hideEditorTextInput() {
+                if (!editorTextInput) return;
+                editorTextInput.style.display = 'none';
+                editorTextInput.value = '';
+                pendingTextPos = null;
+            }
+
+            function clearEditorTextOverlays() {
+                editorTextOverlays.forEach(el => el.remove());
+                editorTextOverlays = [];
+                selectedTextEl = null;
+            }
+
+            function positionEditorTextOverlay(el, canvasX, canvasY) {
+                const left = (canvasX / Math.max(editorCanvas.width, 1)) * 100;
+                const top = (canvasY / Math.max(editorCanvas.height, 1)) * 100;
+                el.style.left = `${left}%`;
+                el.style.top = `${top}%`;
+                el.dataset.x = String(canvasX);
+                el.dataset.y = String(canvasY);
+            }
+
+            function bakeEditorTextOverlaysToCanvas() {
+                if (!editorTextOverlays.length) return;
+                applyEditorStrokeStyle();
+                editorCtx.globalCompositeOperation = 'source-over';
+                editorCtx.fillStyle = '#000000';
+                editorTextOverlays.forEach(el => {
+                    const text = el.textContent || '';
+                    if (!text) return;
+                    const x = parseFloat(el.dataset.x) || 0;
+                    const y = parseFloat(el.dataset.y) || 0;
+                    const size = parseFloat(el.dataset.size) || textSize;
+                    editorCtx.font = `bold ${Math.max(12, size)}px Arial, sans-serif`;
+                    editorCtx.textBaseline = 'top';
+                    editorCtx.fillText(text, x, y);
+                });
+                clearEditorTextOverlays();
+                saveEditorState(true);
+            }
+
+            function createEditorTextOverlay(text, canvasX, canvasY, size) {
+                const el = document.createElement('div');
+                el.className = 'editor-text-obj';
+                el.textContent = text;
+                el.dataset.size = String(size);
+                const displaySize = Math.max(10, size * (editorCanvas.getBoundingClientRect().width / Math.max(editorCanvas.width, 1)) / Math.max(editorZoom, 0.01));
+                el.style.fontSize = `${displaySize}px`;
+                positionEditorTextOverlay(el, canvasX, canvasY);
+                editorCanvasWrapper.appendChild(el);
+                editorTextOverlays.push(el);
+
+                el.addEventListener('mousedown', (e) => {
+                    if (editorTool !== 'text') return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    hideEditorTextInput();
+                    selectedTextEl = el;
+                    editorTextOverlays.forEach(o => o.classList.toggle('selected', o === el));
+                    draggingTextEl = el;
+                    const pos = getEditorPointerPos(e);
+                    textDragOffsetX = pos.x - (parseFloat(el.dataset.x) || 0);
+                    textDragOffsetY = pos.y - (parseFloat(el.dataset.y) || 0);
+                });
+                return el;
+            }
+
+            function commitEditorText() {
+                if (!editorTextInput || !pendingTextPos) {
+                    hideEditorTextInput();
+                    return;
+                }
+                const text = editorTextInput.value.trim();
+                if (text) {
+                    createEditorTextOverlay(text, pendingTextPos.x, pendingTextPos.y, Math.max(12, textSize));
+                }
+                hideEditorTextInput();
+            }
+
+            function showEditorTextInput(pos) {
+                if (!editorTextInput || !editorCanvasWrapper) return;
+                selectedTextEl = null;
+                editorTextOverlays.forEach(o => o.classList.remove('selected'));
+                pendingTextPos = pos;
+                const left = (pos.x / Math.max(editorCanvas.width, 1)) * 100;
+                const top = (pos.y / Math.max(editorCanvas.height, 1)) * 100;
+                editorTextInput.style.left = `${left}%`;
+                editorTextInput.style.top = `${top}%`;
+                editorTextInput.style.fontSize = `${Math.max(12, Math.round(textSize / Math.max(editorZoom, 1)))}px`;
+                editorTextInput.value = '';
+                editorTextInput.style.display = 'block';
+                setTimeout(() => editorTextInput.focus(), 0);
+            }
+
+            function applyEditorStrokeStyle() {
+                editorCtx.lineCap = 'round';
+                editorCtx.lineJoin = 'round';
+                if (editorTool === 'eraser') {
+                    editorCtx.globalCompositeOperation = 'destination-out';
+                    editorCtx.lineWidth = eraserSize;
+                    editorCtx.strokeStyle = 'rgba(0,0,0,1)';
+                } else {
+                    editorCtx.globalCompositeOperation = 'source-over';
+                    editorCtx.lineWidth = brushSize;
+                    editorCtx.strokeStyle = '#000000';
+                    editorCtx.fillStyle = '#000000';
+                }
+            }
+
+            function setEditorTool(tool) {
+                hideEditorTextInput();
+                editorTool = tool;
+                quadPoints = [];
+                isPanning = false;
+                draggingTextEl = null;
+                document.querySelectorAll('.image-editor-toolbar [data-tool]').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.tool === tool);
+                });
+                editorCanvas.classList.toggle('cursor-pan', tool === 'pan');
+                applyEditorStrokeStyle();
+                syncSizeRailUI();
+                updateEditorHint();
+            }
+
+            document.querySelectorAll('.image-editor-toolbar [data-tool]').forEach(btn => {
+                btn.addEventListener('click', () => setEditorTool(btn.dataset.tool));
+            });
+            document.getElementById('editor-undo-btn').addEventListener('click', () => undoLastAction());
+            document.getElementById('editor-redo-btn').addEventListener('click', () => redoLastAction());
+
+            if (editorSizeSlider) {
+                editorSizeSlider.addEventListener('input', () => {
+                    setActiveToolSize(editorSizeSlider.value);
+                });
+            }
+
+            if (editorTextInput) {
+                editorTextInput.addEventListener('keydown', (e) => {
+                    e.stopPropagation();
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        commitEditorText();
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        hideEditorTextInput();
+                    }
+                });
+                editorTextInput.addEventListener('mousedown', (e) => e.stopPropagation());
+                editorTextInput.addEventListener('click', (e) => e.stopPropagation());
+                editorTextInput.addEventListener('blur', () => {
+                    setTimeout(() => {
+                        if (document.activeElement !== editorTextInput) {
+                            commitEditorText();
+                        }
+                    }, 120);
+                });
+            }
+
+            if (editorViewport) {
+                editorViewport.addEventListener('wheel', (e) => {
+                    if (!imageEditorModal || imageEditorModal.style.display === 'none') return;
+                    e.preventDefault();
+                    const direction = e.deltaY > 0 ? -1 : 1;
+                    const next = Math.round((editorZoom + direction * 0.15) * 100) / 100;
+                    editorZoom = Math.min(4, Math.max(0.5, next));
+                    applyEditorZoom();
+                }, { passive: false });
+            }
+
+            document.addEventListener('mousemove', (e) => {
+                if (isPanning && editorViewport) {
+                    e.preventDefault();
+                    editorViewport.scrollLeft = panScrollLeft - (e.clientX - panStartX);
+                    editorViewport.scrollTop = panScrollTop - (e.clientY - panStartY);
+                    return;
+                }
+                if (draggingTextEl) {
+                    e.preventDefault();
+                    const pos = getEditorPointerPos(e);
+                    positionEditorTextOverlay(
+                        draggingTextEl,
+                        pos.x - textDragOffsetX,
+                        pos.y - textDragOffsetY
+                    );
+                }
+            });
+            document.addEventListener('mouseup', () => {
+                isPanning = false;
+                draggingTextEl = null;
+            });
+
+            function getEditorPointerPos(e) {
+                const rect = editorCanvas.getBoundingClientRect();
+                const scaleX = editorCanvas.width / Math.max(rect.width, 1);
+                const scaleY = editorCanvas.height / Math.max(rect.height, 1);
+                const touch = e.touches?.[0] || e.changedTouches?.[0];
+                const clientX = e.clientX ?? touch?.clientX;
+                const clientY = e.clientY ?? touch?.clientY;
+                return {
+                    x: (clientX - rect.left) * scaleX,
+                    y: (clientY - rect.top) * scaleY
+                };
+            }
+
+            function restoreEditorLastState() {
+                if (!editorHistory.length) return;
+                editorCtx.putImageData(editorHistory[editorHistory.length - 1], 0, 0);
+            }
+
+            function drawEditorShape(tool, startX, startY, endX, endY) {
+                applyEditorStrokeStyle();
+                editorCtx.beginPath();
+                if (tool === 'line') {
+                    editorCtx.moveTo(startX, startY);
+                    editorCtx.lineTo(endX, endY);
+                    editorCtx.stroke();
+                } else if (tool === 'circle') {
+                    const radius = Math.hypot(endX - startX, endY - startY);
+                    editorCtx.arc(startX, startY, radius, 0, Math.PI * 2);
+                    editorCtx.stroke();
+                }
+            }
+
+            function drawQuadPath(points, closed = false) {
+                if (!points.length) return;
+                applyEditorStrokeStyle();
+                editorCtx.beginPath();
+                editorCtx.moveTo(points[0].x, points[0].y);
+                for (let i = 1; i < points.length; i++) {
+                    editorCtx.lineTo(points[i].x, points[i].y);
+                }
+                if (closed && points.length >= 3) editorCtx.closePath();
+                editorCtx.stroke();
+                points.forEach(p => {
+                    editorCtx.beginPath();
+                    editorCtx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+                    editorCtx.fill();
+                });
+            }
 
             function setupImageEditor(sourceCanvas) {
-                editorHistory = []; // Limpa o histórico
+                editorHistory = [];
+                editorRedoStack = [];
+                quadPoints = [];
+                clearEditorTextOverlays();
+                hideEditorTextInput();
+                setEditorTool('brush');
+                editorCtx.setTransform(1, 0, 0, 1, 0, 0);
                 editorCtx.clearRect(0, 0, editorCanvas.width, editorCanvas.height);
-                
-                // Desenha a imagem do canvas original no canvas do editor
-                editorCtx.drawImage(sourceCanvas, 0, 0, editorCanvas.width, editorCanvas.height);
-                saveEditorState(); // Salva o estado inicial
 
-                // Configurações do pincel
-                editorCtx.strokeStyle = 'black'; // Cor preta
-                editorCtx.lineWidth = 1;       // Pincel mais fino
-                ctx.lineCap = 'round';
+                if (sourceCanvas && sourceCanvas.width > 0 && sourceCanvas.height > 0) {
+                    editorCtx.imageSmoothingEnabled = true;
+                    editorCtx.imageSmoothingQuality = 'high';
+                    editorCtx.drawImage(sourceCanvas, 0, 0, editorCanvas.width, editorCanvas.height);
+                }
+                // Snapshot inicial no próximo frame para o modal abrir sem hitch
+                requestAnimationFrame(() => saveEditorState(false));
 
                 let isDrawing = false;
+                let startX = 0;
+                let startY = 0;
                 let lastX = 0;
                 let lastY = 0;
 
-                function draw(e) {
-                    if (!isDrawing) return;
-                    e.preventDefault();
-                    const rect = editorCanvas.getBoundingClientRect();
-                    const x = (e.clientX || e.touches[0].clientX) - rect.left;
-                    const y = (e.clientY || e.touches[0].clientY) - rect.top;
-
-                    editorCtx.beginPath();
-                    editorCtx.moveTo(lastX, lastY);
-                    editorCtx.lineTo(x, y);
-                    editorCtx.stroke();
-                    [lastX, lastY] = [x, y];
-                }
-
                 const startDrawing = (e) => {
+                    if (e.target === editorTextInput || e.target.closest?.('.editor-text-obj')) return;
+                    const pos = getEditorPointerPos(e);
+
+                    if (editorTool === 'pan') {
+                        e.preventDefault();
+                        isPanning = true;
+                        panStartX = e.clientX ?? e.touches?.[0]?.clientX ?? 0;
+                        panStartY = e.clientY ?? e.touches?.[0]?.clientY ?? 0;
+                        panScrollLeft = editorViewport ? editorViewport.scrollLeft : 0;
+                        panScrollTop = editorViewport ? editorViewport.scrollTop : 0;
+                        return;
+                    }
+
+                    if (editorTool === 'text') {
+                        e.preventDefault();
+                        showEditorTextInput(pos);
+                        return;
+                    }
+
+                    e.preventDefault();
+
+                    if (editorTool === 'quad') {
+                        quadPoints.push(pos);
+                        restoreEditorLastState();
+                        drawQuadPath(quadPoints, quadPoints.length === 4);
+                        updateEditorHint();
+                        if (quadPoints.length >= 4) {
+                            restoreEditorLastState();
+                            applyEditorStrokeStyle();
+                            editorCtx.beginPath();
+                            editorCtx.moveTo(quadPoints[0].x, quadPoints[0].y);
+                            editorCtx.lineTo(quadPoints[1].x, quadPoints[1].y);
+                            editorCtx.lineTo(quadPoints[2].x, quadPoints[2].y);
+                            editorCtx.lineTo(quadPoints[3].x, quadPoints[3].y);
+                            editorCtx.closePath();
+                            editorCtx.stroke();
+                            quadPoints = [];
+                            saveEditorState(true);
+                            updateEditorHint();
+                        }
+                        return;
+                    }
+
                     isDrawing = true;
-                    const rect = editorCanvas.getBoundingClientRect();
-                    [lastX, lastY] = [(e.clientX || e.touches[0].clientX) - rect.left, (e.clientY || e.touches[0].clientY) - rect.top];
+                    startX = lastX = pos.x;
+                    startY = lastY = pos.y;
+                    applyEditorStrokeStyle();
                 };
 
-                const stopDrawing = () => {
-                    if (isDrawing) {
-                        isDrawing = false;
-                        saveEditorState(); // Salva o estado após cada traço
+                const draw = (e) => {
+                    if (!isDrawing) return;
+                    e.preventDefault();
+                    const pos = getEditorPointerPos(e);
+
+                    if (editorTool === 'brush' || editorTool === 'eraser') {
+                        applyEditorStrokeStyle();
+                        editorCtx.beginPath();
+                        editorCtx.moveTo(lastX, lastY);
+                        editorCtx.lineTo(pos.x, pos.y);
+                        editorCtx.stroke();
+                        lastX = pos.x;
+                        lastY = pos.y;
+                    } else if (editorTool === 'line' || editorTool === 'circle') {
+                        restoreEditorLastState();
+                        drawEditorShape(editorTool, startX, startY, pos.x, pos.y);
                     }
+                };
+
+                const stopDrawing = (e) => {
+                    if (!isDrawing) return;
+                    isDrawing = false;
+                    if ((editorTool === 'line' || editorTool === 'circle') && e) {
+                        const pos = getEditorPointerPos(e);
+                        restoreEditorLastState();
+                        drawEditorShape(editorTool, startX, startY, pos.x, pos.y);
+                    }
+                    saveEditorState(true);
                 };
 
                 editorCanvas.onmousedown = startDrawing;
                 editorCanvas.onmousemove = draw;
                 editorCanvas.onmouseup = stopDrawing;
-                editorCanvas.onmouseout = stopDrawing;
+                editorCanvas.onmouseleave = () => {
+                    if (isDrawing && (editorTool === 'brush' || editorTool === 'eraser')) {
+                        isDrawing = false;
+                        saveEditorState(true);
+                    }
+                };
                 editorCanvas.ontouchstart = startDrawing;
                 editorCanvas.ontouchmove = draw;
                 editorCanvas.ontouchend = stopDrawing;
             }
 
-            function saveEditorState() {
-                editorHistory.push(editorCtx.getImageData(0, 0, editorCanvas.width, editorCanvas.height));
+            function saveEditorState(clearRedo = true) {
+                try {
+                    if (clearRedo) editorRedoStack = [];
+                    editorHistory.push(editorCtx.getImageData(0, 0, editorCanvas.width, editorCanvas.height));
+                    if (editorHistory.length > 20) editorHistory.shift();
+                } catch (err) {
+                    console.warn('Nao foi possivel salvar estado do editor:', err);
+                }
             }
 
             function undoLastAction() {
-                if (editorHistory.length > 1) { // Mantém sempre o estado inicial
-                    editorHistory.pop(); // Remove o estado atual
-                    editorCtx.putImageData(editorHistory[editorHistory.length - 1], 0, 0); // Restaura o anterior
+                hideEditorTextInput();
+                if (editorHistory.length > 1) {
+                    editorRedoStack.push(editorHistory.pop());
+                    editorCtx.putImageData(editorHistory[editorHistory.length - 1], 0, 0);
+                    quadPoints = [];
+                    updateEditorHint();
                 } else {
-                    showNotification("Não há mais ações para desfazer.", "error");
+                    showNotification('Não há mais traços para desfazer.', 'error');
                 }
             }
 
-            // Listener para o Ctrl+Z no modal
+            function redoLastAction() {
+                hideEditorTextInput();
+                if (editorRedoStack.length > 0) {
+                    const state = editorRedoStack.pop();
+                    editorHistory.push(state);
+                    editorCtx.putImageData(state, 0, 0);
+                    quadPoints = [];
+                    updateEditorHint();
+                } else {
+                    showNotification('Não há traços para refazer.', 'error');
+                }
+            }
+
             imageEditorModal.addEventListener('keydown', (e) => {
-                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+                if (e.target === editorTextInput) return;
+                if ((e.key === 'Delete' || e.key === 'Backspace') && editorTool === 'text' && selectedTextEl) {
+                    e.preventDefault();
+                    editorTextOverlays = editorTextOverlays.filter(el => el !== selectedTextEl);
+                    selectedTextEl.remove();
+                    selectedTextEl = null;
+                    return;
+                }
+                if (!(e.ctrlKey || e.metaKey)) return;
+                const key = e.key.toLowerCase();
+                if (key === 'z' && !e.shiftKey) {
                     e.preventDefault();
                     undoLastAction();
+                } else if (key === 'y' || (key === 'z' && e.shiftKey)) {
+                    e.preventDefault();
+                    redoLastAction();
                 }
             });
 
-            // Salva as alterações do editor de volta para o canvas da miniatura
             document.getElementById('save-image-changes-btn').addEventListener('click', () => {
-                const previewCanvas = currentImageWrapper.querySelector('.drawing-canvas');
-                const previewCtx = previewCanvas.getContext('2d');
-                previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-                previewCtx.drawImage(editorCanvas, 0, 0, previewCanvas.width, previewCanvas.height);
+                hideEditorTextInput();
+                bakeEditorTextOverlaysToCanvas();
+                if (!editingImageWrapper) {
+                    showNotification('Nenhuma imagem em edição.', 'error');
+                    return;
+                }
+                saveEditorDrawingToPreview(editingImageWrapper, editorCanvas);
                 markOrderDirty();
+                editingImageWrapper = null;
                 closeModal('image-editor-modal');
             });
 
@@ -8109,18 +9537,15 @@
             });
 
             document.getElementById('load-list').addEventListener('click', async (e) => {
-                const button = e.target;
-                const action = button.dataset.action; // load, fiscal, ou delete
+                const button = e.target.closest('button[data-action]');
+                if (!button) return;
+                const action = button.dataset.action; // load ou fiscal
                 if (!action) return;
 
-                const orderId = button.closest('.item-buttons').dataset.orderId;
+                const orderId = button.closest('.item-buttons')?.dataset.orderId;
                 if (!orderId) return;
 
-                if (action === 'delete') {
-                    orderIdToDelete = orderId; // Armazena o ID do orçamento a ser apagado
-                    document.getElementById('delete-single-password-modal').style.display = 'flex';
-                    document.getElementById('delete-single-password-input').focus();
-                } else if (action === 'load' || action === 'fiscal') {
+                if (action === 'load' || action === 'fiscal') {
                     try {
                         await loadSelectedOrder(orderId);
                         closeModal('load-modal');
@@ -8134,6 +9559,57 @@
                     }
                 }
             });
+
+            // Menu de contexto (botão direito) na lista de orçamentos: Imprimir / Apagar
+            const loadOrderContextMenu = document.getElementById('load-order-context-menu');
+            let loadContextOrderId = null;
+
+            const hideLoadOrderContextMenu = () => {
+                if (loadOrderContextMenu) loadOrderContextMenu.style.display = 'none';
+                loadContextOrderId = null;
+            };
+
+            document.getElementById('load-list').addEventListener('contextmenu', (e) => {
+                const listItem = e.target.closest('.load-list-item');
+                if (!listItem) {
+                    hideLoadOrderContextMenu();
+                    return;
+                }
+                e.preventDefault();
+                const orderId = listItem.dataset.orderId
+                    || listItem.querySelector('.item-buttons')?.dataset.orderId
+                    || listItem.querySelector('.selection-checkbox')?.dataset.orderId;
+                if (!orderId) return;
+
+                loadContextOrderId = orderId;
+                loadOrderContextMenu.style.top = `${e.clientY}px`;
+                loadOrderContextMenu.style.left = `${e.clientX}px`;
+                loadOrderContextMenu.style.display = 'block';
+            });
+
+            loadOrderContextMenu.addEventListener('click', async (e) => {
+                const actionBtn = e.target.closest('button[data-action]');
+                if (!actionBtn || !loadContextOrderId) return;
+                const action = actionBtn.dataset.action;
+                const orderId = loadContextOrderId;
+                hideLoadOrderContextMenu();
+
+                if (action === 'delete-order') {
+                    orderIdToDelete = orderId;
+                    document.getElementById('delete-single-password-modal').style.display = 'flex';
+                    document.getElementById('delete-single-password-input').focus();
+                } else if (action === 'print-order') {
+                    await printOrderFromLoadList(orderId);
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#load-order-context-menu')) {
+                    hideLoadOrderContextMenu();
+                }
+            });
+            document.getElementById('load-list').addEventListener('scroll', hideLoadOrderContextMenu, true);
+            document.getElementById('load-modal')?.addEventListener('scroll', hideLoadOrderContextMenu, true);
 
             // NOVO: Listener para o formulário de senha de exclusão única
             document.getElementById('delete-single-password-form').addEventListener('submit', deleteSingleOrder);
@@ -8279,15 +9755,18 @@
             }
         }
 
-        function editItem(button) {
-            const row = button.closest('.order-item');
+        function editOrderRow(row) {
+            if (!row) return;
             selectedRowToEdit = row;
             const productId = row.dataset.productId;
             const product = catalogoProdutos.find(p => p.id === productId);
-            currentEditingProduct = product; // CORREÇÃO: Define o produto que está sendo editado.
-            if (!product) return;
+            currentEditingProduct = product;
+            if (!product) {
+                showNotification('Produto do item não encontrado no catálogo.', 'error');
+                return;
+            }
 
-            button.closest('.options-menu').remove();
+            row.querySelector('.options-menu')?.remove();
 
             if (product.type === 'sob-medida' || product.type === 'toldo-completo') {
                 const scope = JSON.parse(row.dataset.scope || '{}');
@@ -8320,6 +9799,11 @@
                 document.getElementById('quantity-modal').style.display = 'flex';
                 quantityInput.focus();
             }
+        }
+
+        function editItem(button) {
+            const row = button.closest('.order-item');
+            editOrderRow(row);
         }
 
         function duplicateItem(button) {

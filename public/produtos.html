@@ -543,6 +543,211 @@
             font-weight: bold;
         }
 
+        #product-fiscal-fields {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #eee;
+        }
+        #product-fiscal-fields > h4 {
+            margin: 0 0 4px 0;
+            color: #333;
+        }
+        #product-fiscal-fields .fiscal-field-hint {
+            font-size: 0.85em;
+            color: #666;
+            margin: 0 0 10px 0;
+        }
+        .product-fiscal-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+        .product-fiscal-tab-btn {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            background: #e9ecef;
+            color: #495057;
+            cursor: pointer;
+            font-size: 0.88em;
+            transition: background 0.15s ease;
+        }
+        .product-fiscal-tab-btn:hover { background: #dee2e6; }
+        .product-fiscal-tab-btn.active {
+            background: #cce5ff;
+            color: #1a1a1a;
+            font-weight: 600;
+        }
+        .product-fiscal-pane { display: none; }
+        .product-fiscal-pane.active { display: block; }
+        .pf-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px 16px;
+        }
+        .pf-grid .pf-span-full { grid-column: 1 / -1; }
+        .pf-form-group label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .req-asterisk { color: #dc3545; }
+        .pf-help-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #6c757d;
+            color: #fff;
+            font-size: 0.7em;
+            cursor: help;
+        }
+        .pf-input-suffix, .pf-input-prefix {
+            display: flex;
+            align-items: stretch;
+        }
+        .pf-input-suffix input, .pf-input-prefix input { flex: 1; margin-bottom: 0 !important; border-radius: 5px 0 0 5px !important; }
+        .pf-input-suffix span, .pf-input-prefix span {
+            padding: 8px 10px;
+            background: #e9ecef;
+            border: 1px solid #ccc;
+            border-left: none;
+            border-radius: 0 5px 5px 0;
+            font-size: 0.85em;
+            color: #555;
+            white-space: nowrap;
+        }
+        .pf-input-prefix input { border-radius: 0 5px 5px 0 !important; border-left: none !important; }
+        .pf-input-prefix span { border-left: 1px solid #ccc; border-right: none; border-radius: 5px 0 0 5px; }
+        .pf-clear-wrap { display: flex; gap: 6px; align-items: stretch; }
+        .pf-clear-wrap input { flex: 1; margin-bottom: 0 !important; }
+        .pf-clear-btn {
+            padding: 0 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background: #f8f9fa;
+            cursor: pointer;
+            color: #666;
+        }
+        .pf-clear-btn:hover { background: #e9ecef; }
+        .pf-alert {
+            padding: 12px 14px;
+            background: #e8f4fd;
+            border: 1px solid #b8daff;
+            border-radius: 6px;
+            color: #004085;
+            font-style: italic;
+            font-size: 0.9em;
+            margin-bottom: 14px;
+        }
+        .pf-subsection {
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid #eee;
+        }
+        .pf-subsection h5 { margin: 0 0 10px 0; font-size: 0.95em; color: #444; }
+        .pf-collapsible { border: 1px solid #dee2e6; border-radius: 6px; margin-bottom: 10px; }
+        .pf-collapsible-header {
+            width: 100%;
+            text-align: left;
+            padding: 10px 14px;
+            background: #f8f9fa;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .pf-collapsible.open .pf-collapsible-header { border-radius: 6px 6px 0 0; }
+        .pf-collapsible-body { display: none; padding: 12px; }
+        .pf-collapsible.open .pf-collapsible-body { display: block; }
+        .pf-icms-rule {
+            position: relative;
+            padding: 12px;
+            padding-right: 36px;
+            margin-bottom: 10px;
+            background: #fafafa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+        }
+        .pf-icms-rule .pf-remove-rule {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: none;
+            border: none;
+            color: #dc3545;
+            font-size: 1.2em;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .pf-link-btn {
+            background: none;
+            border: none;
+            color: #007bff;
+            cursor: pointer;
+            padding: 0;
+            font-size: 0.9em;
+        }
+        .pf-link-btn:hover { text-decoration: underline; }
+        .pf-toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .pf-badge-toggle {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            background: #e9ecef;
+            color: #666;
+        }
+        .pf-badge-toggle.active { background: #d4edda; color: #155724; }
+        .pf-input-disabled { background: #e9ecef !important; color: #6c757d !important; }
+        .pf-autocomplete-wrap { position: relative; }
+        .pf-suggestions {
+            position: absolute;
+            z-index: 3000;
+            left: 0; right: 0;
+            max-height: 180px;
+            overflow-y: auto;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-top: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .pf-suggestions div { padding: 8px 10px; cursor: pointer; font-size: 0.88em; }
+        .pf-suggestions div:hover { background: #007bff; color: #fff; }
+        .pf-uf-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 10px;
+            align-items: end;
+            margin-bottom: 8px;
+            padding-right: 28px;
+            position: relative;
+        }
+        .pf-uf-row .pf-remove-uf {
+            position: absolute;
+            right: 0;
+            top: 28px;
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+            font-size: 1.1em;
+        }
+
         /* --- ESTILOS ESPECÍFICOS DE CADA MODAL --- */
         #add-product-form input,
         #add-product-form textarea,
@@ -1233,20 +1438,258 @@
                 </div>
 
                 <div id="product-fiscal-fields" class="form-group">
-                    <h4>Informações Fiscais Padrão</h4>
-                    <input type="text" id="productNcmInput" placeholder="0000.00.00" oninput="formatNCM(this)" maxlength="10">
-                    <select id="productCfopInput">
-                        <option value="" disabled selected>CFOP Padrão...</option>
-                    </select>
-                    <select id="productCsosnInput">
-                        <option value="" disabled selected>CSOSN Padrão (Simples Nacional)...</option>
-                    </select>
-                    <select id="productCstIcmsInput">
-                        <option value="" disabled selected>CST ICMS Padrão (Lucro Presumido/Real)...</option>
-                    </select>
-                    <select id="productCstIpiInput">
-                        <option value="" disabled selected>CST IPI Padrão...</option>
-                    </select>
+                    <h4>Tributos e dados fiscais</h4>
+                    <p class="fiscal-field-hint">Dados de natureza do produto. CFOP e demais informações da operação são definidos no lançamento fiscal da nota.</p>
+
+                    <div class="product-fiscal-tabs" id="product-fiscal-tabs">
+                        <button type="button" class="product-fiscal-tab-btn active" data-pf-tab="dados">Dados fiscais</button>
+                        <button type="button" class="product-fiscal-tab-btn" data-pf-tab="reforma">Reforma Tributária</button>
+                        <button type="button" class="product-fiscal-tab-btn" data-pf-tab="icms">ICMS</button>
+                        <button type="button" class="product-fiscal-tab-btn" data-pf-tab="ipi">IPI</button>
+                        <button type="button" class="product-fiscal-tab-btn" data-pf-tab="piscofins">PIS/COFINS</button>
+                        <button type="button" class="product-fiscal-tab-btn" data-pf-tab="petroleo">Derivados de petróleo</button>
+                    </div>
+
+                    <!-- ABA: Dados fiscais -->
+                    <div id="pf-pane-dados" class="product-fiscal-pane active">
+                        <div class="pf-grid">
+                            <div class="pf-form-group pf-span-full pf-autocomplete-wrap">
+                                <label for="productNcmInput">NCM <span class="req-asterisk">*</span></label>
+                                <input type="text" id="productNcmInput" placeholder="Busque ou digite o NCM..." autocomplete="off">
+                            </div>
+                            <div class="pf-form-group">
+                                <label for="productCestInput">CEST</label>
+                                <div class="pf-clear-wrap">
+                                    <input type="text" id="productCestInput" placeholder="Ex: 2806100" maxlength="7">
+                                    <button type="button" class="pf-clear-btn" id="productCestClearBtn" title="Limpar">✕</button>
+                                </div>
+                            </div>
+                            <div class="pf-form-group">
+                                <label for="productCeanInput">GTIN/EAN</label>
+                                <input type="text" id="productCeanInput" placeholder="Sem GTIN" maxlength="14">
+                            </div>
+                            <div class="pf-form-group pf-span-full">
+                                <label>Escala relevante</label>
+                                <div class="pf-toggle-row">
+                                    <span class="pf-badge-toggle" id="productEscalaBadge">Não</span>
+                                    <input type="checkbox" id="productEscalaRelevanteCheck" style="width: auto; margin: 0;">
+                                    <label for="productEscalaRelevanteCheck" style="margin: 0; font-weight: normal;">Produto fabricado em escala relevante</label>
+                                </div>
+                            </div>
+                            <div class="pf-form-group">
+                                <label for="productTipoInput">Tipo <span class="req-asterisk">*</span></label>
+                                <select id="productTipoInput">
+                                    <option value="00">Mercadoria para revenda</option>
+                                    <option value="01">Matéria-prima</option>
+                                    <option value="02">Embalagem</option>
+                                    <option value="03">Produto em processo</option>
+                                    <option value="04">Produto acabado</option>
+                                    <option value="05">Subproduto</option>
+                                    <option value="06">Produto intermediário</option>
+                                    <option value="07">Material de uso e consumo</option>
+                                    <option value="08">Ativo imobilizado</option>
+                                    <option value="09">Serviços</option>
+                                    <option value="10">Outros insumos</option>
+                                    <option value="99">Outras</option>
+                                </select>
+                            </div>
+                            <div class="pf-form-group">
+                                <label for="productPesoInput">Peso</label>
+                                <div class="pf-input-suffix">
+                                    <input type="text" id="productPesoInput" placeholder="0,000" inputmode="decimal">
+                                    <span>KG</span>
+                                </div>
+                            </div>
+                            <div class="pf-form-group">
+                                <label for="productOrigemInput">Origem <span class="req-asterisk">*</span></label>
+                                <select id="productOrigemInput">
+                                    <option value="0">0 - Nacional</option>
+                                    <option value="1">1 - Estrangeira (importação direta)</option>
+                                    <option value="2">2 - Estrangeira (mercado interno)</option>
+                                    <option value="3">3 - Nacional (&gt; 40% conteúdo importado)</option>
+                                    <option value="4">4 - Nacional (processos básicos)</option>
+                                    <option value="5">5 - Nacional (&lt; 40% conteúdo importado)</option>
+                                    <option value="6">6 - Estrangeira (importação direta, sem similar)</option>
+                                    <option value="7">7 - Estrangeira (mercado interno, sem similar)</option>
+                                    <option value="8">8 - Nacional (&gt; 70% conteúdo importado)</option>
+                                </select>
+                            </div>
+                            <div class="pf-form-group pf-span-full">
+                                <label for="productBeneficioInput">Benefício Fiscal <span class="pf-help-icon" title="Código ou descrição de benefício fiscal aplicável ao produto">?</span></label>
+                                <input type="text" id="productBeneficioInput" placeholder="Ex: cBenef ou descrição">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ABA: Reforma Tributária -->
+                    <div id="pf-pane-reforma" class="product-fiscal-pane">
+                        <div class="pf-alert">Importante! Em 2026, somente as empresas enquadradas no regime normal de tributação (CRT = 3) deverão preencher os campos relacionados à reforma tributária.</div>
+                        <div class="pf-grid">
+                            <div class="pf-form-group">
+                                <label for="productReformaCstInput">Situação Tributária (CST) do IBS e CBS</label>
+                                <select id="productReformaCstInput">
+                                    <option value="">Selecione</option>
+                                </select>
+                            </div>
+                            <div class="pf-form-group">
+                                <label for="productReformaClassInput">Classificação Tributária (cClassTrib)</label>
+                                <select id="productReformaClassInput">
+                                    <option value="">Selecione</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ABA: ICMS -->
+                    <div id="pf-pane-icms" class="product-fiscal-pane">
+                        <div class="pf-collapsible open" id="productIcmsRegrasPanel">
+                            <button type="button" class="pf-collapsible-header" id="productIcmsRegrasToggle">
+                                Regras especiais <span id="productIcmsRegrasChevron">▲</span>
+                            </button>
+                            <div class="pf-collapsible-body">
+                                <p class="fiscal-field-hint" style="margin-bottom: 10px;">Regras por origem, destino e tipo de cliente. Usadas no lançamento fiscal conforme o destinatário da nota.</p>
+                                <div id="product-icms-rules-list"></div>
+                                <button type="button" class="pf-link-btn" id="productAddIcmsRuleBtn">+ Adicionar nova regra</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ABA: IPI -->
+                    <div id="pf-pane-ipi" class="product-fiscal-pane">
+                        <div class="pf-grid">
+                            <div class="pf-form-group">
+                                <label for="productIpiCstInput">Situação tributária <span class="req-asterisk">*</span></label>
+                                <select id="productIpiCstInput">
+                                    <option value="" disabled selected>Selecione...</option>
+                                </select>
+                            </div>
+                            <div class="pf-form-group">
+                                <label for="productIpiEnqInput">Enquadramento de IPI <span class="req-asterisk">*</span></label>
+                                <select id="productIpiEnqInput">
+                                    <option value="999">999 - Tributação normal IPI; Outros</option>
+                                    <option value="001">001 - Entrada com recuperação de crédito</option>
+                                    <option value="002">002 - Entrada isenta</option>
+                                    <option value="003">003 - Entrada não-tributada</option>
+                                    <option value="004">004 - Entrada imune</option>
+                                    <option value="005">005 - Entrada com suspensão</option>
+                                </select>
+                            </div>
+                            <div class="pf-form-group">
+                                <label for="productAliqIpiInput">Alíquota IPI</label>
+                                <div class="pf-input-suffix">
+                                    <input type="text" id="productAliqIpiInput" placeholder="0,00" inputmode="decimal">
+                                    <span>%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ABA: PIS/COFINS -->
+                    <div id="pf-pane-piscofins" class="product-fiscal-pane">
+                        <div class="pf-subsection" style="margin-top: 0; padding-top: 0; border: none;">
+                            <h5>PIS / COFINS de saída</h5>
+                            <div class="pf-grid">
+                                <div class="pf-form-group pf-span-full">
+                                    <label style="font-weight: normal; display: flex; align-items: center; gap: 8px;">
+                                        <input type="checkbox" id="productPisCofinsPadraoCheck" checked style="width: auto; margin: 0;">
+                                        Utilizar a configuração padrão da minha empresa
+                                    </label>
+                                </div>
+                                <div class="pf-form-group">
+                                    <label for="productCstPisInput">Situação tributária <span class="req-asterisk">*</span></label>
+                                    <select id="productCstPisInput">
+                                        <option value="" disabled selected>Selecione...</option>
+                                    </select>
+                                </div>
+                                <div class="pf-form-group">
+                                    <label for="productAliqPisInput">Alíquota PIS</label>
+                                    <div class="pf-input-suffix">
+                                        <input type="text" id="productAliqPisInput" class="pf-input-disabled" placeholder="0,00" readonly>
+                                        <span>%</span>
+                                    </div>
+                                </div>
+                                <div class="pf-form-group">
+                                    <label for="productAliqCofinsInput">Alíquota Cofins</label>
+                                    <div class="pf-input-suffix">
+                                        <input type="text" id="productAliqCofinsInput" class="pf-input-disabled" placeholder="0,00" readonly>
+                                        <span>%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pf-subsection">
+                            <h5>PIS / COFINS de entrada</h5>
+                            <div class="pf-grid">
+                                <div class="pf-form-group">
+                                    <label for="productCstPisEntradaInput">Situação tributária</label>
+                                    <select id="productCstPisEntradaInput">
+                                        <option value="">Selecione</option>
+                                    </select>
+                                </div>
+                                <div class="pf-form-group">
+                                    <label for="productCstCofinsEntradaInput">Situação tributária COFINS</label>
+                                    <select id="productCstCofinsEntradaInput">
+                                        <option value="">Selecione</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ABA: Derivados de petróleo -->
+                    <div id="pf-pane-petroleo" class="product-fiscal-pane">
+                        <p class="fiscal-field-hint pf-span-full">Informe os campos abaixo com as informações exigidas pela SEFAZ para emissão de documentos fiscais de produtos relacionados ao gás natural.</p>
+                        <div class="pf-grid">
+                            <div class="pf-form-group">
+                                <label for="productAnpClassInput">Classificação ANP</label>
+                                <select id="productAnpClassInput">
+                                    <option value="">Selecione</option>
+                                    <option value="GLP">GLP - Gás liquefeito de petróleo</option>
+                                    <option value="GLGN">GLGN - Gás liquefeito de gás natural</option>
+                                    <option value="GN">GN - Gás natural</option>
+                                </select>
+                            </div>
+                            <div class="pf-form-group">
+                                <label for="productAnpValorPartidaInput">Valor de partida</label>
+                                <div class="pf-input-prefix">
+                                    <span>R$</span>
+                                    <input type="text" id="productAnpValorPartidaInput" placeholder="0,00" oninput="formatarValorMonetario(this)">
+                                </div>
+                            </div>
+                            <div class="pf-form-group">
+                                <label for="productAnpAliqAdRemInput">Alíquota ad rem</label>
+                                <div class="pf-input-suffix">
+                                    <input type="text" id="productAnpAliqAdRemInput" placeholder="0,0000" inputmode="decimal">
+                                    <span>%</span>
+                                </div>
+                            </div>
+                            <div class="pf-form-group">
+                                <label for="productAnpPctGlpInput">Percentual de GLP</label>
+                                <div class="pf-input-suffix">
+                                    <input type="text" id="productAnpPctGlpInput" placeholder="0,0000" inputmode="decimal">
+                                    <span>%</span>
+                                </div>
+                            </div>
+                            <div class="pf-form-group">
+                                <label for="productAnpPctGlgnnInput">Percentual de GLGNn</label>
+                                <div class="pf-input-suffix">
+                                    <input type="text" id="productAnpPctGlgnnInput" placeholder="0,0000" inputmode="decimal">
+                                    <span>%</span>
+                                </div>
+                            </div>
+                            <div class="pf-form-group">
+                                <label for="productAnpPctGlgniInput">Percentual de GLGNi</label>
+                                <div class="pf-input-suffix">
+                                    <input type="text" id="productAnpPctGlgniInput" placeholder="0,0000" inputmode="decimal">
+                                    <span>%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pf-subsection">
+                            <div id="product-anp-ufs-list"></div>
+                            <button type="button" class="pf-link-btn" id="productAddAnpUfBtn">+ Adicionar mais uma UF</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="stock-management-section">
@@ -1625,7 +2068,7 @@
             // Se já carregou, não faz nada
             if (Object.keys(fiscalDataSources).length > 0) return;
             try {
-                const collectionsToFetch = ['cfop', 'csosn', 'cst_icms', 'cst_ipi'];
+                const collectionsToFetch = ['ncm', 'csosn', 'cst_icms', 'cst_ipi', 'cst_pis_cofins', 'cst_ibs_cbs', 'cclass_trib'];
                 const promises = collectionsToFetch.map(coll => db.collection('dados_fiscais').doc(coll).get());
                 const results = await Promise.all(promises);
 
@@ -1677,10 +2120,33 @@
                         custo: data.custo || 0, // Carrega o valor de custo
                         estoque: data.estoque, // Pode ser um número (antigo) ou um objeto (novo)
                         ncm: data.ncm || '',
-                        cfop: data.cfop || '',
+                        cest: data.cest || '',
+                        cean: data.cean || '',
+                        escalaRelevante: !!data.escalaRelevante,
+                        tipoProduto: data.tipoProduto || '00',
+                        pesoKg: data.pesoKg || 0,
+                        origem: data.origem != null ? data.origem : 0,
+                        beneficioFiscal: data.beneficioFiscal || '',
+                        reformaCstIbsCbs: data.reformaCstIbsCbs || '',
+                        reformaCClassTrib: data.reformaCClassTrib || '',
+                        icmsRegras: data.icmsRegras || [],
+                        ipiCst: data.ipiCst || data.cstIpi || '',
+                        ipiEnquadramento: data.ipiEnquadramento || '999',
+                        aliqIpi: data.aliqIpi || 0,
+                        pisCofinsSaidaUsarPadrao: data.pisCofinsSaidaUsarPadrao !== false,
+                        pisCofinsSaidaCst: data.pisCofinsSaidaCst || data.cstPis || '',
+                        pisCofinsEntradaCst: data.pisCofinsEntradaCst || '',
+                        pisCofinsEntradaCofinsCst: data.pisCofinsEntradaCofinsCst || '',
+                        aliqPis: data.aliqPis || 0,
+                        aliqCofins: data.aliqCofins || 0,
+                        derivadosPetroleo: data.derivadosPetroleo || null,
+                        // legado (migração)
                         csosn: data.csosn || '',
                         cstIcms: data.cstIcms || '',
-                        cstIpi: data.cstIpi || '',                        
+                        cstIpi: data.cstIpi || '',
+                        cstPis: data.cstPis || '',
+                        cstCofins: data.cstCofins || '',
+                        aliqIcms: data.aliqIcms || 0,
                         composition: data.composition || [],
                         bundleItems: data.bundleItems || [],
                         variants: data.variants || [],
@@ -1715,6 +2181,331 @@
                     selectElement.appendChild(option);
                 });
             }
+        }
+
+        const BR_UFS = ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO'];
+        const TIPO_CLIENTE_ICMS = [
+            { value: '', label: 'Selecione' },
+            { value: 'consumidor_final', label: 'Consumidor final' },
+            { value: 'contribuinte', label: 'Contribuinte ICMS' },
+            { value: 'nao_contribuinte', label: 'Não contribuinte' },
+            { value: 'produtor_rural', label: 'Produtor rural' },
+            { value: 'orgao_publico', label: 'Órgão público' }
+        ];
+
+        function initProductFiscalTabs() {
+            const tabs = document.getElementById('product-fiscal-tabs');
+            if (!tabs || tabs.dataset.bound) return;
+            tabs.dataset.bound = '1';
+            tabs.addEventListener('click', (e) => {
+                const btn = e.target.closest('.product-fiscal-tab-btn');
+                if (!btn) return;
+                const tab = btn.dataset.pfTab;
+                tabs.querySelectorAll('.product-fiscal-tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+                document.querySelectorAll('.product-fiscal-pane').forEach(p => p.classList.remove('active'));
+                const pane = document.getElementById(`pf-pane-${tab}`);
+                if (pane) pane.classList.add('active');
+            });
+
+            document.getElementById('productCestClearBtn')?.addEventListener('click', () => {
+                document.getElementById('productCestInput').value = '';
+            });
+            document.getElementById('productEscalaRelevanteCheck')?.addEventListener('change', updateEscalaRelevanteBadge);
+            document.getElementById('productPisCofinsPadraoCheck')?.addEventListener('change', togglePisCofinsPadraoFields);
+            document.getElementById('productIcmsRegrasToggle')?.addEventListener('click', () => {
+                const panel = document.getElementById('productIcmsRegrasPanel');
+                const open = panel.classList.toggle('open');
+                document.getElementById('productIcmsRegrasChevron').textContent = open ? '▲' : '▼';
+            });
+            document.getElementById('productAddIcmsRuleBtn')?.addEventListener('click', () => addProductIcmsRule());
+            document.getElementById('productAddAnpUfBtn')?.addEventListener('click', () => addProductAnpUfRow());
+            setupProductFiscalAutocomplete(document.getElementById('productNcmInput'), 'ncm');
+        }
+
+        function updateEscalaRelevanteBadge() {
+            const check = document.getElementById('productEscalaRelevanteCheck');
+            const badge = document.getElementById('productEscalaBadge');
+            if (!check || !badge) return;
+            const on = check.checked;
+            badge.textContent = on ? 'Sim' : 'Não';
+            badge.classList.toggle('active', on);
+        }
+
+        function togglePisCofinsPadraoFields() {
+            const usarPadrao = document.getElementById('productPisCofinsPadraoCheck')?.checked;
+            ['productAliqPisInput', 'productAliqCofinsInput'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.readOnly = usarPadrao;
+                el.classList.toggle('pf-input-disabled', usarPadrao);
+                if (usarPadrao) el.value = '0,00';
+            });
+            const cstPis = document.getElementById('productCstPisInput');
+            if (cstPis) cstPis.disabled = usarPadrao;
+        }
+
+        function setupProductFiscalAutocomplete(input, dataSourceKey) {
+            if (!input || input.dataset.autocompleteBound) return;
+            input.dataset.autocompleteBound = '1';
+            const dataSource = fiscalDataSources[dataSourceKey];
+            if (!dataSource) return;
+            let suggestionsContainer;
+            input.addEventListener('input', () => {
+                const value = input.value.toLowerCase();
+                if (suggestionsContainer) suggestionsContainer.remove();
+                if (!value.trim()) return;
+                const filtered = dataSource.filter(item =>
+                    item.code.toLowerCase().includes(value) || (item.desc || '').toLowerCase().includes(value)
+                ).slice(0, 20);
+                if (!filtered.length) return;
+                suggestionsContainer = document.createElement('div');
+                suggestionsContainer.className = 'pf-suggestions';
+                input.parentElement.appendChild(suggestionsContainer);
+                filtered.forEach(item => {
+                    const div = document.createElement('div');
+                    div.textContent = `${item.code} - ${item.desc || ''}`;
+                    div.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        input.value = `${item.code} - ${item.desc || ''}`;
+                        input.dataset.code = item.code;
+                        suggestionsContainer.remove();
+                        suggestionsContainer = null;
+                    });
+                    suggestionsContainer.appendChild(div);
+                });
+            });
+            input.addEventListener('blur', () => setTimeout(() => suggestionsContainer?.remove(), 150));
+        }
+
+        function buildUfSelectOptions(selected = '') {
+            return ['<option value="">Selecione</option>']
+                .concat(BR_UFS.map(uf => `<option value="${uf}"${uf === selected ? ' selected' : ''}>${uf}</option>`))
+                .join('');
+        }
+
+        function addProductIcmsRule(rule = {}) {
+            const list = document.getElementById('product-icms-rules-list');
+            if (!list) return;
+            const ruleId = rule.id || `rule-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+            const isSimples = fiscalConfig.regime === 'simples';
+            const isLucro = fiscalConfig.regime === 'presumido' || fiscalConfig.regime === 'real';
+            const div = document.createElement('div');
+            div.className = 'pf-icms-rule';
+            div.dataset.ruleId = ruleId;
+            div.innerHTML = `
+                <button type="button" class="pf-remove-rule" title="Remover regra">✕</button>
+                <div class="pf-grid">
+                    <div class="pf-form-group">
+                        <label>Origem <span class="req-asterisk">*</span></label>
+                        <select class="icms-rule-origem">${buildUfSelectOptions(rule.origemUf || '')}</select>
+                    </div>
+                    <div class="pf-form-group">
+                        <label>Destino <span class="req-asterisk">*</span></label>
+                        <select class="icms-rule-destino">${buildUfSelectOptions(rule.destinoUf || '')}</select>
+                    </div>
+                    <div class="pf-form-group">
+                        <label>Tipo de cliente <span class="req-asterisk">*</span></label>
+                        <select class="icms-rule-tipo-cliente">
+                            ${TIPO_CLIENTE_ICMS.map(o => `<option value="${o.value}"${o.value === (rule.tipoCliente || '') ? ' selected' : ''}>${o.label}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="pf-form-group icms-rule-cst-wrap" style="display:${isLucro ? '' : 'none'}">
+                        <label>Situação tributária (CST) <span class="req-asterisk">*</span></label>
+                        <select class="icms-rule-cst"></select>
+                    </div>
+                    <div class="pf-form-group icms-rule-csosn-wrap pf-span-full" style="display:${isSimples ? '' : 'none'}">
+                        <label>CSOSN <span class="req-asterisk">*</span></label>
+                        <select class="icms-rule-csosn"></select>
+                    </div>
+                    <div class="pf-form-group">
+                        <label>Alíq. ICMS (%)</label>
+                        <input type="text" class="icms-rule-aliq" placeholder="0,00" value="${rule.aliqIcms != null ? String(rule.aliqIcms).replace('.', ',') : ''}">
+                    </div>
+                </div>`;
+            list.appendChild(div);
+            populateSelectWithOptions(div.querySelector('.icms-rule-cst'), fiscalDataSources.cst_icms, 'code', 'desc', 'Selecione');
+            populateSelectWithOptions(div.querySelector('.icms-rule-csosn'), fiscalDataSources.csosn, 'code', 'desc', 'Selecione');
+            if (rule.cst) div.querySelector('.icms-rule-cst').value = rule.cst;
+            if (rule.csosn) div.querySelector('.icms-rule-csosn').value = rule.csosn;
+            div.querySelector('.pf-remove-rule').addEventListener('click', () => div.remove());
+        }
+
+        function addProductAnpUfRow(row = {}) {
+            const list = document.getElementById('product-anp-ufs-list');
+            if (!list) return;
+            const div = document.createElement('div');
+            div.className = 'pf-uf-row';
+            div.innerHTML = `
+                <div class="pf-form-group">
+                    <label>UF de origem <span class="pf-help-icon" title="UF de origem do produto para cálculo proporcional">?</span></label>
+                    <select class="anp-uf-select">${buildUfSelectOptions(row.uf || '')}</select>
+                </div>
+                <div class="pf-form-group">
+                    <label>Percentual para a UF</label>
+                    <div class="pf-input-suffix">
+                        <input type="text" class="anp-uf-pct" placeholder="0,00" value="${row.percentual != null ? String(row.percentual).replace('.', ',') : ''}">
+                        <span>%</span>
+                    </div>
+                </div>
+                <button type="button" class="pf-remove-uf" title="Remover">✕</button>`;
+            div.querySelector('.pf-remove-uf').addEventListener('click', () => div.remove());
+            list.appendChild(div);
+        }
+
+        function migrateLegacyIcmsRules(product) {
+            if (product.icmsRegras && product.icmsRegras.length) return product.icmsRegras;
+            if (product.csosn || product.cstIcms || product.aliqIcms) {
+                return [{
+                    id: 'legacy',
+                    origemUf: '',
+                    destinoUf: '',
+                    tipoCliente: '',
+                    cst: product.cstIcms || '',
+                    csosn: product.csosn || '',
+                    aliqIcms: product.aliqIcms || 0
+                }];
+            }
+            return [];
+        }
+
+        function applyRegimeFiscalVisibility() {
+            const isSimples = fiscalConfig.regime === 'simples';
+            const isLucro = fiscalConfig.regime === 'presumido' || fiscalConfig.regime === 'real';
+            document.querySelectorAll('#product-icms-rules-list .pf-icms-rule').forEach(ruleEl => {
+                const cstWrap = ruleEl.querySelector('.icms-rule-cst-wrap');
+                const csosnWrap = ruleEl.querySelector('.icms-rule-csosn-wrap');
+                if (cstWrap) cstWrap.style.display = isLucro ? '' : 'none';
+                if (csosnWrap) csosnWrap.style.display = isSimples ? '' : 'none';
+            });
+            const ipiCst = document.getElementById('productIpiCstInput');
+            if (ipiCst) ipiCst.required = isLucro || fiscalConfig.regime === 'simples';
+        }
+
+        function extractFiscalCode(value) {
+            if (!value) return '';
+            const str = String(value).trim();
+            const match = str.match(/^(\d+)/);
+            return match ? match[1] : str;
+        }
+
+        function fillProductFiscalForm(product = {}) {
+            initProductFiscalTabs();
+            document.getElementById('productNcmInput').value = product.ncm || '';
+            document.getElementById('productNcmInput').dataset.code = extractFiscalCode(product.ncm);
+            document.getElementById('productCestInput').value = product.cest || '';
+            document.getElementById('productCeanInput').value = product.cean || '';
+            document.getElementById('productEscalaRelevanteCheck').checked = !!product.escalaRelevante;
+            updateEscalaRelevanteBadge();
+            document.getElementById('productTipoInput').value = product.tipoProduto || '00';
+            document.getElementById('productPesoInput').value = product.pesoKg
+                ? Number(product.pesoKg).toFixed(3).replace('.', ',') : '';
+            document.getElementById('productOrigemInput').value = product.origem != null ? String(product.origem) : '0';
+            document.getElementById('productBeneficioInput').value = product.beneficioFiscal || '';
+            document.getElementById('productReformaCstInput').value = product.reformaCstIbsCbs || '';
+            document.getElementById('productReformaClassInput').value = product.reformaCClassTrib || '';
+
+            const rulesList = document.getElementById('product-icms-rules-list');
+            rulesList.innerHTML = '';
+            const rules = migrateLegacyIcmsRules(product);
+            if (rules.length) rules.forEach(r => addProductIcmsRule(r));
+            else addProductIcmsRule();
+
+            document.getElementById('productIpiCstInput').value = product.ipiCst || product.cstIpi || '99';
+            document.getElementById('productIpiEnqInput').value = product.ipiEnquadramento || '999';
+            document.getElementById('productAliqIpiInput').value = product.aliqIpi
+                ? Number(product.aliqIpi).toFixed(2).replace('.', ',') : '';
+
+            document.getElementById('productPisCofinsPadraoCheck').checked = product.pisCofinsSaidaUsarPadrao !== false;
+            document.getElementById('productCstPisInput').value = product.pisCofinsSaidaCst || product.cstPis || '99';
+            document.getElementById('productAliqPisInput').value = product.aliqPis
+                ? Number(product.aliqPis).toFixed(2).replace('.', ',') : '0,00';
+            document.getElementById('productAliqCofinsInput').value = product.aliqCofins
+                ? Number(product.aliqCofins).toFixed(2).replace('.', ',') : '0,00';
+            document.getElementById('productCstPisEntradaInput').value = product.pisCofinsEntradaCst || '';
+            document.getElementById('productCstCofinsEntradaInput').value = product.pisCofinsEntradaCofinsCst || '';
+            togglePisCofinsPadraoFields();
+
+            const dp = product.derivadosPetroleo || {};
+            document.getElementById('productAnpClassInput').value = dp.classificacaoAnp || '';
+            document.getElementById('productAnpValorPartidaInput').value = dp.valorPartida
+                ? Number(dp.valorPartida).toFixed(2).replace('.', ',') : '';
+            document.getElementById('productAnpAliqAdRemInput').value = dp.aliqAdRem != null ? String(dp.aliqAdRem).replace('.', ',') : '';
+            document.getElementById('productAnpPctGlpInput').value = dp.pctGlp != null ? String(dp.pctGlp).replace('.', ',') : '';
+            document.getElementById('productAnpPctGlgnnInput').value = dp.pctGlgnn != null ? String(dp.pctGlgnn).replace('.', ',') : '';
+            document.getElementById('productAnpPctGlgniInput').value = dp.pctGlgni != null ? String(dp.pctGlgni).replace('.', ',') : '';
+            const ufsList = document.getElementById('product-anp-ufs-list');
+            ufsList.innerHTML = '';
+            (dp.ufs || []).forEach(u => addProductAnpUfRow(u));
+
+            document.querySelector('#product-fiscal-tabs .product-fiscal-tab-btn[data-pf-tab="dados"]')?.click();
+            applyRegimeFiscalVisibility();
+        }
+
+        function collectProductIcmsRules() {
+            return Array.from(document.querySelectorAll('#product-icms-rules-list .pf-icms-rule')).map(el => ({
+                id: el.dataset.ruleId,
+                origemUf: el.querySelector('.icms-rule-origem')?.value || '',
+                destinoUf: el.querySelector('.icms-rule-destino')?.value || '',
+                tipoCliente: el.querySelector('.icms-rule-tipo-cliente')?.value || '',
+                cst: el.querySelector('.icms-rule-cst')?.value || '',
+                csosn: el.querySelector('.icms-rule-csosn')?.value || '',
+                aliqIcms: parseFloat((el.querySelector('.icms-rule-aliq')?.value || '0').replace(',', '.')) || 0
+            }));
+        }
+
+        function collectProductFiscalFields() {
+            const ncmInput = document.getElementById('productNcmInput');
+            const ncmCode = ncmInput.dataset.code || extractFiscalCode(ncmInput.value);
+            const ncmDisplay = ncmInput.value.trim() || ncmCode;
+            const dpUfs = Array.from(document.querySelectorAll('#product-anp-ufs-list .pf-uf-row')).map(row => ({
+                uf: row.querySelector('.anp-uf-select')?.value || '',
+                percentual: parseFloat((row.querySelector('.anp-uf-pct')?.value || '0').replace(',', '.')) || 0
+            })).filter(u => u.uf);
+
+            const derivadosPetroleo = {
+                classificacaoAnp: document.getElementById('productAnpClassInput').value,
+                valorPartida: parseFloat(document.getElementById('productAnpValorPartidaInput').value.replace(/\./g, '').replace(',', '.')) || 0,
+                aliqAdRem: parseFloat((document.getElementById('productAnpAliqAdRemInput').value || '0').replace(',', '.')) || 0,
+                pctGlp: parseFloat((document.getElementById('productAnpPctGlpInput').value || '0').replace(',', '.')) || 0,
+                pctGlgnn: parseFloat((document.getElementById('productAnpPctGlgnnInput').value || '0').replace(',', '.')) || 0,
+                pctGlgni: parseFloat((document.getElementById('productAnpPctGlgniInput').value || '0').replace(',', '.')) || 0,
+                ufs: dpUfs
+            };
+            const hasDerivados = derivadosPetroleo.classificacaoAnp || derivadosPetroleo.valorPartida || dpUfs.length;
+
+            const icmsRegras = collectProductIcmsRules();
+            const firstRule = icmsRegras[0] || {};
+
+            return {
+                ncm: ncmDisplay,
+                cest: document.getElementById('productCestInput').value.trim(),
+                cean: document.getElementById('productCeanInput').value.trim(),
+                escalaRelevante: document.getElementById('productEscalaRelevanteCheck').checked,
+                tipoProduto: document.getElementById('productTipoInput').value,
+                pesoKg: parseFloat((document.getElementById('productPesoInput').value || '0').replace(',', '.')) || 0,
+                origem: document.getElementById('productOrigemInput').value,
+                beneficioFiscal: document.getElementById('productBeneficioInput').value.trim(),
+                reformaCstIbsCbs: document.getElementById('productReformaCstInput').value,
+                reformaCClassTrib: document.getElementById('productReformaClassInput').value,
+                icmsRegras,
+                ipiCst: document.getElementById('productIpiCstInput').value.trim(),
+                ipiEnquadramento: document.getElementById('productIpiEnqInput').value,
+                aliqIpi: parseFloat((document.getElementById('productAliqIpiInput').value || '0').replace(',', '.')) || 0,
+                pisCofinsSaidaUsarPadrao: document.getElementById('productPisCofinsPadraoCheck').checked,
+                pisCofinsSaidaCst: document.getElementById('productCstPisInput').value.trim(),
+                pisCofinsEntradaCst: document.getElementById('productCstPisEntradaInput').value.trim(),
+                pisCofinsEntradaCofinsCst: document.getElementById('productCstCofinsEntradaInput').value.trim(),
+                aliqPis: parseFloat((document.getElementById('productAliqPisInput').value || '0').replace(',', '.')) || 0,
+                aliqCofins: parseFloat((document.getElementById('productAliqCofinsInput').value || '0').replace(',', '.')) || 0,
+                derivadosPetroleo: hasDerivados ? derivadosPetroleo : null,
+                // compatibilidade com lançamento fiscal legado
+                csosn: firstRule.csosn || '',
+                cstIcms: firstRule.cst || '',
+                cstIpi: document.getElementById('productIpiCstInput').value.trim(),
+                cstPis: document.getElementById('productCstPisInput').value.trim(),
+                cstCofins: document.getElementById('productCstPisInput').value.trim(),
+                aliqIcms: firstRule.aliqIcms || 0
+            };
         }
 
         function getImageLinkLabel(imageType) {
@@ -2001,10 +2792,18 @@
             let productType = 'simples'; // Padrão para novo produto
 
             // Popula os selects fiscais
-            populateSelectWithOptions(document.getElementById('productCfopInput'), fiscalDataSources.cfop, 'code', 'desc', 'CFOP Padrão...');
-            populateSelectWithOptions(document.getElementById('productCsosnInput'), fiscalDataSources.csosn, 'code', 'desc', 'CSOSN Padrão...');
-            populateSelectWithOptions(document.getElementById('productCstIcmsInput'), fiscalDataSources.cst_icms, 'code', 'desc', 'CST ICMS Padrão...');
-            populateSelectWithOptions(document.getElementById('productCstIpiInput'), fiscalDataSources.cst_ipi, 'code', 'desc', 'CST IPI Padrão...');
+            populateSelectWithOptions(document.getElementById('productIpiCstInput'), fiscalDataSources.cst_ipi, 'code', 'desc', 'Selecione...');
+            populateSelectWithOptions(document.getElementById('productCstPisInput'), fiscalDataSources.cst_pis_cofins, 'code', 'desc', 'Selecione...');
+            populateSelectWithOptions(document.getElementById('productCstPisEntradaInput'), fiscalDataSources.cst_pis_cofins, 'code', 'desc', 'Selecione');
+            populateSelectWithOptions(document.getElementById('productCstCofinsEntradaInput'), fiscalDataSources.cst_pis_cofins, 'code', 'desc', 'Selecione');
+            if (fiscalDataSources.cst_ibs_cbs) {
+                populateSelectWithOptions(document.getElementById('productReformaCstInput'), fiscalDataSources.cst_ibs_cbs, 'code', 'desc', 'Selecione');
+            }
+            if (fiscalDataSources.cclass_trib) {
+                populateSelectWithOptions(document.getElementById('productReformaClassInput'), fiscalDataSources.cclass_trib, 'code', 'desc', 'Selecione');
+            }
+            initProductFiscalTabs();
+            applyRegimeFiscalVisibility();
 
             if (productId) { // Modo Edição
                 title.textContent = 'Editar Produto';
@@ -2037,11 +2836,7 @@
                 document.getElementById('productPriceVarejoInput').value = product.precoVarejo.toFixed(2).replace('.', ',');
                 document.getElementById('productPriceMinimoInput').value = (product.precoMinimo || 0).toFixed(2).replace('.', ',');
                 document.getElementById('productCustoInput').value = (product.custo || 0).toFixed(2).replace('.', ',');
-                document.getElementById('productNcmInput').value = product.ncm || '';
-                document.getElementById('productCfopInput').value = product.cfop || '';
-                document.getElementById('productCsosnInput').value = product.csosn || '';
-                document.getElementById('productCstIcmsInput').value = product.cstIcms || '';
-                document.getElementById('productCstIpiInput').value = product.cstIpi || '';
+                fillProductFiscalForm(product);
 
                 // Verifica se o produto usa o sistema de agrupamento
                 const usaAgrupamento = product.agrupamento && product.agrupamento.nome;
@@ -2123,7 +2918,7 @@
                     }
                 }
                 document.getElementById('productCodeInput').value = newCode;
-
+                fillProductFiscalForm({});
 
             }
 
@@ -2212,15 +3007,8 @@
                 ...fiscalFields.querySelectorAll('select')
             ].forEach(el => { if (el) el.required = false; });
 
-            // Esconde os campos fiscais específicos por padrão
-            const cfopInput = document.getElementById('productCfopInput');
-            const csosnInput = document.getElementById('productCsosnInput');
-            const cstIcmsInput = document.getElementById('productCstIcmsInput');
-            const cstIpiInput = document.getElementById('productCstIpiInput');
-            csosnInput.style.display = 'none';
-            cfopInput.style.display = 'block'; // CFOP é sempre visível
-            cstIcmsInput.style.display = 'none';
-            cstIpiInput.style.display = 'none';
+            // Esconde os campos fiscais específicos por regime (reaplicado ao exibir a seção)
+            applyRegimeFiscalVisibility();
 
             if (type === 'simples' || type === 'kit-item') {
                 unitField.style.display = 'block';
@@ -2263,18 +3051,9 @@
                 document.getElementById('productPriceAtacadoInput').required = true;
                 document.getElementById('productPriceVarejoInput').required = true;
                 document.getElementById('productNcmInput').required = true;
-                cfopInput.required = true;
-
-                // Mostra e torna obrigatório o campo fiscal correto com base no regime
-                if (fiscalConfig.regime === 'simples') {
-                    csosnInput.style.display = 'block';
-                    csosnInput.required = true;
-                } else if (fiscalConfig.regime === 'presumido' || fiscalConfig.regime === 'real') {
-                    cstIcmsInput.style.display = 'block';
-                    cstIpiInput.style.display = 'block';
-                    cstIcmsInput.required = true;
-                    cstIpiInput.required = true;
-                }
+                document.getElementById('productTipoInput').required = true;
+                document.getElementById('productOrigemInput').required = true;
+                applyRegimeFiscalVisibility();
             } else if (type === 'kit') {
                 descField.style.display = 'block';
                 priceFields.style.display = 'flex';
@@ -2321,18 +3100,9 @@
                 // Define campos obrigatórios
                 document.getElementById('productDescInput').required = true;
                 document.getElementById('productNcmInput').required = true;
-                cfopInput.required = true;
-
-                // Mostra e torna obrigatório o campo fiscal correto com base no regime
-                if (fiscalConfig.regime === 'simples') {
-                    csosnInput.style.display = 'block';
-                    csosnInput.required = true;
-                } else if (fiscalConfig.regime === 'presumido' || fiscalConfig.regime === 'real') {
-                    cstIcmsInput.style.display = 'block';
-                    cstIpiInput.style.display = 'block';
-                    cstIcmsInput.required = true;
-                    cstIpiInput.required = true;
-                }
+                document.getElementById('productTipoInput').required = true;
+                document.getElementById('productOrigemInput').required = true;
+                applyRegimeFiscalVisibility();
             } else if (type === 'personalizado') {
                 // Mostra campos básicos que são sempre necessários
                 unitField.style.display = 'block';
@@ -2352,9 +3122,9 @@
                 document.getElementById('productPriceAtacadoInput').required = true;
                 document.getElementById('productPriceVarejoInput').required = true;
                 document.getElementById('productNcmInput').required = true;
-                cfopInput.required = true;
-
-                // Lógica fiscal já tratada em outros tipos, pode ser reutilizada se necessário
+                document.getElementById('productTipoInput').required = true;
+                document.getElementById('productOrigemInput').required = true;
+                applyRegimeFiscalVisibility();
                 updateConfigButtonsState();
             }
         }
@@ -2805,7 +3575,12 @@
                 codigo: document.getElementById('productCodeInput').value,
                 type: productType,
                 unidade: null, descricao: null, precoAtacado: 0, precoVarejo: 0, estoque: null,
-                ncm: null, cfop: null, csosn: null, cstIcms: null, cstIpi: null,
+                ncm: null, cest: null, cean: null, escalaRelevante: false, tipoProduto: '00', pesoKg: 0,
+                origem: 0, beneficioFiscal: '', reformaCstIbsCbs: '', reformaCClassTrib: '',
+                icmsRegras: [], ipiCst: null, ipiEnquadramento: '999', aliqIpi: 0,
+                pisCofinsSaidaUsarPadrao: true, pisCofinsSaidaCst: null, pisCofinsEntradaCst: '',
+                pisCofinsEntradaCofinsCst: '', aliqPis: 0, aliqCofins: 0, derivadosPetroleo: null,
+                csosn: null, cstIcms: null, cstIpi: null, cstPis: null, cstCofins: null, aliqIcms: 0,
                 precoMinimo: 0,
                 custo: 0,
                 agrupamento: null,
@@ -2814,10 +3589,10 @@
 
             if (productType === 'simples' || productType === 'kit-item') {
                 newProduct.unidade = document.getElementById('productUnitInput').value;
-                newProduct.ncm = document.getElementById('productNcmInput').value.trim();
-                newProduct.cfop = document.getElementById('productCfopInput').value.trim();
-                newProduct.csosn = document.getElementById('productCsosnInput').value.trim();
-                newProduct.cstIcms = document.getElementById('productCstIcmsInput').value.trim();
+            }
+
+            if (document.getElementById('product-fiscal-fields').style.display !== 'none') {
+                Object.assign(newProduct, collectProductFiscalFields());
             }
 
             // --- Lógica de Agrupamento ---
@@ -2906,7 +3681,6 @@
             // Lê os preços de custo e mínimo, que agora são comuns a mais tipos de produto
             newProduct.precoMinimo = parseFloat(document.getElementById('productPriceMinimoInput').value.replace(',', '.')) || 0;
             newProduct.custo = parseFloat(document.getElementById('productCustoInput').value.replace(',', '.')) || 0;
-            newProduct.cstIpi = document.getElementById('productCstIpiInput').value.trim();
 
             if (productType === 'simples' || productType === 'kit-item' || productType === 'kit' || productType === 'sob-medida') {
                 newProduct.descricao = document.getElementById('productDescInput').value;
@@ -2916,12 +3690,6 @@
                 newProduct.unidade = 'Sob Medida';
                 newProduct.precoAtacado = parseFloat(document.getElementById('productPriceAtacadoInput').value.replace(',', '.')) || 0;
                 newProduct.precoVarejo = parseFloat(document.getElementById('productPriceVarejoInput').value.replace(',', '.')) || 0;
-                // Salva dados fiscais para sob-medida
-                newProduct.ncm = document.getElementById('productNcmInput').value.trim();
-                newProduct.cfop = document.getElementById('productCfopInput').value.trim();
-                newProduct.csosn = document.getElementById('productCsosnInput').value.trim();
-                newProduct.cstIcms = document.getElementById('productCstIcmsInput').value.trim();
-                newProduct.cstIpi = document.getElementById('productCstIpiInput').value.trim();
                 // Salva as variáveis personalizadas
                 document.querySelectorAll('#sob-medida-variables-list .variable-tag').forEach(tag => {
                     newProduct.customVariables.push({
@@ -2966,13 +3734,6 @@
                 newProduct.descricao = document.getElementById('productDescInput').value;
                 newProduct.unidade = 'M²'; // Unidade fixa para este tipo
 
-                // Salva dados fiscais
-                newProduct.ncm = document.getElementById('productNcmInput').value.trim();
-                newProduct.cfop = document.getElementById('productCfopInput').value.trim();
-                newProduct.csosn = document.getElementById('productCsosnInput').value.trim();
-                newProduct.cstIcms = document.getElementById('productCstIcmsInput').value.trim();
-                newProduct.cstIpi = document.getElementById('productCstIpiInput').value.trim();
-
                 // Salva os preços por marca de lona
                 newProduct.precosPorLona = [];
                 document.querySelectorAll('#lona-prices-list .lona-price-item').forEach(row => {
@@ -2998,11 +3759,6 @@
                 newProduct.descricao = document.getElementById('productDescInput').value;
                 newProduct.precoAtacado = parseFloat(document.getElementById('productPriceAtacadoInput').value.replace(',', '.')) || 0;
                 newProduct.precoVarejo = parseFloat(document.getElementById('productPriceVarejoInput').value.replace(',', '.')) || 0;
-                newProduct.ncm = document.getElementById('productNcmInput').value.trim();
-                newProduct.cfop = document.getElementById('productCfopInput').value.trim();
-                newProduct.csosn = document.getElementById('productCsosnInput').value.trim();
-                newProduct.cstIcms = document.getElementById('productCstIcmsInput').value.trim();
-                newProduct.cstIpi = document.getElementById('productCstIpiInput').value.trim();
 
                 // Coleta dados das seções ativadas
                 if (document.getElementById('product-variants-container').style.display !== 'none') {
