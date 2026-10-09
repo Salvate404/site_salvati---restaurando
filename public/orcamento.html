@@ -1404,13 +1404,17 @@
 
         /* --- Estilo do Input de Quantidade --- */
         .modal-content.quantity #quantity-input {
-            width: 100%;
+            display: block;
+            width: 150px;
             max-width: 150px;
+            margin: 0 auto;
+            align-self: center;
             padding: 10px;
             font-size: 1.2em;
             text-align: center;
             border: 2px solid #007bff;
             border-radius: 8px;
+            box-sizing: border-box;
         }
         
         /* --- Estilos para o Modal Sob Medida --- */
@@ -2555,7 +2559,7 @@
             <button type="button" class="close-button" data-modal-id="quantity-modal">&times;</button>
             <h2>Selecione a quantidade</h2>
             <p id="quantity-product-name"></p>
-            <input type="number" id="quantity-input" value="1" min="1" autocomplete="off">
+            <input type="text" inputmode="decimal" id="quantity-input" value="1" autocomplete="off">
             <div class="modal-buttons">
                 <button type="button" class="button select-product-button" id="add-item-to-order-btn">Adicionar</button>
                 <button type="button" class="button seller-button" data-modal-id="quantity-modal">Cancelar</button>
@@ -5675,6 +5679,21 @@
             document.body.classList.add('modal-open');
         }
 
+        function focusQuantityInput(quantityInput) {
+            const placeCaret = () => {
+                quantityInput.focus();
+                const end = String(quantityInput.value ?? '').length;
+                try {
+                    // Seleciona o valor inteiro e deixa o caret no fim (lado direito)
+                    quantityInput.setSelectionRange(0, end);
+                } catch (err) {
+                    quantityInput.select();
+                }
+            };
+            placeCaret();
+            requestAnimationFrame(placeCaret);
+        }
+
         function proceedToQuantityModal() {
             const quantityInput = document.getElementById('quantity-input');
             // Ajusta o passo do input com base na unidade do produto (inteiro ou decimal)
@@ -5693,7 +5712,7 @@
             document.getElementById('quantity-product-name').innerText = `Produto: ${productNameDisplay}`;
             document.getElementById('quantity-modal').style.display = 'flex';
             quantityInput.value = 1;
-            quantityInput.focus();
+            focusQuantityInput(quantityInput);
         }
 
         function openMadeToMeasureModal(product, existingScope = null, existingVariants = null, existingComponents = null, existingSections = null) {
@@ -8302,6 +8321,11 @@
 
             document.getElementById('open-product-modal-btn').addEventListener('click', openProductSelection);
             document.getElementById('add-item-to-order-btn').addEventListener('click', addSelectedItemToOrder);
+            document.getElementById('quantity-input').addEventListener('keydown', (e) => {
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                addSelectedItemToOrder();
+            });
             document.getElementById('add-mtm-item-to-order-btn').addEventListener('click', () => {
                 if (!selectedProduct) return;
 
@@ -9794,7 +9818,7 @@
                 const unit = product.unidade ? product.unidade.toLowerCase() : '';
                 quantityInput.step = ['un', 'pç', 'unid', 'peça'].includes(unit) ? "1" : "0.01";
                 document.getElementById('quantity-modal').style.display = 'flex';
-                quantityInput.focus();
+                focusQuantityInput(quantityInput);
             }
         }
 
