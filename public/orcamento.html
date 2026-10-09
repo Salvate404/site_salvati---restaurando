@@ -3956,24 +3956,13 @@
         }
 
         async function recoverClientCounterBase() {
-            // 1 leitura em vez de carregar a coleção inteira (isso esgotava a cota do Firebase)
-            try {
-                const snap = await db.collection('clientes').orderBy('code', 'desc').limit(1).get();
-                if (!snap.empty) {
-                    const parsed = parseClientCodeValue(snap.docs[0].data().code);
-                    if (parsed !== null && parsed > 0) return parsed;
-                }
-                return 0;
-            } catch (error) {
-                console.warn('Recover otimizado falhou, usando fallback select(code):', error);
-                const snapshot = await db.collection('clientes').select('code').get();
-                let maxCode = 0;
-                snapshot.forEach(doc => {
-                    const parsed = parseClientCodeValue(doc.data().code);
-                    if (parsed !== null && parsed > maxCode) maxCode = parsed;
-                });
-                return maxCode;
+            // Só 1 leitura. O fallback antigo baixava a coleção inteira e estourava a cota.
+            const snap = await db.collection('clientes').orderBy('code', 'desc').limit(1).get();
+            if (!snap.empty) {
+                const parsed = parseClientCodeValue(snap.docs[0].data().code);
+                if (parsed !== null && parsed > 0) return parsed;
             }
+            return 0;
         }
 
         function isValidClientCode(value) {
@@ -4021,25 +4010,145 @@
             return snap.exists && snap.data().renumberingInProgress === true;
         }
 
-        let clientsCache = null;
-        let clientsCacheAt = 0;
         let clientSearchDebounceTimer = null;
-        const CLIENTS_CACHE_TTL_MS = 90 * 1000;
+        const CLIENT_SEARCH_LIMIT = 15;
 
         function invalidateClientsCache() {
-            clientsCache = null;
-            clientsCacheAt = 0;
+            // A lista não guarda mais a coleção inteira em memória.
         }
 
-        async function getClientsCached(forceRefresh = false) {
-            const now = Date.now();
-            if (!forceRefresh && clientsCache && (now - clientsCacheAt) < CLIENTS_CACHE_TTL_MS) {
-                return clientsCache;
+        function caseVariants(term) {
+            const text = (term || '').trim();
+            if (!text) return [];
+            const variants = new Set([text, text.toLowerCase()]);
+            variants.add(text.charAt(0).toUpperCase() + text.slice(1).toLowerCase());
+            return [...variants];
+        }
+
+        function buildClientSearchTokens(client) {
+            const tokens = new Set();
+            const addText = (value) => {
+                const norm = normalizeString(String(value || '')).trim();
+                if (!norm) return;
+                norm.split(/[^a-z0-9]+/).filter(word => word.length >= 2).forEach(word => {
+                    const max = Math.min(word.length, 12);
+                    for (let len = 2; len <= max; len++) tokens.add(word.slice(0, len));
+                });
+            };
+            const addDigits = (value) => {
+                const digits = String(value || '').replace(/\D/g, '');
+                if (digits.length < 2) return;
+                const max = Math.min(digits.length, 14);
+                for (let len = 2; len <= max; len++) tokens.add(digits.slice(0, len));
+            };
+
+            addText(client.name);
+            addText(client.nomeFantasia);
+            addText(client.apelido);
+            addText(client.email);
+            addText(client.address && client.address.cidade);
+            addDigits(client.document);
+            addDigits(client.phone);
+            if (isValidClientCode(client.code)) {
+                addDigits(String(Math.floor(client.code)));
+                addText(String(Math.floor(client.code)).padStart(3, '0'));
             }
-            const querySnapshot = await db.collection('clientes').get();
-            clientsCache = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            clientsCacheAt = now;
-            return clientsCache;
+            return [...tokens].slice(0, 180);
+        }
+
+        function scheduleClientSearchTokenBackfill(clientId, client) {
+            if (!clientId || !client || (Array.isArray(client.searchTokens) && client.searchTokens.length > 0)) return;
+            const searchTokens = buildClientSearchTokens(client);
+            if (!searchTokens.length) return;
+            db.collection('clientes').doc(clientId).set({ searchTokens }, { merge: true }).catch(() => {});
+        }
+
+        async function queryClientsByPrefix(field, prefix) {
+            const snap = await db.collection('clientes')
+                .orderBy(field)
+                .startAt(prefix)
+                .endAt(`${prefix}\uf8ff`)
+                .limit(CLIENT_SEARCH_LIMIT)
+                .get();
+            return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        }
+
+        async function safeClientQuery(label, run) {
+            try {
+                return await run();
+            } catch (error) {
+                console.warn(`Consulta de clientes (${label}) ignorada:`, error?.code || error?.message || error);
+                return [];
+            }
+        }
+
+        async function searchClients(searchTerm, filters = {}) {
+            const term = (searchTerm || '').trim();
+            const docFilter = (filters.docFilter || '').trim();
+            const phoneFilter = (filters.phoneFilter || '').trim();
+            const cityFilter = (filters.cityFilter || '').trim();
+            const emailFilter = (filters.emailFilter || '').trim();
+            const jobs = [];
+
+            const normTerm = normalizeString(term);
+            if (normTerm.length >= 2) {
+                jobs.push(safeClientQuery('tokens', async () => {
+                    const snap = await db.collection('clientes')
+                        .where('searchTokens', 'array-contains', normTerm)
+                        .limit(CLIENT_SEARCH_LIMIT)
+                        .get();
+                    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                }));
+                caseVariants(term).forEach(variant => {
+                    if (variant.length < 2) return;
+                    ['name', 'nomeFantasia', 'apelido'].forEach(field => {
+                        jobs.push(safeClientQuery(field, () => queryClientsByPrefix(field, variant)));
+                    });
+                });
+            }
+
+            const codeDigits = term.replace(/\D/g, '');
+            if (codeDigits && codeDigits.length <= 6 && codeDigits === term.replace(/\s/g, '')) {
+                const asNumber = Number(codeDigits);
+                if (Number.isFinite(asNumber)) {
+                    jobs.push(safeClientQuery('code', async () => {
+                        const snap = await db.collection('clientes').where('code', '==', asNumber).limit(5).get();
+                        return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    }));
+                }
+            }
+
+            if (docFilter.length >= 2) {
+                const docDigits = docFilter.replace(/\D/g, '');
+                caseVariants(docFilter).forEach(variant => {
+                    if (variant.length >= 2) jobs.push(safeClientQuery('document', () => queryClientsByPrefix('document', variant)));
+                });
+                if (docDigits.length >= 2) jobs.push(safeClientQuery('document-digits', () => queryClientsByPrefix('document', docDigits)));
+            }
+
+            if (phoneFilter.length >= 2) {
+                const phoneDigits = phoneFilter.replace(/\D/g, '');
+                jobs.push(safeClientQuery('phone', () => queryClientsByPrefix('phone', phoneFilter)));
+                if (phoneDigits.length >= 2) jobs.push(safeClientQuery('phone-digits', () => queryClientsByPrefix('phone', phoneDigits)));
+            }
+
+            if (cityFilter.length >= 2) {
+                caseVariants(cityFilter).forEach(variant => {
+                    jobs.push(safeClientQuery('cidade', () => queryClientsByPrefix('address.cidade', variant)));
+                });
+            }
+
+            if (emailFilter.length >= 2) {
+                jobs.push(safeClientQuery('email', () => queryClientsByPrefix('email', emailFilter.toLowerCase())));
+            }
+
+            if (jobs.length === 0) return [];
+            const lists = await Promise.all(jobs);
+            const byId = new Map();
+            lists.flat().forEach(client => {
+                if (client && client.id) byId.set(client.id, client);
+            });
+            return [...byId.values()];
         }
 
         function startButtonCooldown(button, seconds = 5, originalText = null) {
@@ -7710,6 +7819,7 @@
                     }
 
                     const client = docSnap.data();
+                    scheduleClientSearchTokenBackfill(clientId, client);
                     if (client.type === 'pj') {
                         toggleClientTypePopup('pj');
                         document.getElementById('popup-razao-social').value = client.name || '';
@@ -7815,6 +7925,8 @@
                 return;
             }
 
+            clientData.searchTokens = buildClientSearchTokens({ ...clientData, code: clientCode });
+
             try {
                 if (saveClientBtn) {
                     saveClientBtn.disabled = true;
@@ -7823,7 +7935,6 @@
                 let clientNameToDisplay;
                 if (editingClientId) {
                     await db.collection('clientes').doc(editingClientId).set(clientData, { merge: true });
-                    invalidateClientsCache();
                     applyClientToOrderForm({ ...clientData, code: clientCode }, editingClientId);
                     showNotification('Cliente atualizado com sucesso!', 'success');
                 } else {
@@ -7836,14 +7947,18 @@
                         return;
                     }
                     clientData.code = clientCode;
+                    clientData.searchTokens = buildClientSearchTokens(clientData);
                     const docRef = await db.collection('clientes').add(clientData);
-                    invalidateClientsCache();
                     applyClientToOrderForm(clientData, docRef.id);
                     showNotification('Cliente salvo com sucesso!', 'success');
                     closeModal('client-modal');
                 }
-                renderClientList(document.getElementById('client-search-input').value);
                 closeModal('client-edit-modal');
+                try {
+                    await renderClientList(document.getElementById('client-search-input').value);
+                } catch (listError) {
+                    console.warn('Cliente salvo, mas a lista não foi atualizada:', listError);
+                }
 
             } catch (error) {
                 console.error("Erro ao salvar cliente: ", error);
@@ -7887,10 +8002,21 @@
                 return;
             }
 
+            const hasStructuredFilter = docFilter !== '' || phoneFilter !== '' || cityFilter !== '' || emailFilter !== '';
+            if (searchTerm.trim().length < 2 && !hasStructuredFilter && !/^\d+$/.test(searchTerm.trim())) {
+                listContainer.innerHTML = '<p style="text-align: center; padding: 20px;">Digite pelo menos 2 letras ou o código do cliente.</p>';
+                return;
+            }
+
             listContainer.innerHTML = '<p style="text-align: center; padding: 20px;">Buscando...</p>';
 
             try {
-                const clients = await getClientsCached();
+                const clients = await searchClients(searchTerm, {
+                    docFilter,
+                    phoneFilter,
+                    cityFilter,
+                    emailFilter
+                });
 
                 const normalizedSearchTerm = normalizeString(searchTerm);
                 const normalizedDocFilter = normalizeString(docFilter);
@@ -8573,6 +8699,7 @@
 
                         if (docSnap.exists) {
                             const client = docSnap.data();
+                            scheduleClientSearchTokenBackfill(clientId, client);
                             applyClientToOrderForm(client, clientId);
                             markOrderDirty();
                             closeModal('client-modal');
