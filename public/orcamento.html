@@ -2307,6 +2307,198 @@
             pointer-events: auto;
             cursor: pointer;
         }
+
+        /* Telas estreitas: uma coluna só, um scroll, botões fora do conteúdo.
+           PDF/imagem clonam .container e não herdam estas regras. */
+        @media (max-width: 1100px) {
+            html:not(.pdf-generation-mode),
+            body:not(.pdf-generation-mode) {
+                display: block;
+                overflow-x: hidden;
+                overflow-y: auto;
+                height: auto;
+                min-height: 100%;
+                max-width: 100%;
+            }
+
+            body:not(.pdf-generation-mode) {
+                padding: 8px;
+            }
+
+            body:not(.pdf-generation-mode) > .top-fixed-buttons,
+            body:not(.pdf-generation-mode) > .fixed-buttons {
+                position: static !important;
+                top: auto !important;
+                right: auto !important;
+                bottom: auto !important;
+                left: auto !important;
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                justify-content: flex-start;
+                gap: 8px;
+                width: 100%;
+                max-width: 100%;
+                margin: 0 0 8px 0;
+                padding: 8px;
+                box-sizing: border-box;
+                background: #fff;
+                border-radius: 10px;
+                pointer-events: auto;
+                z-index: auto;
+            }
+
+            body:not(.pdf-generation-mode) > .top-fixed-buttons .left-buttons,
+            body:not(.pdf-generation-mode) > .top-fixed-buttons .right,
+            body:not(.pdf-generation-mode) > .fixed-buttons > div {
+                display: contents !important;
+            }
+
+            body:not(.pdf-generation-mode) > .top-fixed-buttons .button,
+            body:not(.pdf-generation-mode) > .fixed-buttons .button {
+                flex: 1 1 calc(50% - 8px);
+                text-align: center;
+                box-sizing: border-box;
+                white-space: normal;
+            }
+
+            body:not(.pdf-generation-mode) > .container {
+                display: block;
+                width: 100%;
+                max-width: 100%;
+                max-height: none;
+                height: auto;
+                overflow: visible;
+                margin: 0 0 8px 0;
+                padding: 14px;
+                box-sizing: border-box;
+            }
+
+            body:not(.pdf-generation-mode) > .container .header-wrapper,
+            body:not(.pdf-generation-mode) > .container .client-section,
+            body:not(.pdf-generation-mode) > .container .order-header,
+            body:not(.pdf-generation-mode) > .container .totals-section,
+            body:not(.pdf-generation-mode) > .container .purchase-details-header,
+            body:not(.pdf-generation-mode) > .container .sale-info,
+            body:not(.pdf-generation-mode) > .container .client-info-row {
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+                position: static;
+            }
+
+            body:not(.pdf-generation-mode) > .container .order-header h3 {
+                position: static;
+                left: auto;
+                transform: none;
+                width: 100%;
+                text-align: left;
+            }
+
+            body:not(.pdf-generation-mode) > .container .price-mode-buttons,
+            body:not(.pdf-generation-mode) > .container .company-info,
+            body:not(.pdf-generation-mode) > .container .signature-box,
+            body:not(.pdf-generation-mode) > .container .payments-section,
+            body:not(.pdf-generation-mode) > .container .totals-container,
+            body:not(.pdf-generation-mode) > .container .image-with-desc,
+            body:not(.pdf-generation-mode) > .container .input-with-button {
+                width: 100%;
+                max-width: 100%;
+                margin-left: 0;
+                box-sizing: border-box;
+            }
+
+            body:not(.pdf-generation-mode) > .container .sale-info {
+                flex-direction: row;
+                flex-wrap: wrap;
+                align-items: center;
+            }
+
+            body:not(.pdf-generation-mode) > .container,
+            body:not(.pdf-generation-mode) > .container p,
+            body:not(.pdf-generation-mode) > .container label,
+            body:not(.pdf-generation-mode) > .container h3,
+            body:not(.pdf-generation-mode) > .container .company-info,
+            body:not(.pdf-generation-mode) > .container .sale-info,
+            body:not(.pdf-generation-mode) > .container .signature-box p {
+                overflow-wrap: anywhere;
+                word-break: break-word;
+            }
+
+            body:not(.pdf-generation-mode) > .container .client-info-row input,
+            body:not(.pdf-generation-mode) > .container .client-info-row select {
+                width: 100%;
+                min-width: 0;
+                box-sizing: border-box;
+            }
+
+            body:not(.pdf-generation-mode) > .container .order-data {
+                overflow: visible;
+            }
+
+            body:not(.pdf-generation-mode) > .container .order-table {
+                display: block;
+                width: 100%;
+                min-width: 0;
+            }
+
+            body:not(.pdf-generation-mode) > .container .order-table thead {
+                display: none;
+            }
+
+            body:not(.pdf-generation-mode) > .container .order-table tbody,
+            body:not(.pdf-generation-mode) > .container .order-table tr,
+            body:not(.pdf-generation-mode) > .container .order-table td {
+                display: block;
+                width: 100% !important;
+                max-width: none !important;
+                text-align: left !important;
+                box-sizing: border-box;
+            }
+
+            body:not(.pdf-generation-mode) > .container .order-table tr {
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                margin: 0 0 10px 0;
+                padding: 8px;
+            }
+
+            body:not(.pdf-generation-mode) > .container .order-table td {
+                padding: 4px 0;
+            }
+
+            body:not(.pdf-generation-mode) > .container .order-table td:nth-child(1)::before { content: "Item: "; font-weight: bold; }
+            body:not(.pdf-generation-mode) > .container .order-table td:nth-child(2)::before { content: "Imagem: "; font-weight: bold; }
+            body:not(.pdf-generation-mode) > .container .order-table td:nth-child(4)::before { content: "Qtd: "; font-weight: bold; }
+            body:not(.pdf-generation-mode) > .container .order-table td:nth-child(5)::before { content: "Preço: "; font-weight: bold; }
+            body:not(.pdf-generation-mode) > .container .order-table td:nth-child(6)::before { content: "Total: "; font-weight: bold; }
+            body:not(.pdf-generation-mode) > .container .order-table td:nth-child(7)::before { content: "Opções: "; font-weight: bold; }
+
+            body:not(.pdf-generation-mode) > .container .payment-input-group {
+                flex-wrap: wrap;
+            }
+
+            body:not(.pdf-generation-mode) #notifications-container {
+                top: 8px;
+                right: 8px;
+                bottom: auto;
+                left: 8px;
+            }
+
+            body:not(.pdf-generation-mode) .modal-content,
+            body:not(.pdf-generation-mode) .modal-content.load-screen {
+                width: 96%;
+                max-width: 96%;
+                padding: 14px;
+                max-height: 92vh;
+                overflow: auto;
+            }
+
+            body:not(.pdf-generation-mode) #pedidos-modal .load-list-item {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -2324,13 +2516,6 @@
             <button type="button" class="button" id="downloadButton">Baixar PDF</button>
             <button type="button" class="button" id="downloadImageButton" style="background-color: #17a2b8; color: #fff;"><i class="fas fa-image"></i> Salvar Imagem</button>
         </div>
-    </div>
-
-    <div class="fixed-buttons">
-        <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-start;">
-            <button type="button" class="button" id="saveButton">Salvar</button>
-        </div>
-        <button type="button" class="button" id="backToMenuButton">Menu</button>
     </div>
 
     <div class="container">
@@ -2480,6 +2665,13 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="fixed-buttons">
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-start;">
+            <button type="button" class="button" id="saveButton">Salvar</button>
+        </div>
+        <button type="button" class="button" id="backToMenuButton">Menu</button>
     </div>
 
     <!-- Menu de contexto (botão direito) na lista de orçamentos -->
@@ -3956,11 +4148,19 @@
         }
 
         async function recoverClientCounterBase() {
-            // Só 1 leitura. O fallback antigo baixava a coleção inteira e estourava a cota.
-            const snap = await db.collection('clientes').orderBy('code', 'desc').limit(1).get();
-            if (!snap.empty) {
-                const parsed = parseClientCodeValue(snap.docs[0].data().code);
-                if (parsed !== null && parsed > 0) return parsed;
+            // Só códigos numéricos, 1 leitura. Não varre a coleção (isso estourava a cota).
+            try {
+                const snap = await db.collection('clientes')
+                    .where('code', '>=', 0)
+                    .orderBy('code', 'desc')
+                    .limit(1)
+                    .get();
+                if (!snap.empty) {
+                    const parsed = parseClientCodeValue(snap.docs[0].data().code);
+                    if (parsed !== null && parsed > 0) return parsed;
+                }
+            } catch (error) {
+                console.warn('Não foi possível ler o maior código numérico de cliente:', error);
             }
             return 0;
         }
@@ -4063,6 +4263,73 @@
             db.collection('clientes').doc(clientId).set({ searchTokens }, { merge: true }).catch(() => {});
         }
 
+        let clientSearchIndexPromise = null;
+
+        async function ensureClientSearchIndex() {
+            if (clientSearchIndexPromise) return clientSearchIndexPromise;
+            clientSearchIndexPromise = (async () => {
+                const counterRef = db.collection('contadores').doc('clientes');
+                const metaSnap = await counterRef.get();
+                const meta = metaSnap.exists ? metaSnap.data() : {};
+                if (meta.searchIndexComplete === true) return;
+
+                const lockAt = meta.searchIndexLockAt && typeof meta.searchIndexLockAt.toDate === 'function'
+                    ? meta.searchIndexLockAt.toDate().getTime()
+                    : 0;
+                if (meta.searchIndexLock === true && Date.now() - lockAt < 120000) return;
+
+                await counterRef.set({
+                    searchIndexLock: true,
+                    searchIndexLockAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+
+                let cursor = meta.searchIndexCursor || null;
+                const pageSize = 80;
+                for (let page = 0; page < 80; page++) {
+                    let query = db.collection('clientes')
+                        .orderBy(firebase.firestore.FieldPath.documentId())
+                        .limit(pageSize);
+                    if (cursor) query = query.startAfter(cursor);
+                    const snap = await query.get();
+                    if (snap.empty) {
+                        await counterRef.set({
+                            searchIndexComplete: true,
+                            searchIndexLock: false,
+                            searchIndexCursor: firebase.firestore.FieldValue.delete()
+                        }, { merge: true });
+                        return;
+                    }
+
+                    const batch = db.batch();
+                    let writes = 0;
+                    snap.docs.forEach(docSnap => {
+                        const client = docSnap.data();
+                        if (Array.isArray(client.searchTokens) && client.searchTokens.length > 0) return;
+                        const searchTokens = buildClientSearchTokens(client);
+                        if (!searchTokens.length) return;
+                        batch.set(docSnap.ref, { searchTokens }, { merge: true });
+                        writes += 1;
+                    });
+                    if (writes > 0) await batch.commit();
+
+                    cursor = snap.docs[snap.docs.length - 1].id;
+                    const finished = snap.size < pageSize;
+                    await counterRef.set({
+                        searchIndexCursor: finished ? firebase.firestore.FieldValue.delete() : cursor,
+                        searchIndexComplete: finished,
+                        searchIndexLock: !finished,
+                        searchIndexLockAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+                    if (finished) return;
+                }
+                await counterRef.set({ searchIndexLock: false }, { merge: true });
+            })().catch((error) => {
+                console.warn('Indexação de clientes pausada para não estourar a cota:', error);
+                clientSearchIndexPromise = null;
+            });
+            return clientSearchIndexPromise;
+        }
+
         async function queryClientsByPrefix(field, prefix) {
             const snap = await db.collection('clientes')
                 .orderBy(field)
@@ -4083,6 +4350,7 @@
         }
 
         async function searchClients(searchTerm, filters = {}) {
+            await ensureClientSearchIndex();
             const term = (searchTerm || '').trim();
             const docFilter = (filters.docFilter || '').trim();
             const phoneFilter = (filters.phoneFilter || '').trim();
@@ -6179,8 +6447,27 @@
             markOrderDirty();
         }
 
+        function parseQuantityInput(value) {
+            const normalized = String(value || '').trim().replace(',', '.');
+            if (!/^\d+(\.\d+)?$/.test(normalized)) return NaN;
+            return parseFloat(normalized);
+        }
+
+        function sanitizeQuantityInput(input) {
+            let value = String(input.value || '').replace(/[^\d.,]/g, '');
+            const sepAt = value.search(/[.,]/);
+            if (sepAt >= 0) {
+                const whole = value.slice(0, sepAt).replace(/\D/g, '');
+                const fraction = value.slice(sepAt + 1).replace(/\D/g, '').slice(0, 2);
+                value = `${whole},${fraction}`;
+            } else {
+                value = value.replace(/\D/g, '');
+            }
+            if (input.value !== value) input.value = value;
+        }
+
         function addSelectedItemToOrder() {
-            const quantidade = parseFloat(document.getElementById('quantity-input').value);
+            const quantidade = parseQuantityInput(document.getElementById('quantity-input').value);
             if (isNaN(quantidade) || quantidade <= 0) { // Check for invalid quantity
                 showNotification("Quantidade inválida.", "error");
                 return;
@@ -8451,6 +8738,9 @@
                 if (e.key !== 'Enter') return;
                 e.preventDefault();
                 addSelectedItemToOrder();
+            });
+            document.getElementById('quantity-input').addEventListener('input', (e) => {
+                sanitizeQuantityInput(e.target);
             });
             document.getElementById('add-mtm-item-to-order-btn').addEventListener('click', () => {
                 if (!selectedProduct) return;

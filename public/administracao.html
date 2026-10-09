@@ -1281,21 +1281,10 @@
                 statsContainer.innerHTML = '<p style="text-align: center;">Calculando...</p>';
 
                 try {
-                    // 1. Contar Orçamentos/Vendas
-                    const orcamentosSnapshot = await db.collection('orcamentos').get();
-                    const totalOrcamentos = orcamentosSnapshot.size;
-
-                    // 2. Contar Produtos
-                    const produtosSnapshot = await db.collection('produtos').get();
-                    const totalProdutos = produtosSnapshot.size;
-
-                    // 3. Contar Clientes
-                    const clientesSnapshot = await db.collection('clientes').get();
-                    const totalClientes = clientesSnapshot.size;
-
-                    // 4. Contar Funcionários
-                    const funcionariosSnapshot = await db.collection('funcionarios').get();
-                    const totalFuncionarios = funcionariosSnapshot.size;
+                    const totalOrcamentos = (await db.collection('orcamentos').count().get()).data().count;
+                    const totalProdutos = (await db.collection('produtos').count().get()).data().count;
+                    const totalClientes = (await db.collection('clientes').count().get()).data().count;
+                    const totalFuncionarios = (await db.collection('funcionarios').count().get()).data().count;
 
                     // Renderiza os cards com os resultados
                     statsContainer.innerHTML = `
@@ -1819,14 +1808,8 @@
                 btn.textContent = 'Renumerando...';
 
                 try {
-                    const snapshot = await db.collection('clientes').get();
-                    const initialCount = snapshot.size;
-                    const sortedDocs = snapshot.docs.slice().sort((a, b) => {
-                        const ta = a.createTime ? a.createTime.toMillis() : 0;
-                        const tb = b.createTime ? b.createTime.toMillis() : 0;
-                        if (ta !== tb) return ta - tb;
-                        return a.id.localeCompare(b.id);
-                    });
+                    const initialCount = previewDocs.length;
+                    const sortedDocs = previewDocs;
 
                     const BATCH_SIZE = 400;
                     let assignedCode = 0;
@@ -1842,8 +1825,8 @@
                         btn.textContent = `Renumerando... ${Math.min(i + chunk.length, sortedDocs.length)}/${sortedDocs.length}`;
                     }
 
-                    const afterSnap = await db.collection('clientes').get();
-                    if (afterSnap.size !== initialCount) {
+                    const afterCount = (await db.collection('clientes').count().get()).data().count;
+                    if (afterCount !== initialCount) {
                         throw new Error('RENUMBERING_COUNT_CHANGED');
                     }
 

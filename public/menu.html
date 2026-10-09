@@ -198,13 +198,51 @@
         #logoutButton:hover {
             background-color: #c82333;
         }
+
+        @media (max-width: 760px) {
+            body {
+                overflow: auto;
+                align-items: stretch;
+                justify-content: flex-start;
+                padding: 12px 12px 72px;
+            }
+
+            .container {
+                max-height: none;
+                padding: 18px 14px 24px;
+            }
+
+            .header-title-wrapper {
+                padding-top: 8px;
+            }
+
+            .header-title-wrapper h1 {
+                font-size: 1.5em;
+            }
+
+            .menu-columns {
+                flex-direction: column;
+                gap: 18px;
+            }
+
+            .menu-column button {
+                font-size: 1.05em;
+                padding: 14px 16px;
+            }
+
+            #logoutButton {
+                position: fixed;
+                bottom: 12px;
+                right: 12px;
+            }
+        }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <div class="container">
         <div class="header-title-wrapper">
-            <IMG/img src="IMG/imglogo.png" alt="Logo da Empresa">
+            <img src="IMG/imglogo.png" alt="Logo da Empresa">
             <h1>Escolha a Calculadora</h1>
             <h2>Selecione o tipo de toldo para prosseguir</h2>
         </div>
