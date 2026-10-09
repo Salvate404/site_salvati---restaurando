@@ -884,6 +884,41 @@
             word-wrap: break-word; /* Quebra palavras longas */
         }
 
+        .item-spec-line {
+            display: flex;
+            align-items: stretch;
+            gap: 6px;
+        }
+
+        .item-spec-line .obs-input-div {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        .material-usage {
+            display: flex;
+            align-items: stretch;
+            gap: 3px;
+            flex: 0 0 auto;
+            color: #111;
+        }
+
+        .material-usage-bar {
+            width: 0;
+            border-left: 2px solid #111;
+            align-self: stretch;
+            flex: 0 0 auto;
+        }
+
+        .material-usage-values {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            font-weight: bold;
+            line-height: 1.15;
+        }
+
         .totals-section {
             margin-top: 20px;
             padding-top: 15px;
@@ -2245,6 +2280,17 @@
 
 
         .pdf-generation-mode .no-pdf {
+            display: none !important;
+        }
+
+        .pdf-generation-mode .material-usage {
+            font-style: normal !important;
+            color: #000 !important;
+        }
+
+        /* Lona e costura ficam na tela e na via do estabelecimento. A via do cliente não leva esses números. */
+        .pdf-generation-mode .pdf-copy:not(.production-copy) .material-usage,
+        #note-image-overlay .material-usage {
             display: none !important;
         }
 
@@ -5086,6 +5132,162 @@
             return val.label || '';
         }
 
+        function formulaLooksCalculated(formula) {
+            const compact = (formula || '').toString().replace(/\s/g, '');
+            return compact !== '' && compact !== '1';
+        }
+
+        function formatPlainQuantity(value) {
+            if (!isFinite(value)) return '';
+            const rounded = Math.round((value + Number.EPSILON) * 100) / 100;
+            if (rounded <= 0) return '';
+            return rounded.toFixed(2).replace('.', ',');
+        }
+
+        function resolveLonaAndCosturaComponents(product) {
+            const composition = product.composition || [];
+            const described = composition.map((component, index) => {
+                const componentProduct = catalogoProdutos.find(p => p.id === component.productId);
+                return {
+                    component,
+                    index,
+                    componentProduct,
+                    name: normalizeTextKey(componentProduct?.nome || '')
+                };
+            });
+
+            const byName = (test) => {
+                const matches = described.filter(item => test(item.name));
+                return matches.find(item => formulaLooksCalculated(item.component.formula)) || matches[0] || null;
+            };
+
+            let lona = byName(name => name.includes('lona') && !name.includes('costura'));
+            let costura = byName(name => name.includes('costura'));
+            if (!lona && described[0]) lona = described[0];
+            if (!costura && described[1] && (!lona || described[1].index !== lona.index)) costura = described[1];
+            return { lona, costura };
+        }
+
+        function materialEntryFromSection(sectionSelections, sectionId) {
+            const selected = sectionSelections?.[sectionId];
+            if (!selected || typeof selected !== 'object' || Array.isArray(selected) || !selected.formula) return null;
+            const componentProduct = selected.productId
+                ? catalogoProdutos.find(p => p.id === selected.productId)
+                : null;
+            return {
+                component: { formula: selected.formula },
+                componentProduct
+            };
+        }
+
+        function isMinimumCostura(componentProduct, unitQuantity, sectionSelections) {
+            const label = normalizeTextKey(getSectionDisplayLabel(sectionSelections?.costura));
+            if (label === 'min' || label === 'min.' || label.includes('minim')) return true;
+            if (!componentProduct) return false;
+            const minPrice = parseFloat(componentProduct.precoMinimo) || 0;
+            if (minPrice <= 0) return false;
+            const unitPrice = parseFloat(priceMode === 'atacado' ? componentProduct.precoAtacado : componentProduct.precoVarejo) || 0;
+            if (unitPrice <= 0) return false;
+            return unitQuantity * unitPrice < minPrice - 0.009;
+        }
+
+        function computeMaterialUsage(product, row) {
+            if (!product || product.type !== 'sob-medida' || !row.dataset.scope) return null;
+            let scope;
+            let sections = null;
+            try {
+                scope = JSON.parse(row.dataset.scope);
+                if (row.dataset.sections) sections = JSON.parse(row.dataset.sections);
+            } catch (error) {
+                return null;
+            }
+
+            const lineQty = parseFloat(row.dataset.quantidade) || 1;
+            const fromComposition = resolveLonaAndCosturaComponents(product);
+            const lona = materialEntryFromSection(sections, 'marcaLona') || fromComposition.lona;
+            const costura = materialEntryFromSection(sections, 'costura') || fromComposition.costura;
+            let lonaText = '';
+            let costuraText = '';
+
+            try {
+                if (lona?.component?.formula) {
+                    const effectiveScope = getScopeForFormula(scope, sections, lona.component.formula);
+                    const quantity = evaluateFormula(lona.component.formula, effectiveScope);
+                    if (isFinite(quantity) && quantity > 0) lonaText = formatPlainQuantity(quantity * lineQty);
+                }
+            } catch (error) {
+                lonaText = '';
+            }
+
+            try {
+                if (costura?.component?.formula) {
+                    const effectiveScope = getScopeForFormula(scope, sections, costura.component.formula);
+                    const quantity = evaluateFormula(costura.component.formula, effectiveScope);
+                    if (isFinite(quantity) && quantity > 0) {
+                        costuraText = isMinimumCostura(costura.componentProduct, quantity, sections)
+                            ? 'min.'
+                            : formatPlainQuantity(quantity * lineQty);
+                    }
+                }
+            } catch (error) {
+                costuraText = '';
+            }
+
+            if (!lonaText && !costuraText) return null;
+            return { lona: lonaText, costura: costuraText };
+        }
+
+        function renderMaterialUsage(row) {
+            if (!row) return;
+            const obs = row.querySelector('.obs-input-div');
+            if (!obs) return;
+
+            const product = catalogoProdutos.find(p => p.id === row.dataset.productId);
+            const info = product ? computeMaterialUsage(product, row) : null;
+            let line = obs.parentElement && obs.parentElement.classList.contains('item-spec-line')
+                ? obs.parentElement
+                : null;
+
+            if (!info) {
+                const usage = line ? line.querySelector('.material-usage') : null;
+                if (usage) usage.remove();
+                if (line && line.childElementCount === 1) {
+                    line.replaceWith(obs);
+                }
+                return;
+            }
+
+            if (!line) {
+                line = document.createElement('div');
+                line.className = 'item-spec-line';
+                obs.replaceWith(line);
+                line.appendChild(obs);
+            }
+
+            let usage = line.querySelector('.material-usage');
+            if (!usage) {
+                usage = document.createElement('div');
+                usage.className = 'material-usage';
+                usage.innerHTML = '<span class="material-usage-bar"></span><span class="material-usage-values"></span>';
+                line.appendChild(usage);
+            }
+            const bar = usage.querySelector('.material-usage-bar');
+            if (bar) bar.textContent = '';
+
+            const values = usage.querySelector('.material-usage-values');
+            values.textContent = '';
+            if (info.lona) {
+                const lonaSpan = document.createElement('span');
+                lonaSpan.textContent = info.lona;
+                values.appendChild(lonaSpan);
+            }
+            if (info.costura) {
+                const costuraSpan = document.createElement('span');
+                costuraSpan.textContent = info.costura;
+                values.appendChild(costuraSpan);
+            }
+        }
+
         function getProductIdsInDescriptionSections(product) {
             const ids = new Set();
             const sections = product?.descriptionSections || {};
@@ -6689,6 +6891,7 @@
                 row.dataset.preco = preco;
                 row.querySelector('td:nth-child(5)').innerText = formatarValorMonetario(preco); // Atualiza Preço Uni.
                 row.querySelector('.total-cell').innerText = formatarValorMonetario(total);
+                renderMaterialUsage(row);
             });
             updateTotals();
             if (fromUserAction) markOrderDirty();
@@ -7499,6 +7702,7 @@
                         <td><button class="more-options-btn"><i class="fas fa-bars"></i></button></td>
                     `;
                     newRow.querySelector('.obs-input-div').innerText = item.obs;
+                    renderMaterialUsage(newRow);
                     orderBody.appendChild(newRow);
                 });
 
@@ -7607,6 +7811,7 @@
 
             // Clona o container original duas vezes
             const copy1 = originalElement.cloneNode(true);
+            copy1.querySelectorAll('.material-usage').forEach(el => el.remove());
             const tipoSelectCopy1 = copy1.querySelector('#tipo-documento');
             if (tipoSelectCopy1) tipoSelectCopy1.value = tipoDocumentoCorreto;
 
@@ -7821,6 +8026,7 @@
             if (tipoDocumentoCorreto === 'orcamento') {
                 copy1.classList.add('watermarked');
             }
+            copy1.querySelectorAll('.material-usage').forEach(el => el.remove());
             return copy1;
         }
 
@@ -8812,6 +9018,7 @@
                     selectedRowToEdit.querySelector('.obs-input-div').innerHTML = obsText.join('<br>');
                     selectedRowToEdit.querySelector('td:nth-child(5)').innerText = formatarValorMonetario(totalPrice); // Atualiza o preço unitário
                     selectedRowToEdit.querySelector('.total-cell').innerText = formatarValorMonetario(totalPrice);
+                    renderMaterialUsage(selectedRowToEdit);
                     finalizeLinkedProductPair(selectedRowToEdit, linkedDescriptionConfig);
                     selectedRowToEdit = null;
                 } else {
@@ -8852,6 +9059,7 @@
                     <td><button class="more-options-btn"><i class="fas fa-bars"></i></button></td>
                 `;
                 orderBody.appendChild(newRow);
+                    renderMaterialUsage(newRow);
                     reindexOrderItems();
                     finalizeLinkedProductPair(newRow, linkedDescriptionConfig);
                 }
