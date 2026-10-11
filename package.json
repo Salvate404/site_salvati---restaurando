@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "focus:empresa-dry-run": "node scripts/focusnfe/criar-empresa-dry-run.mjs"
+  },
   "dependencies": {
     "firebase": "^12.11.0"
   }
