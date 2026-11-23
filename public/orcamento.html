@@ -5342,46 +5342,129 @@
             return null;
         }
 
+        const DESCRIPTION_PLACEHOLDER = '[?]';
+
+        function productHasVisibleDescriptionSection(product, sectionId) {
+            const sectionData = normalizeSectionData(product?.descriptionSections?.[sectionId]);
+            return filterSectionOptionsForLinkagem(sectionData.options).length > 0;
+        }
+
+        function isProductDescriptionSectionRequired(product, sectionId) {
+            return normalizeSectionData(product?.descriptionSections?.[sectionId]).required;
+        }
+
+        function getSectionSelectionText(sections, sectionId) {
+            const sel = sections?.[sectionId];
+            if (!sel) return '';
+            if (Array.isArray(sel)) {
+                return sel.map(getSectionDisplayLabel).filter(Boolean).join(' ');
+            }
+            return getSectionDisplayLabel(sel) || '';
+        }
+
+        /** Valor selecionado ou [?] apenas para seções opcionais não preenchidas. */
+        function resolveOptionalSectionSlot(product, sections, sectionId) {
+            if (!productHasVisibleDescriptionSection(product, sectionId)) return null;
+            const text = getSectionSelectionText(sections, sectionId);
+            if (text) return text;
+            if (isProductDescriptionSectionRequired(product, sectionId)) return null;
+            return DESCRIPTION_PLACEHOLDER;
+        }
+
+        function productIncludesBandoMeasure(product) {
+            const vars = product?.customVariables || [];
+            return vars.some(v => normalizeTextKey(v.value).includes('bando'));
+        }
+
+        function productUsesMeasureLine(product) {
+            if (!product) return false;
+            if (product.linkedImageType) return true;
+            if (product.type === 'sob-medida' || product.type === 'toldo-completo') return true;
+            return (product.customVariables || []).length > 0;
+        }
+
+        function readPartialScopeFromModalInputs(selector, inputKind) {
+            const scope = {};
+            document.querySelectorAll(selector).forEach(input => {
+                const varName = input.dataset.variableName;
+                if (!varName) return;
+                let value = inputKind === 'mtm'
+                    ? parseCurrencyToNumber(input.value)
+                    : (parseFloat(input.value) || 0);
+                if (!isNaN(value) && value > 0) scope[varName] = value;
+            });
+            return scope;
+        }
+
+        function refreshActiveLinkedImageDescription() {
+            if (!activeLinkedImageWrapper || !selectedProduct || !isLinkagemEnabled()) return;
+            const pairId = activeLinkedImageWrapper.dataset.pairId;
+            if (!pairId) return;
+
+            let scope = {};
+            let sections = {};
+            const mtmModal = document.getElementById('made-to-measure-modal');
+            const toldoModal = document.getElementById('toldo-completo-config-modal');
+
+            if (mtmModal?.style.display === 'flex') {
+                scope = readPartialScopeFromModalInputs('#mtm-variables-container .mtm-variable-input', 'mtm');
+                sections = readSectionSelections(document.getElementById('mtm-sections-container'));
+            } else if (toldoModal?.style.display === 'flex') {
+                scope = readPartialScopeFromModalInputs('#toldo-completo-variables-container .toldo-variable-input', 'toldo');
+                sections = readSectionSelections(document.getElementById('toldo-completo-sections-container'));
+            } else {
+                return;
+            }
+
+            const description = buildLinkedImageDescription({ product: selectedProduct, scope, sections });
+            syncLinkedImageDescription(pairId, description, selectedProduct.id);
+        }
+
         function buildLinkedImageDescription(config) {
             const { product, scope = {}, sections = {} } = config;
             const lines = [];
 
             if (product?.nome) lines.push(product.nome);
 
-            const largura = getScopeDisplayValue(scope, ['largura', 'larg', 'profundidade', 'comprimento']);
-            const isCapota = (product?.linkedImageType || '').toLowerCase() === 'capota';
-            if (isCapota) {
-                // Capota: medida é "largura x perna" (sem caída nem bandô)
-                const perna = getScopeDisplayValue(scope, ['perna', 'pernas', 'lateral', 'caida', 'queda', 'avanco', 'altura']);
-                if (largura || perna) {
-                    lines.push(`${largura || '?'} x ${perna || '?'}`);
-                }
-            } else {
-                // Toldo cortina (e demais): "largura x caída + bandô"
-                const caida = getScopeDisplayValue(scope, ['caida', 'queda', 'avanco', 'altura']);
-                const bando = getScopeDisplayValue(scope, ['bando']);
-                if (largura || caida) {
-                    let measureLine = `${largura || '?'} x ${caida || '?'}`;
-                    if (bando) measureLine += ` + ${bando}`;
+            if (productUsesMeasureLine(product)) {
+                const largura = getScopeDisplayValue(scope, ['largura', 'larg', 'profundidade', 'comprimento']);
+                const isCapota = (product?.linkedImageType || '').toLowerCase() === 'capota';
+                if (isCapota) {
+                    const perna = getScopeDisplayValue(scope, ['perna', 'pernas', 'lateral', 'caida', 'queda', 'avanco', 'altura']);
+                    lines.push(`${largura || DESCRIPTION_PLACEHOLDER} x ${perna || DESCRIPTION_PLACEHOLDER}`);
+                } else {
+                    const caida = getScopeDisplayValue(scope, ['caida', 'queda', 'avanco', 'altura']);
+                    let measureLine = `${largura || DESCRIPTION_PLACEHOLDER} x ${caida || DESCRIPTION_PLACEHOLDER}`;
+                    const bando = getScopeDisplayValue(scope, ['bando']);
+                    if (productIncludesBandoMeasure(product) || bando) {
+                        measureLine += ` + ${bando || DESCRIPTION_PLACEHOLDER}`;
+                    }
                     lines.push(measureLine);
                 }
             }
 
-            const lonaParts = [
-                getSectionDisplayLabel(sections.marcaLona),
-                getSectionDisplayLabel(sections.corLona),
-                getSectionDisplayLabel(sections.fundoLona)
-            ].filter(Boolean);
+            const lonaParts = ['marcaLona', 'corLona', 'fundoLona']
+                .map(id => resolveOptionalSectionSlot(product, sections, id))
+                .filter(slot => slot !== null);
             if (lonaParts.length > 0) lines.push(lonaParts.join(' '));
 
-            const viesLabel = getSectionDisplayLabel(sections.corVies);
-            if (viesLabel) lines.push(`Viés ${viesLabel}`);
+            const costuraSlot = resolveOptionalSectionSlot(product, sections, 'costura');
+            if (costuraSlot !== null) lines.push(costuraSlot);
 
-            const obsRaw = sections.observacoes;
-            const obs = Array.isArray(obsRaw)
-                ? obsRaw.map(getSectionDisplayLabel).filter(Boolean)
-                : (obsRaw ? [getSectionDisplayLabel(obsRaw)].filter(Boolean) : []);
-            obs.forEach(o => lines.push(o));
+            const viesSlot = resolveOptionalSectionSlot(product, sections, 'corVies');
+            if (viesSlot !== null) lines.push(`Viés ${viesSlot}`);
+
+            if (productHasVisibleDescriptionSection(product, 'observacoes')) {
+                const obsRaw = sections.observacoes;
+                const obsLabels = Array.isArray(obsRaw)
+                    ? obsRaw.map(getSectionDisplayLabel).filter(Boolean)
+                    : (obsRaw ? [getSectionDisplayLabel(obsRaw)].filter(Boolean) : []);
+                if (obsLabels.length > 0) {
+                    obsLabels.forEach(o => lines.push(o));
+                } else if (!isProductDescriptionSectionRequired(product, 'observacoes')) {
+                    lines.push(DESCRIPTION_PLACEHOLDER);
+                }
+            }
 
             return lines.join('\n');
         }
@@ -5474,13 +5557,17 @@
                                 const vs = b.querySelector('.selected-variant-text');
                                 if (vs) { vs.textContent = ''; vs.dataset.variantIndex = ''; }
                             });
-                            if (wasActive) return;
+                            if (wasActive) {
+                                refreshActiveLinkedImageDescription();
+                                return;
+                            }
                             if (hasVariants) {
                                 openMtmVariantSelector(btn);
                             } else {
                                 btn.classList.add('active');
                             }
                         }
+                        refreshActiveLinkedImageDescription();
                     });
 
                     optsWrap.appendChild(btn);
@@ -5491,6 +5578,7 @@
             });
 
             container.style.display = hasAny ? 'block' : 'none';
+            refreshActiveLinkedImageDescription();
             return hasAny;
         }
 
@@ -6362,6 +6450,8 @@
                     mtmInput.addEventListener('input', liveFormatCurrency);
                     mtmInput.addEventListener('blur', liveFormatCurrency);
                     mtmInput.addEventListener('keydown', handleVariableEnterNavigation);
+                    mtmInput.addEventListener('input', refreshActiveLinkedImageDescription);
+                    mtmInput.addEventListener('blur', refreshActiveLinkedImageDescription);
                 });
                 measuresBlock.appendChild(measuresGrid);
                 variablesContainer.appendChild(measuresBlock);
@@ -6420,6 +6510,7 @@
             }
 
             renderSectionSelectors(document.getElementById('mtm-sections-container'), product, existingSections || {});
+            refreshActiveLinkedImageDescription();
         }
 
         function openToldoCompletoConfigurator(product, existingConfig = {}) { // A variável 'product' aqui é a correta
@@ -6442,7 +6533,10 @@
                 variablesContainer.appendChild(varGroup);
                 // Adiciona o listener para recalcular o preço
                 // CORREÇÃO: Passa o 'product' correto para a função de cálculo
-                varGroup.querySelector('input').addEventListener('input', () => calculateToldoCompletoPrice(product));
+                varGroup.querySelector('input').addEventListener('input', () => {
+                    calculateToldoCompletoPrice(product);
+                    refreshActiveLinkedImageDescription();
+                });
                 input.addEventListener('keydown', handleVariableEnterNavigation);
             });
 
@@ -6489,6 +6583,7 @@
             renderSectionSelectors(document.getElementById('toldo-completo-sections-container'), product, existingConfig.sections || {});
 
             calculateToldoCompletoPrice(product); // Calcula o preço inicial com os valores carregados
+            refreshActiveLinkedImageDescription();
             modal.style.display = 'flex';
             document.body.classList.add('modal-open');
         }
@@ -8789,10 +8884,14 @@
             targetButton.classList.add('active'); // Ativa o botão ao selecionar uma variante
 
             closeModal('mtm-variant-selection-modal');
+            refreshActiveLinkedImageDescription();
         }
 
         // Listener para o novo modal de Toldo Completo
-        document.getElementById('toldo-completo-lona-select').addEventListener('change', calculateToldoCompletoPrice);
+        document.getElementById('toldo-completo-lona-select').addEventListener('change', () => {
+            if (selectedProduct) calculateToldoCompletoPrice(selectedProduct);
+            refreshActiveLinkedImageDescription();
+        });
         document.getElementById('add-toldo-completo-to-order-btn').addEventListener('click', addToldoCompletoToOrder);
 
         function evaluateFormula(formula, scope) {
